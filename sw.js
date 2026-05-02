@@ -3,7 +3,7 @@
 // (camara.leg.br, senado.leg.br, generativelanguage.googleapis.com),
 // para garantir dados sempre frescos.
 
-const CACHE_NAME = "monitor-ric-v4-2";
+const CACHE_NAME = "monitor-ric-v4-1";
 const SHELL = [
   "./",
   "./index.html",
