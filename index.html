@@ -385,8 +385,10 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   <div class="header-statusbar">
     <div class="statusbar-item" data-stat="total" title="Ver todos os requerimentos"><span class="label">Total</span><span class="value tabular" id="stat-total">—</span></div>
     <div class="statusbar-item" data-stat="relevantes" title="Filtrar por relevantes"><span class="label">Relevantes</span><span class="value tabular" id="stat-relevantes">—</span></div>
+    <div class="statusbar-item alert" data-stat="vencidos" title="Filtrar por prazo vencido"><span class="label">Vencidos</span><span class="value tabular" id="stat-vencidos">—</span></div>
     <div class="statusbar-item" data-stat="aprovados" title="Filtrar por aprovados"><span class="label">Aprovados</span><span class="value tabular" id="stat-aprovados">—</span></div>
-    <div class="statusbar-item" data-stat="aguardando" title="Filtrar Em andamento CC / Aguardando resposta"><span class="label">Em andamento / Aguardando</span><span class="value tabular" id="stat-andamento">—</span></div>
+    <div class="statusbar-item" data-stat="andamento" title="Filtrar Em andamento na CC"><span class="label">Em andamento CC</span><span class="value tabular" id="stat-andamento">—</span></div>
+    <div class="statusbar-item" data-stat="aguardando" title="Filtrar Aguardando resposta"><span class="label">Aguardando resp.</span><span class="value tabular" id="stat-aguardando">—</span></div>
     <div class="statusbar-item" style="margin-left:auto"><span class="label">Última sync</span><span class="value tabular" style="font-size:13px" id="stat-sync">nunca</span></div>
   </div>
 </header>
@@ -437,13 +439,21 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 
   <h2 class="painel-titulo">Requerimentos sob acompanhamento</h2>
-  <div class="grid-3" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr));margin-bottom:22px">
+  <div class="grid-4">
     <div class="painel-coluna attention">
-      <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
+      <div class="painel-coluna-header"><h3>Em andamento na CC <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
     </div>
-    <div class="painel-coluna" style="border-left:3px solid var(--leg-aprovado)">
-      <div class="painel-coluna-header"><h3>Aprovados <span class="count" id="cnt-aprov-sem-sei">—</span></h3></div>
+    <div class="painel-coluna attention">
+      <div class="painel-coluna-header"><h3>Aguardando resposta <span class="count" id="cnt-aguardando">—</span></h3></div>
+      <div class="painel-coluna-body" id="lst-aguardando"></div>
+    </div>
+    <div class="painel-coluna urgent">
+      <div class="painel-coluna-header"><h3>Prazo hoje ou vencido <span class="count" id="cnt-vencidos">—</span></h3></div>
+      <div class="painel-coluna-body" id="lst-vencidos"></div>
+    </div>
+    <div class="painel-coluna purple">
+      <div class="painel-coluna-header"><h3>Aprovados sem registro SEI <span class="count" id="cnt-aprov-sem-sei">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-aprov-sem-sei"></div>
     </div>
   </div>
@@ -471,7 +481,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <section class="pane" id="pane-lista">
   <div class="card">
     <div class="form-row">
-      <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto (apelido), resumo, comentários"></div>
+      <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, apelido, objeto, resumo, comentários"></div>
       <div><label>Casa</label><select id="filter-casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option></select></div>
       <div><label>Sigla</label><select id="filter-sigla"><option value="">Todas</option><option value="RIC">RIC</option><option value="RQS">RQS</option><option value="REQ">REQ</option></select></div>
       <div><label>Ano</label><select id="filter-ano"><option value="">Todos</option></select></div>
@@ -510,8 +520,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <th>Temática</th>
           <th class="sortable" data-sort="situacaoLegislativa">Sit. Legislativa</th>
           <th>Etapa</th>
-          <th>Prazo Etapa</th>
-          <th>Prazo CN</th>
+          <th>Prazo</th>
           <th>Ações</th>
         </tr></thead>
         <tbody id="tbl-lista-body"></tbody>
@@ -559,7 +568,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <h2>Sincronização incremental</h2>
       <p class="text-small text-muted" style="margin-bottom:12px">Busca apenas o que foi atualizado nos últimos N dias.</p>
       <div class="form-row">
-        <div><label>Últimos N dias</label><input type="number" id="sync-dias" value="3" min="1" max="180"></div>
+        <div><label>Últimos N dias</label><input type="number" id="sync-dias" value="3" min="1" max="60"></div>
         <div class="actions"><button class="btn" id="btn-sync-incremental">Sincronizar incremental</button></div>
       </div>
     </div>
@@ -695,7 +704,7 @@ const URL_SENADO = "https://legis.senado.leg.br/dadosabertos";
 const DB_NAME = "monitor-ric";
 const DB_NAME_LEGADO = "monitor-sic";
 const DB_VERSION = 1;
-const SCHEMA_VERSAO_DADOS = 4;
+const SCHEMA_VERSAO_DADOS = 3;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
 
@@ -881,7 +890,6 @@ async function migrarDados() {
     if (p.urlInteiroTeor === undefined) { p.urlInteiroTeor = ""; ch = true; }
     if (p.dataEnriquecimento === undefined) { p.dataEnriquecimento = ""; ch = true; }
     if (p.ultimaMovimentacaoData === undefined) { p.ultimaMovimentacaoData = ""; ch = true; }
-    if (p.prazoFinalCNSugerido === undefined) { p.prazoFinalCNSugerido = ""; ch = true; }
     if (ch) await DB.put("proposicoes", p);
   }
 
@@ -922,41 +930,18 @@ async function smartFetch(url) {
 }
 
 // ===== GEMINI API =====
-
-// Tenta baixar o PDF via fetch direto, depois via proxy se configurado.
-// Se ambos falharem, lança erro com flag isCorsError=true para que o caller exiba o dropzone.
-async function fetchPdfComFallback(url, onProgress) {
-  // Tentativa 1: direto
-  try {
-    if (onProgress) onProgress("baixando PDF (tentativa direta)...");
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const buf = await r.arrayBuffer();
-    return buf;
-  } catch (e1) {
-    // Tentativa 2: via proxy
-    const proxy = (await getConfig("proxy", "")) || "";
-    if (proxy) {
-      try {
-        if (onProgress) onProgress("baixando PDF (via proxy)...");
-        const target = proxy.replace("{url}", encodeURIComponent(url));
-        const r2 = await fetch(target);
-        if (!r2.ok) throw new Error(`HTTP ${r2.status} via proxy`);
-        const buf2 = await r2.arrayBuffer();
-        return buf2;
-      } catch (e2) {
-        const err = new Error(`CORS: download bloqueado (${e2.message})`);
-        err.isCorsError = true;
-        throw err;
-      }
-    }
-    const err = new Error(`CORS: download bloqueado — ${e1.message}`);
-    err.isCorsError = true;
-    throw err;
-  }
-}
-
-function arrayBufferToBase64(buf) {
+// Baixa o PDF e converte para base64 (usando o proxy CORS se configurado)
+async function fetchPdfAsBase64(url, onProgress) {
+  const proxy = (await getConfig("proxy", "")) || "";
+  const target = proxy ? proxy.replace("{url}", encodeURIComponent(url)) : url;
+  if (onProgress) onProgress("baixando PDF...");
+  const res = await fetch(target);
+  if (!res.ok) throw new Error(`Falha ao baixar PDF: HTTP ${res.status}`);
+  const buf = await res.arrayBuffer();
+  // Limite de ~20MB para inline (limite Gemini é ~20MB de payload)
+  if (buf.byteLength > 18 * 1024 * 1024) throw new Error(`PDF muito grande (${(buf.byteLength / 1024 / 1024).toFixed(1)} MB). Limite ~18 MB.`);
+  if (onProgress) onProgress(`convertendo (${(buf.byteLength / 1024).toFixed(0)} KB)...`);
+  // Conversão eficiente para base64
   const bytes = new Uint8Array(buf);
   let binary = "";
   const chunkSize = 0x8000;
@@ -967,23 +952,16 @@ function arrayBufferToBase64(buf) {
 }
 
 async function analisarPdfComGemini(urlInteiroTeor, apiKey, model, onProgress) {
-  const buf = await fetchPdfComFallback(urlInteiroTeor, onProgress);
-  if (buf.byteLength > 18 * 1024 * 1024) throw new Error(`PDF muito grande (${(buf.byteLength/1024/1024).toFixed(1)} MB). Limite ~18 MB.`);
-  if (onProgress) onProgress(`convertendo (${(buf.byteLength/1024).toFixed(0)} KB)...`);
-  const pdfBase64 = arrayBufferToBase64(buf);
+  const pdfBase64 = await fetchPdfAsBase64(urlInteiroTeor, onProgress);
   if (onProgress) onProgress("enviando para Gemini...");
-  return _enviarPdfBase64AoGemini(pdfBase64, apiKey, model);
-}
+  const prompt = `Você está analisando um Requerimento de Informação (RIC) do Congresso Nacional do Brasil dirigido à Casa Civil da Presidência da República. Leia o documento em anexo e responda SOMENTE com um JSON válido no formato exato:
+{"objeto": "...", "resumo": "..."}
 
-async function _enviarPdfBase64AoGemini(pdfBase64, apiKey, model) {
-  const prompt = `Você está analisando um Requerimento de Informação (RIC) do Congresso Nacional do Brasil. Leia o documento em anexo e responda SOMENTE com um JSON válido no formato:
-{"apelido":"...","resumo":"...","palavrasChave":"..."}
+Onde:
+- "objeto": frase curta (máximo 15 palavras) identificando o tema central do pedido. Não inclua "Requer informações sobre" — vá direto ao tema. Ex.: "Agendas do Presidente da República com o STF", "Custos das obras do Novo PAC", "Viagens internacionais oficiais em 2025".
+- "resumo": parágrafo de até 5 linhas descrevendo objetivamente os quesitos formulados (sem mencionar nome do parlamentar requerente, sem citações literais longas).
 
-Regras obrigatórias:
-- "apelido": frase de ATÉ 150 CARACTERES que sintetize o OBJETO do requerimento. NÃO mencione o destinatário (ministério, órgão, ministro ou cargo). Foco exclusivo na demanda. Exemplos: "Custos das obras do Novo PAC no Nordeste", "Agendas do Presidente com o Supremo Tribunal Federal", "Viagens internacionais oficiais em 2025 e despesas".
-- "resumo": texto de ATÉ 700 CARACTERES. Descreva os quesitos, questionamentos e itens pedidos SEM mencionar o destinatário. Ao final, inclua síntese das alegações do autor que justificariam o requerimento (máximo 20% do total do resumo).
-- "palavrasChave": 3 a 6 termos separados por vírgula, representando os temas centrais do requerimento.
-Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
+Responda APENAS o JSON, sem texto antes ou depois, sem markdown, sem \`\`\`.`;
 
   const payload = {
     contents: [{
@@ -992,7 +970,11 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
         { text: prompt }
       ]
     }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 1024, responseMimeType: "application/json" }
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 1024,
+      responseMimeType: "application/json"
+    }
   };
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -1010,15 +992,17 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
   const data = await res.json();
   const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!txt) throw new Error("Resposta Gemini vazia");
+  // Limpa eventuais cercas de markdown
   let limpo = txt.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/g, "").trim();
   let parsed;
   try { parsed = JSON.parse(limpo); }
   catch (e) {
+    // Tenta extrair primeiro objeto JSON da string
     const m = limpo.match(/\{[\s\S]*\}/);
     if (m) { parsed = JSON.parse(m[0]); }
     else throw new Error(`Resposta Gemini não é JSON válido: ${limpo.substring(0, 100)}`);
   }
-  return { apelido: parsed.apelido || parsed.objeto || "", resumo: parsed.resumo || "", palavrasChave: parsed.palavrasChave || parsed["palavras-chave"] || "" };
+  return { objeto: parsed.objeto || "", resumo: parsed.resumo || "" };
 }
 
 async function getFiltroRegex() {
@@ -1123,7 +1107,7 @@ async function camaraBuscarTramitacoes(prop) {
 
 async function detectarSituacaoCamara(prop) {
   const hist = prop.historico || [];
-  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "", prazoFinalCNSugerido: "" };
+  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "" };
   if (hist.length === 0) return det;
   // Ordenar ascendente por data
   hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
@@ -1163,21 +1147,6 @@ async function detectarSituacaoCamara(prop) {
     else det.situacao = "tramitacao_inicial";
   } else {
     det.situacao = "tramitacao_inicial";
-  }
-  // Extrair prazo das tramitações da Câmara
-  // Formato: "Prazo para Resposta Externas (de DD/MM/YYYY a DD/MM/YYYY)"
-  for (const t of hist) {
-    if (!det.prazoFinalCNSugerido) {
-      const txt = (t.descricao || "") + " " + (t.despacho || "");
-      const pm = txt.match(REGEX_PRAZO_CAMARA);
-      if (pm) {
-        const partes = pm[1].split("/");
-        if (partes.length === 3) {
-          const ano = partes[2].length === 2 ? "20" + partes[2] : partes[2];
-          det.prazoFinalCNSugerido = `${ano}-${partes[1].padStart(2,"0")}-${partes[0].padStart(2,"0")}`;
-        }
-      }
-    }
   }
   return det;
 }
@@ -1280,81 +1249,47 @@ async function senadoBuscarMovimentacoes(prop) {
 
 async function detectarSituacaoSenado(prop) {
   const hist = prop.historico || [];
-  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "", prazoFinalCNSugerido: "" };
+  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "" };
   if (hist.length === 0) return det;
   hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
   det.ultimaMovimentacaoData = (hist[hist.length - 1].dataHora || hist[hist.length - 1].data || "").substring(0, 10);
 
-  let aprovEv = null, respEv = null, arqEv = null, retiradoEv = null;
-
+  // Detecta primeiro evento com situacao mapeada como "aprovado"
+  let aprovEv = null;
   for (const e of hist) {
-    const texto = e.despacho || e.descricao || "";
-    const textoN = normalizar(texto);
-    const snOriginal = e.situacao || "";
-    const sn = normalizar(snOriginal);
-
-    // 1. Respondido (texto)
-    if (!respEv && REGEX_RESP_SENADO.test(texto)) { respEv = e; }
-
-    // 2. Arquivado/encerrado (texto) — pode vir junto com respondido
-    if (!arqEv && REGEX_ARQ_SENADO.test(textoN)) { arqEv = e; }
-
-    // 3. Aprovado pela Comissão Diretora (texto)
-    if (!aprovEv && REGEX_APROV_SENADO.test(texto)) { aprovEv = e; }
-
-    // 4. Aprovado via campo estruturado
-    if (!aprovEv && sn && MAP_SIT_SENADO[sn] === "aprovado") { aprovEv = e; }
-
-    // 5. Retirado
-    if (!retiradoEv && (REGEX_RETIRADO_SENADO.test(textoN) || MAP_SIT_SENADO[sn] === "retirado")) { retiradoEv = e; }
-
-    // 6. Extrair prazo do texto
-    if (!det.prazoFinalCNSugerido) {
-      const pm = texto.match(REGEX_PRAZO_SENADO);
-      if (pm) {
-        const partes = pm[1].split("/");
-        if (partes.length === 3) {
-          det.prazoFinalCNSugerido = `${partes[2].length === 2 ? "20" + partes[2] : partes[2]}-${partes[1].padStart(2,"0")}-${partes[0].padStart(2,"0")}`;
-        }
+    const sn = normalizar(e.situacao || "");
+    if (sn && MAP_SIT_SENADO[sn] === "aprovado") { aprovEv = e; break; }
+    // Fallback textual: matérias aprovadas explicitamente
+    if (!aprovEv) {
+      const t = normalizar(e.despacho || e.descricao || "");
+      if (/\b(deferid[oa]|consignada\s+a\s+aprovac[ãa]o|comiss[ãa]o\s+diretora\s+aprov(ou|ado))\b/i.test(t)) {
+        aprovEv = e; break;
       }
     }
   }
-
-  // Captura despacho de aprovação
   if (aprovEv) {
     det.dataAprovacao = aprovEv.data;
-    det.despachoAprovacao = (aprovEv.despacho || aprovEv.descricao || aprovEv.situacao || "").substring(0, 500);
+    det.despachoAprovacao = (aprovEv.despacho || aprovEv.descricao || aprovEv.situacao).substring(0, 500);
   }
 
-  // Determinação do status final (precedência: respondido > aprovado+aguardando > aprovado > aguardando > fallback)
-  if (respEv || arqEv) {
-    det.situacao = "respondido";
-  } else if (aprovEv && det.prazoFinalCNSugerido) {
-    // Aprovado e prazo extraído → aguardando resposta
-    det.situacao = "aguardando_resposta";
-  } else if (aprovEv) {
-    det.situacao = "aprovado";
-  } else if (retiradoEv) {
-    det.situacao = "retirado";
-  } else {
-    // Fallback: último evento com situacao estruturada
-    const ultimaComSituacao = [...hist].reverse().find(e => e.situacao && normalizar(e.situacao) in MAP_SIT_SENADO);
-    if (ultimaComSituacao) {
-      const sn = normalizar(ultimaComSituacao.situacao);
+  // Última situação encontrada na ordem do histórico
+  const ultimaComSituacao = [...hist].reverse().find(e => e.situacao);
+  if (ultimaComSituacao) {
+    const sn = normalizar(ultimaComSituacao.situacao);
+    if (MAP_SIT_SENADO[sn]) {
       det.situacao = MAP_SIT_SENADO[sn];
     } else {
-      // Último evento com qualquer situacao
-      const ult = [...hist].reverse().find(e => e.situacao);
-      if (ult) {
-        registrarSituacaoNaoMapeada(ult.situacao, "senado");
-        const t = normalizar(ult.situacao || "");
-        if (/arquiv|retirad|rejeit|prejudic/.test(t)) det.situacao = "retirado";
-        else if (/aprov/.test(t)) det.situacao = "aprovado";
-        else det.situacao = "tramitacao_inicial";
-      } else {
-        det.situacao = "tramitacao_inicial";
-      }
+      registrarSituacaoNaoMapeada(ultimaComSituacao.situacao, "senado");
+      // Fallback heurístico
+      if (/arquiv|retirad|rejeit|prejudic/.test(sn)) det.situacao = "retirado";
+      else if (/aguard.+resp|aguardando\s+inform/.test(sn)) det.situacao = "aguardando_resposta";
+      else if (/aprov/.test(sn)) det.situacao = "aprovado";
+      else det.situacao = "tramitacao_inicial";
     }
+  } else if (aprovEv) {
+    det.situacao = "aprovado";
+  } else {
+    det.situacao = "tramitacao_inicial";
   }
   return det;
 }
@@ -1379,7 +1314,6 @@ async function enriquecerProposicao(prop, opts = {}) {
       prop.dataAprovacao = det.dataAprovacao;
       prop.despachoAprovacao = det.despachoAprovacao;
       prop.ultimaMovimentacaoData = det.ultimaMovimentacaoData;
-      if (det.prazoFinalCNSugerido) prop.prazoFinalCNSugerido = det.prazoFinalCNSugerido;
     } else {
       if (!prop.urlInteiroTeor) { await senadoBuscarInteiroTeor(prop); await sleep(THROTTLE_MS); }
       try { prop.historico = await senadoBuscarMovimentacoes(prop); }
@@ -1389,7 +1323,6 @@ async function enriquecerProposicao(prop, opts = {}) {
       prop.dataAprovacao = det.dataAprovacao;
       prop.despachoAprovacao = det.despachoAprovacao;
       prop.ultimaMovimentacaoData = det.ultimaMovimentacaoData;
-      if (det.prazoFinalCNSugerido) prop.prazoFinalCNSugerido = det.prazoFinalCNSugerido;
     }
     prop.dataEnriquecimento = new Date().toISOString();
   } catch (e) {
@@ -1675,11 +1608,12 @@ function ehAguardandoResposta(p, m) {
   return p.situacaoLegislativa === "aguardando_resposta";
 }
 
-// Prazo final CN: prefere valor salvo pelo usuário; senão, usa sugestão do histórico de tramitação
-function calcPrazoFinalCN(m, prop) {
-  if (m.prazoFinalCN) return m.prazoFinalCN;
-  if (prop && prop.prazoFinalCNSugerido) return prop.prazoFinalCNSugerido;
-  return "";
+// Calcula prazo final CN automaticamente quando há dataRecebimentoSEI
+function calcPrazoFinalCN(m) {
+  if (m.dataRecebimentoSEI && (!m.prazoFinalCN || m.prazoFinalCN === "")) {
+    return addDiasIso(m.dataRecebimentoSEI, 30);
+  }
+  return m.prazoFinalCN || "";
 }
 
 // ===== POPULAR SELECTS =====
@@ -1756,7 +1690,7 @@ function aplicarFiltros() {
     if (busca) {
       const blob = normalizar([
         p.identificacao, p.ementa, p.autor, p.numero,
-        m.apelido, m.resumo, m.comentarios, m.palavrasChave,
+        m.objeto, m.resumo, m.comentarios, m.apelido, m.palavrasChave,
         m.nupRecebimento, m.nupResposta
       ].join(" "));
       if (!blob.includes(busca)) return false;
@@ -1785,12 +1719,11 @@ function renderBadgeLegislativo(p) {
   return html;
 }
 
-function renderBadgePrazo(m, tipo) {
-  const data = tipo === "cn" ? (m.prazoFinalCN || "") : (m.prazoEtapa || "");
-  if (!data) return "";
+function renderBadgePrazo(m) {
+  if (!m.prazoEtapa) return "";
   const hoje = isoHoje();
-  const cls = data < hoje ? "badge-vencido" : (data === hoje ? "badge-hoje" : "badge-prazo-ok");
-  return `<span class="badge ${cls}">${formatarData(data)}</span>`;
+  const cls = m.prazoEtapa < hoje ? "badge-vencido" : (m.prazoEtapa === hoje ? "badge-hoje" : "");
+  return `<span class="badge ${cls}">${formatarData(m.prazoEtapa)}</span>`;
 }
 
 function renderTabela() {
@@ -1801,7 +1734,7 @@ function renderTabela() {
   document.querySelectorAll("th[data-sort]").forEach(th => th.classList.toggle("sorted", th.dataset.sort === listaEstado.ordemColuna));
 
   if (listaEstado.filtrados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="12" class="empty">Nenhum requerimento corresponde aos filtros.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="empty">Nenhum requerimento corresponde aos filtros.</td></tr>`;
     document.getElementById("lista-pagination").innerHTML = "";
     return;
   }
@@ -1812,7 +1745,7 @@ function renderTabela() {
   tbody.innerHTML = pg.map(p => {
     const m = getMarcacao(p.id);
     const tituloCol = m.apelido
-      ? `<b>${escapeHtml(m.apelido)}</b>`
+      ? `<b>${escapeHtml(m.apelido)}</b><br><span class="text-small text-muted">${escapeHtml((p.ementa || "").substring(0, 160))}…</span>`
       : escapeHtml((p.ementa || "").substring(0, 200) + ((p.ementa || "").length > 200 ? "…" : ""));
     const inteiroTeor = p.urlInteiroTeor
       ? `<a href="${escapeAttr(p.urlInteiroTeor)}" target="_blank" rel="noopener" title="Inteiro teor" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></a>` : "";
@@ -1829,8 +1762,7 @@ function renderTabela() {
       <td>${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span>` : ""}</td>
       <td>${renderBadgeLegislativo(p)}</td>
       <td class="text-small">${escapeHtml(etapaLabel)}</td>
-      <td>${renderBadgePrazo(m, "etapa")}</td>
-      <td class="col-data">${renderBadgePrazo(m, "cn")}</td>
+      <td>${renderBadgePrazo(m)}</td>
       <td class="col-acoes">${inteiroTeor}${portal}<button class="btn btn-sm" data-detalhe="${p.id}">Detalhes</button></td>
     </tr>`;
   }).join("");
@@ -1942,8 +1874,8 @@ async function abrirDetalhe(id) {
   const p = listaEstado.itens.find(x => x.id === id);
   if (!p) return;
   const m = getMarcacao(id);
-  // Preenche prazoFinalCN sugerido do histórico se ainda não foi preenchido pelo usuário
-  m.prazoFinalCN = calcPrazoFinalCN(m, p);
+  // Preenche prazoFinalCN automático se aplicável
+  m.prazoFinalCN = calcPrazoFinalCN(m);
 
   document.getElementById("modal-titulo").textContent = p.identificacao + (m.apelido ? ` — ${m.apelido}` : "");
 
@@ -1980,12 +1912,13 @@ async function abrirDetalhe(id) {
     <div class="modal-section">
       <h3>Identificação interna</h3>
       <div class="field-row-3">
-        <div style="flex:2"><label>Objeto (apelido)</label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: Custos das obras do Novo PAC; Agendas do Presidente com STF" maxlength="150"></div>
+        <div><label>Apelido</label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: Agendas STF, PAC viagens..."></div>
         <div><label>Temática</label><select id="m-tematica">${tematicaOpts}</select></div>
         <div><label>Relevante</label><label style="display:flex;align-items:center;gap:8px;padding:7px 0"><input type="checkbox" id="m-relevante"${m.relevante ? " checked" : ""} style="width:auto"> Acompanhar prioritariamente</label></div>
       </div>
-      <div>
-        <label>Palavras-chave</label><input type="text" id="m-palavraschave" value="${escapeAttr(m.palavrasChave || "")}" placeholder="separadas por vírgula" style="margin-bottom:10px">
+      <div class="field-row-2">
+        <div><label>Palavras-chave</label><input type="text" id="m-palavraschave" value="${escapeAttr(m.palavrasChave || "")}" placeholder="separadas por vírgula"></div>
+        <div><label>Objeto</label><input type="text" id="m-objeto" value="${escapeAttr(m.objeto || "")}" placeholder="ex.: Aquisição de aparelhos de ar-condicionado"></div>
       </div>
     </div>
 
@@ -2022,7 +1955,7 @@ async function abrirDetalhe(id) {
       </div>
       <div class="field-row-3">
         <div><label>Data do recebimento (SEI)</label><input type="date" id="m-data-recebimento-sei" value="${escapeAttr(m.dataRecebimentoSEI || "")}"></div>
-        <div><label>Prazo final CN (sugerido do histórico — editável)</label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
+        <div><label>Prazo final CN (auto: SEI + 30 dias)</label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
         <div><label>Data da resposta</label><input type="date" id="m-data-resposta" value="${escapeAttr(m.dataResposta || "")}"></div>
       </div>
       <div class="field-row-3">
@@ -2043,9 +1976,12 @@ async function abrirDetalhe(id) {
     </div>
   `;
 
-  // Ao preencher data do recebimento SEI, sugerir mudança de status
+  // Auto-cálculo do prazo final ao mudar dataRecebimentoSEI
   document.getElementById("m-data-recebimento-sei").addEventListener("change", e => {
-    if (e.target.value) {
+    const novo = e.target.value;
+    if (novo) {
+      document.getElementById("m-prazo-final-cn").value = addDiasIso(novo, 30);
+      // Sugestão de status
       const stEl = document.getElementById("m-status-interno");
       if (stEl.value === "novo" || stEl.value === "tramitacao_cn") stEl.value = "andamento_cc";
     }
@@ -2078,9 +2014,8 @@ async function abrirDetalhe(id) {
       status.innerHTML = `<span class="text-muted">Baixando PDF…</span>`;
       try {
         const r = await analisarPdfComGemini(p.urlInteiroTeor, apiKey, model, msg => { status.innerHTML = `<span class="text-muted">${escapeHtml(msg)}</span>`; });
-        if (r.apelido) document.getElementById("m-apelido").value = r.apelido;
+        if (r.objeto) document.getElementById("m-objeto").value = r.objeto;
         if (r.resumo) document.getElementById("m-resumo").value = r.resumo;
-        if (r.palavrasChave) document.getElementById("m-palavraschave").value = r.palavrasChave;
         status.innerHTML = `<span style="color:var(--ok)">✓ Análise concluída — revise e salve.</span>`;
       } catch (e) {
         status.innerHTML = `<span style="color:var(--err)">Falha: ${escapeHtml(e.message)}</span>`;
@@ -2099,6 +2034,7 @@ async function abrirDetalhe(id) {
       tematica: document.getElementById("m-tematica").value,
       relevante: document.getElementById("m-relevante").checked,
       palavrasChave: document.getElementById("m-palavraschave").value.trim(),
+      objeto: document.getElementById("m-objeto").value.trim(),
       resumo: document.getElementById("m-resumo").value.trim(),
       comentarios: document.getElementById("m-comentarios").value.trim(),
       unidadesConsultadas: unidadesMarc,
@@ -2232,9 +2168,10 @@ async function renderPainel() {
   // Barra de alertas no topo
   const novos7d = apresentados.length;
   const alertas = [
-    { cls: "warning", num: ccAguardando.length, label: "em andamento / aguardando resposta", filtro: { leg: "aguardando_resposta" } },
-    { cls: "info", num: novos7d, label: "novos (7 dias)", filtro: {} },
-    { cls: "purple-pill", num: aprovados2.length, label: "aprovados", filtro: { leg: "aprovado" } }
+    { cls: "critical", num: vencidos.length, label: "vencidos", filtro: { rel: "sim", prazo: "vencido" } },
+    { cls: "warning", num: aguardando.length + andamento.length, label: "aguardando resposta", filtro: { leg: "aguardando_resposta" } },
+    { cls: "purple-pill", num: aprovSemSEI.length, label: "aprovados sem registro SEI", filtro: { leg: "aprovado" } },
+    { cls: "info", num: novos7d, label: "novos (7 dias)", filtro: {} }
   ];
   document.getElementById("alertas-bar").innerHTML = alertas.map(a => `
     <div class="alerta-pill ${a.cls} ${a.num === 0 ? 'zero' : ''}" data-alerta='${escapeAttr(JSON.stringify(a.filtro))}'>
@@ -2288,8 +2225,8 @@ function renderPainelLista(arr, campoData) {
         <b>${escapeHtml(p.identificacao)}</b>
         ${m.relevante ? `<span class="relevante-tag">★ Relevante</span>` : ""}
       </div>
-      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}${m.prazoFinalCN || p.prazoFinalCNSugerido ? " · Prazo CN: " + formatarData(m.prazoFinalCN || p.prazoFinalCNSugerido) : ""}</div>
-      <div class="painel-item-ementa">${escapeHtml((m.apelido || (p.ementa || "").substring(0, 140)) + (m.apelido ? "" : "…"))}</div>
+      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}</div>
+      <div class="painel-item-ementa">${escapeHtml((m.apelido || p.ementa || "").substring(0, 140))}…</div>
     </div>`;
   }).join("");
 }
@@ -2306,10 +2243,9 @@ function renderPainelListaAcomp(arr) {
       </div>
       <div class="painel-item-meta">
         ${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span> ` : ""}
-        ${p.situacaoLegislativa === "aprovado" ? renderBadgeLegislativo(p) : ""}
-        ${etapaLabel ? escapeHtml(etapaLabel) + " · " : ""}Prazo CN: ${(m.prazoFinalCN || p.prazoFinalCNSugerido) ? renderBadgePrazo({prazoEtapa: m.prazoFinalCN || p.prazoFinalCNSugerido || ""}, "etapa") : "—"}
+        ${escapeHtml(etapaLabel)} · Prazo: ${renderBadgePrazo(m) || "—"}
       </div>
-      <div class="painel-item-ementa">${escapeHtml(m.apelido || (p.ementa || "").substring(0, 140))}</div>
+      <div class="painel-item-ementa">${escapeHtml(m.apelido || m.objeto || (p.ementa || "").substring(0, 140))}</div>
     </div>`;
   }).join("");
 }
@@ -2328,16 +2264,23 @@ async function renderHeaderStats() {
   const relevantes = marcs.filter(m => m.relevante).length;
   document.getElementById("stat-relevantes").textContent = relevantes;
   const hoje = isoHoje();
+  const vencidos = marcs.filter(m => m.relevante && m.prazoEtapa && m.prazoEtapa <= hoje && !["respondido","retirado"].includes(m.statusInterno)).length;
+  document.getElementById("stat-vencidos").textContent = vencidos;
   document.getElementById("stat-aprovados").textContent = all.filter(p => p.situacaoLegislativa === "aprovado").length;
-  // Combinado: em andamento CC + aguardando resposta sem status interno
+  // Em andamento: status interno = andamento_cc
   const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
-  const ccAguardandoH = all.filter(p => {
-    const m = marcMap.get(p.id) || {};
-    if (m.statusInterno === "andamento_cc") return true;
-    if (p.situacaoLegislativa === "aguardando_resposta" && (!m.statusInterno || m.statusInterno === "novo")) return true;
-    return false;
+  const andamento = all.filter(p => {
+    const m = marcMap.get(p.id);
+    return m && m.statusInterno === "andamento_cc";
   }).length;
-  document.getElementById("stat-andamento").textContent = ccAguardandoH;
+  // Aguardando resposta: aguardando_resposta legislativo OU andamento_cc interno
+  const aguardando = all.filter(p => {
+    const m = marcMap.get(p.id) || {};
+    if (m.statusInterno && m.statusInterno !== "novo") return false;
+    return p.situacaoLegislativa === "aguardando_resposta";
+  }).length;
+  document.getElementById("stat-andamento").textContent = andamento;
+  document.getElementById("stat-aguardando").textContent = aguardando;
   const ult = await getConfig("ultimaSync", null);
   const sd = document.getElementById("stat-sync");
   sd.textContent = ult ? new Date(ult).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "nunca";
@@ -2355,10 +2298,11 @@ function linhaExport(p) {
     Identificacao: p.identificacao,
     Apresentacao: p.dataApresentacao,
     Autor: p.autor || "",
-    Apelido_Objeto: m.apelido || "",
+    Apelido: m.apelido || "",
     Relevante: m.relevante ? "Sim" : "Não",
     Tematica: m.tematica || "",
     Ementa: p.ementa || "",
+    Objeto: m.objeto || "",
     PalavrasChave: m.palavrasChave || "",
     SituacaoLegislativa: LABEL_LEG[p.situacaoLegislativa] || p.situacaoLegislativa || "",
     SituacaoBruta: p.situacaoBruta || "",
@@ -2371,7 +2315,7 @@ function linhaExport(p) {
     Etapa: etapaLabel,
     PrazoEtapa: m.prazoEtapa || "",
     DataRecebimentoSEI: m.dataRecebimentoSEI || "",
-    PrazoFinalCN: m.prazoFinalCN || p.prazoFinalCNSugerido || "",
+    PrazoFinalCN: m.prazoFinalCN || "",
     DataResposta: m.dataResposta || "",
     NUPRecebimento: m.nupRecebimento || "",
     NUPResposta: m.nupResposta || "",
@@ -2556,33 +2500,6 @@ document.getElementById("btn-reenriquecer").addEventListener("click", async () =
 
 if (location.protocol === "file:") document.getElementById("cors-warning").style.display = "block";
 
-// Processar PDF carregado manualmente (fallback CORS) e enviar ao Gemini
-async function processarPdfFile(file, apiKey, model, statusEl, dropZone) {
-  if (!file || file.type !== "application/pdf") {
-    statusEl.innerHTML = `<span style="color:var(--err)">Selecione um arquivo PDF válido.</span>`;
-    return;
-  }
-  if (file.size > 18 * 1024 * 1024) {
-    statusEl.innerHTML = `<span style="color:var(--err)">PDF muito grande (${(file.size/1024/1024).toFixed(1)} MB). Limite ~18 MB.</span>`;
-    return;
-  }
-  dropZone.style.display = "none";
-  statusEl.innerHTML = `<span class="text-muted">Lendo PDF (${(file.size/1024).toFixed(0)} KB)...</span>`;
-  try {
-    const buf = await file.arrayBuffer();
-    const pdfBase64 = arrayBufferToBase64(buf);
-    statusEl.innerHTML = `<span class="text-muted">Enviando para Gemini...</span>`;
-    const r = await _enviarPdfBase64AoGemini(pdfBase64, apiKey, model);
-    if (r.apelido) { const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido; }
-    if (r.resumo) { const el = document.getElementById("m-resumo"); if (el) el.value = r.resumo; }
-    if (r.palavrasChave) { const el = document.getElementById("m-palavraschave"); if (el) el.value = r.palavrasChave; }
-    statusEl.innerHTML = `<span style="color:var(--ok)">✓ Análise concluída — revise e salve.</span>`;
-  } catch (e2) {
-    dropZone.style.display = "";
-    statusEl.innerHTML = `<span style="color:var(--err)">Falha: ${escapeHtml(e2.message)}</span>`;
-  }
-}
-
 // ===== DARK MODE =====
 async function inicializarTema() {
   const saved = await getConfig("tema", null);
@@ -2619,7 +2536,9 @@ document.querySelectorAll(".statusbar-item[data-stat]").forEach(el => {
     const s = el.dataset.stat;
     if (s === "total") aplicarFiltrosViaPaineis({});
     else if (s === "relevantes") aplicarFiltrosViaPaineis({ rel: "sim" });
+    else if (s === "vencidos") aplicarFiltrosViaPaineis({ rel: "sim", prazo: "vencido" });
     else if (s === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
+    else if (s === "andamento") aplicarFiltrosViaPaineis({ statusInterno: "andamento_cc" });
     else if (s === "aguardando") aplicarFiltrosViaPaineis({ leg: "aguardando_resposta" });
   });
 });
