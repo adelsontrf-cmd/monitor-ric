@@ -8,7 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Monitor RIC">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%234f46e5'/><path d='M18 14h22l8 8v28a2 2 0 0 1-2 2H18a2 2 0 0 1-2-2V16a2 2 0 0 1 2-2z' fill='white'/><path d='M40 14v8h8' fill='none' stroke='%234f46e5' stroke-width='2'/><path d='M22 30h20M22 36h20M22 42h14' stroke='%234f46e5' stroke-width='2.5' stroke-linecap='round'/></svg>">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
 <title>Monitor RIC — Requerimentos de Informação do Congresso Nacional</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -258,6 +260,7 @@ td.col-acoes { white-space: nowrap; }
 .badge-vencido { background: var(--err-light); color: var(--err-strong); }
 .badge-hoje { background: var(--warn-light); color: var(--warn-strong); }
 .badge-prazo-ok { background: var(--ok-light); color: var(--ok-strong); }
+.badge-prazo-ok { background: var(--ok-light); color: var(--ok-strong); }
 
 /* Star */
 .star { cursor: pointer; font-size: 18px; color: var(--muted-2); user-select: none; line-height: 1; }
@@ -338,6 +341,10 @@ a { color: var(--accent); } a:hover { text-decoration: underline; }
 .contador-destaque .num { font-size: 16px; font-weight: 700; }
 .contador-destaque.has-filter { background: var(--accent); color: white; }
 .filtros-ativos { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); }
+#filtros-container { transition: max-height 0.3s ease, opacity 0.2s; overflow: hidden; max-height: 1200px; opacity: 1; }
+#filtros-container.collapsed { max-height: 0; opacity: 0; margin-top: 0 !important; }
+#btn-toggle-filtros.collapsed::before { content: "▶ "; }
+#btn-toggle-filtros.expanded::before { content: "▼ "; }
 .filtro-ativo-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--surface-2); border-radius: 999px; font-size: 11px; color: var(--text-2); border: 1px solid var(--border); }
 .filtro-ativo-chip .x { cursor: pointer; color: var(--muted); font-weight: 700; }
 .filtro-ativo-chip .x:hover { color: var(--err); }
@@ -385,10 +392,8 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   <div class="header-statusbar">
     <div class="statusbar-item" data-stat="total" title="Ver todos os requerimentos"><span class="label">Total</span><span class="value tabular" id="stat-total">—</span></div>
     <div class="statusbar-item" data-stat="relevantes" title="Filtrar por relevantes"><span class="label">Relevantes</span><span class="value tabular" id="stat-relevantes">—</span></div>
-    <div class="statusbar-item alert" data-stat="vencidos" title="Filtrar por prazo vencido"><span class="label">Vencidos</span><span class="value tabular" id="stat-vencidos">—</span></div>
     <div class="statusbar-item" data-stat="aprovados" title="Filtrar por aprovados"><span class="label">Aprovados</span><span class="value tabular" id="stat-aprovados">—</span></div>
-    <div class="statusbar-item" data-stat="andamento" title="Filtrar Em andamento na CC"><span class="label">Em andamento CC</span><span class="value tabular" id="stat-andamento">—</span></div>
-    <div class="statusbar-item" data-stat="aguardando" title="Filtrar Aguardando resposta"><span class="label">Aguardando resp.</span><span class="value tabular" id="stat-aguardando">—</span></div>
+    <div class="statusbar-item warn" data-stat="aguardando" title="Em andamento CC ou Aguardando resposta sem triagem"><span class="label">Em andamento / Aguardando</span><span class="value tabular" id="stat-andamento">—</span></div>
     <div class="statusbar-item" style="margin-left:auto"><span class="label">Última sync</span><span class="value tabular" style="font-size:13px" id="stat-sync">nunca</span></div>
   </div>
 </header>
@@ -439,22 +444,22 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 
   <h2 class="painel-titulo">Requerimentos sob acompanhamento</h2>
-  <div class="grid-4">
+  <div class="grid-3" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr));margin-bottom:22px">
     <div class="painel-coluna attention">
-      <div class="painel-coluna-header"><h3>Em andamento na CC <span class="count" id="cnt-andamento">—</span></h3></div>
+      <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
     </div>
-    <div class="painel-coluna attention">
-      <div class="painel-coluna-header"><h3>Aguardando resposta <span class="count" id="cnt-aguardando">—</span></h3></div>
-      <div class="painel-coluna-body" id="lst-aguardando"></div>
-    </div>
-    <div class="painel-coluna urgent">
-      <div class="painel-coluna-header"><h3>Prazo hoje ou vencido <span class="count" id="cnt-vencidos">—</span></h3></div>
-      <div class="painel-coluna-body" id="lst-vencidos"></div>
-    </div>
-    <div class="painel-coluna purple">
-      <div class="painel-coluna-header"><h3>Aprovados sem registro SEI <span class="count" id="cnt-aprov-sem-sei">—</span></h3></div>
-      <div class="painel-coluna-body" id="lst-aprov-sem-sei"></div>
+    <div class="painel-coluna" style="border-left:3px solid var(--leg-aprovado)">
+      <div class="painel-coluna-header">
+        <h3>Aprovados <span class="count" id="cnt-aprovados-acomp">—</span></h3>
+        <div class="painel-segmented" id="seg-aprov-acomp">
+          <button data-d="7" class="active">7d</button>
+          <button data-d="15">15d</button>
+          <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
+        </div>
+      </div>
+      <div class="painel-coluna-body" id="lst-aprovados-acomp"></div>
     </div>
   </div>
 
@@ -480,31 +485,34 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <!-- LISTA -->
 <section class="pane" id="pane-lista">
   <div class="card">
-    <div class="form-row">
-      <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, apelido, objeto, resumo, comentários"></div>
-      <div><label>Casa</label><select id="filter-casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option></select></div>
-      <div><label>Sigla</label><select id="filter-sigla"><option value="">Todas</option><option value="RIC">RIC</option><option value="RQS">RQS</option><option value="REQ">REQ</option></select></div>
-      <div><label>Ano</label><select id="filter-ano"><option value="">Todos</option></select></div>
-      <div><label>Relevante</label><select id="filter-relevante"><option value="">Todos</option><option value="sim">Apenas relevantes</option><option value="nao">Não relevantes</option></select></div>
-    </div>
-    <div class="form-row">
-      <div><label>Sit. Legislativa</label><select id="filter-leg"><option value="">Todas</option><option value="tramitacao_inicial">Tramitação inicial</option><option value="aguardando_aprovacao">Aguardando aprovação</option><option value="aprovado">Aprovado</option><option value="aguardando_resposta">Aguardando resposta</option><option value="respondido">Respondido</option><option value="retirado">Retirado</option><option value="pendente">Não enriquecido</option></select></div>
-      <div><label>Status interno</label><select id="filter-status-int"></select></div>
-      <div><label>Etapa</label><select id="filter-etapa"></select></div>
-      <div><label>Temática</label><select id="filter-tematica"></select></div>
-      <div><label>Prazo etapa</label><select id="filter-prazo"><option value="">Todos</option><option value="vencido">Vencido</option><option value="hoje">Hoje</option><option value="proximo">Próximos 7 dias</option></select></div>
-    </div>
-    <div class="form-row">
-      <div><label>Aprovado de</label><input type="date" id="filter-aprov-de"></div>
-      <div><label>Aprovado até</label><input type="date" id="filter-aprov-ate"></div>
-      <div><button class="btn" id="btn-clear-filters" style="margin-top:18px">Limpar filtros</button></div>
-    </div>
-    <div class="toolbar">
-      <div class="contador-destaque" id="contador-destaque"><span class="num" id="contador-num">—</span> <span id="contador-label">requerimentos</span></div>
+    <div class="toolbar" style="margin-bottom:0">
+      <button class="btn btn-sm" id="btn-toggle-filtros" type="button">▼ Filtros</button>
+      <div class="contador-destaque" id="contador-destaque" style="margin-left:8px"><span class="num" id="contador-num">—</span> <span id="contador-label">requerimentos</span></div>
       <div class="filtros-ativos" id="filtros-ativos"></div>
       <span class="spacer"></span>
-      <button class="btn" id="btn-export-csv">Exportar CSV</button>
-      <button class="btn" id="btn-export-xlsx">Exportar XLSX</button>
+      <button class="btn btn-sm" id="btn-export-csv">Exportar CSV</button>
+      <button class="btn btn-sm" id="btn-export-xlsx">Exportar XLSX</button>
+    </div>
+    <div id="filtros-container" style="margin-top:12px">
+      <div class="form-row">
+        <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto (apelido), resumo, comentários"></div>
+        <div><label>Casa</label><select id="filter-casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option></select></div>
+        <div><label>Sigla</label><select id="filter-sigla"><option value="">Todas</option><option value="RIC">RIC</option><option value="RQS">RQS</option><option value="REQ">REQ</option></select></div>
+        <div><label>Ano</label><select id="filter-ano"><option value="">Todos</option></select></div>
+        <div><label>Relevante</label><select id="filter-relevante"><option value="">Todos</option><option value="sim">Apenas relevantes</option><option value="nao">Não relevantes</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Sit. Legislativa</label><select id="filter-leg"><option value="">Todas</option><option value="tramitacao_inicial">Tramitação inicial</option><option value="aguardando_aprovacao">Aguardando aprovação</option><option value="aprovado">Aprovado</option><option value="aguardando_resposta">Aguardando resposta</option><option value="respondido">Respondido</option><option value="retirado">Retirado</option><option value="pendente">Não enriquecido</option></select></div>
+        <div><label>Status interno</label><select id="filter-status-int"></select></div>
+        <div><label>Etapa</label><select id="filter-etapa"></select></div>
+        <div><label>Temática</label><select id="filter-tematica"></select></div>
+        <div><label>Prazo etapa</label><select id="filter-prazo"><option value="">Todos</option><option value="vencido">Vencido</option><option value="hoje">Hoje</option><option value="proximo">Próximos 7 dias</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Aprovado de</label><input type="date" id="filter-aprov-de"></div>
+        <div><label>Aprovado até</label><input type="date" id="filter-aprov-ate"></div>
+        <div><button class="btn" id="btn-clear-filters" style="margin-top:18px">Limpar filtros</button></div>
+      </div>
     </div>
   </div>
   <div class="card" style="padding:0">
@@ -516,11 +524,12 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <th class="sortable" data-sort="identificacao">Identificação</th>
           <th class="sortable" data-sort="dataApresentacao">Apresentação</th>
           <th>Autor</th>
-          <th>Apelido / Ementa</th>
+          <th>Objeto (apelido) / Ementa</th>
           <th>Temática</th>
           <th class="sortable" data-sort="situacaoLegislativa">Sit. Legislativa</th>
           <th>Etapa</th>
-          <th>Prazo</th>
+          <th>Prazo etapa</th>
+          <th>Prazo CN</th>
           <th>Ações</th>
         </tr></thead>
         <tbody id="tbl-lista-body"></tbody>
@@ -568,7 +577,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <h2>Sincronização incremental</h2>
       <p class="text-small text-muted" style="margin-bottom:12px">Busca apenas o que foi atualizado nos últimos N dias.</p>
       <div class="form-row">
-        <div><label>Últimos N dias</label><input type="number" id="sync-dias" value="3" min="1" max="60"></div>
+        <div><label>Últimos N dias <span class="text-small text-muted">(máx 180)</span></label><input type="number" id="sync-dias" value="3" min="1" max="180"></div>
         <div class="actions"><button class="btn" id="btn-sync-incremental">Sincronizar incremental</button></div>
       </div>
     </div>
@@ -704,7 +713,7 @@ const URL_SENADO = "https://legis.senado.leg.br/dadosabertos";
 const DB_NAME = "monitor-ric";
 const DB_NAME_LEGADO = "monitor-sic";
 const DB_VERSION = 1;
-const SCHEMA_VERSAO_DADOS = 3;
+const SCHEMA_VERSAO_DADOS = 4;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
 
@@ -725,6 +734,9 @@ const MAP_SIT_CAMARA = {
   "requerimento aprovado": "aprovado",
   "aguardando envio ao executivo": "aprovado",
   "aguardando envio ao poder executivo": "aprovado",
+  "ag. envio ao executivo": "aprovado",
+  "aguardando envio ao executivo": "aprovado",
+  "aguardando envio ao poder executivo": "aprovado",
   // Aguardando resposta
   "aguardando resposta": "aguardando_resposta",
   // Respondido
@@ -742,27 +754,59 @@ const MAP_SIT_CAMARA = {
 const REGRA_DESPACHO_APROVADO_CAMARA = /aprova[cç][ãa]o\s+pelo\s+presidente|aguardando\s+envio\s+ao\s+(poder\s+)?executivo|ag\.?\s*envio\s+ao\s+executivo/i;
 
 // Senado: tramitacao.situacao.descricao_situacao
+// MAP_SIT_SENADO: mapeamento de descricaoSituacao (campo estruturado) para situação INFOCO
+// IMPORTANTE: a detecção principal agora é textual (ver detectarSituacaoSenado).
+// Este mapa serve como fallback para eventos com descricaoSituacao preenchido.
 const MAP_SIT_SENADO = {
-  "retirada pelo autor": "retirado",
-  "retirado": "retirado",
+  // Tramitação inicial
   "aguardando despacho": "tramitacao_inicial",
   "aguardando designacao do relator": "tramitacao_inicial",
+  "aguardando designacao de relator": "tramitacao_inicial",
+  "autuado": "tramitacao_inicial",
   "aprovada a apresentacao perante o plenario do senado": "tramitacao_inicial",
   "aguardando providencias": "tramitacao_inicial",
   "aprovado parecer na comissao": "tramitacao_inicial",
   "materia despachada": "tramitacao_inicial",
   "materia com a relatoria": "tramitacao_inicial",
   "materia em tramitacao": "tramitacao_inicial",
-  "deferida": "tramitacao_inicial",
   "incluida na pauta da reuniao": "tramitacao_inicial",
   "pronto para deliberacao do plenario": "tramitacao_inicial",
   "pronta para a pauta na comissao": "tramitacao_inicial",
   "audiencia publica realizada": "tramitacao_inicial",
+  "requerimento encaminhado a secretaria geral da mesa para deliberacao": "tramitacao_inicial",
+  "distribuido": "tramitacao_inicial",
+  "encaminhado a publicacao": "tramitacao_inicial",
+  "o requerimento vai a publicacao": "tramitacao_inicial",
+  // Aguardando aprovação da Comissão Diretora
   "aguardando decisao da mesa": "aguardando_aprovacao",
+  // Aprovado — somente quando o campo estruturado já diz isso
+  "deferida": "aprovado",
+  // Aguardando resposta
   "aguardando informacoes": "aguardando_resposta",
+  "aguardando resposta": "aguardando_resposta",
+  // Respondido / encerrado
   "informacoes recebidas": "respondido",
-  "providencia concluida": "respondido"
+  "providencia concluida": "respondido",
+  "a materia vai ao arquivo": "respondido",
+  "encaminhado ao arquivo": "respondido",
+  // Retirado
+  "retirada pelo autor": "retirado",
+  "retirado": "retirado",
+  "retirado pelo autor": "retirado"
 };
+
+// Detecção textual primária para o Senado (sobre TextoTramitacao / DescricaoTramitacao)
+// Casos reais validados: REQ 16/2023-CCDD, RQS 1024/2023, REQ 001/2024
+const REGEX_APROV_SENADO = /comiss[ãa]o\s+diretora\s+do\s+senado\s+federal\s+deferiu|consignada\s+a\s+aprovac[ãa]o|comiss[ãa]o\s+diretora.{0,80}aprovou.{0,80}pedido\s+de\s+informa/i;
+const REGEX_RESP_SENADO = /contendo\s+informa[cç][õo]es\s+ao\s+requerente|juntado\s+o\s+of[íi]cio.{0,160}informa[cç][õo]es|resposta\s+ao\s+R[QE][QS]/i;
+const REGEX_ARQ_SENADO = /a\s+mat[eé]ria\s+vai\s+ao\s+arquivo|encaminhad[ao]\s+ao\s+arquivo/i;
+const REGEX_RETIRADO_SENADO = /retirad[ao]\s+pelo\s+autor|retirad[ao]\s+da\s+pauta/i;
+
+// Extração de prazo final (sugerido) das tramitações
+// Câmara: "Prazo para Resposta Externas (de DD/MM/YYYY a DD/MM/YYYY)" — captura a data fim
+// Senado: "Prazo para resposta: DD/MM/YYYY"
+const REGEX_PRAZO_CAMARA = /prazo\s+para\s+resposta\s+externas?\s*\(de\s+\d{1,2}\/\d{1,2}\/\d{2,4}\s+a\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\)/i;
+const REGEX_PRAZO_SENADO = /prazo\s+para\s+resposta:\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/i;
 
 // Detectar aprovação adicional via codTipoTramitacao=240 (Câmara)
 const COD_APROVACAO_CAMARA = "240";
@@ -871,6 +915,15 @@ async function migrarDados() {
     if (m.tipoResposta === undefined) { m.tipoResposta = ""; ch = true; }
     if (m.nupRecebimento === undefined) { m.nupRecebimento = m.nup || ""; ch = true; }
     if (m.nupResposta === undefined) { m.nupResposta = ""; ch = true; }
+    // v3 → v4: copiar objeto → apelido se apelido vazio; depois zerar objeto
+    if (m.objeto && m.objeto.trim() && (!m.apelido || !m.apelido.trim())) {
+      m.apelido = m.objeto.trim();
+      m.objeto = "";
+      ch = true;
+    } else if (m.objeto !== undefined && m.objeto !== "") {
+      m.objeto = "";
+      ch = true;
+    }
     if (ch) await DB.put("marcacoes", m);
   }
 
@@ -890,6 +943,7 @@ async function migrarDados() {
     if (p.urlInteiroTeor === undefined) { p.urlInteiroTeor = ""; ch = true; }
     if (p.dataEnriquecimento === undefined) { p.dataEnriquecimento = ""; ch = true; }
     if (p.ultimaMovimentacaoData === undefined) { p.ultimaMovimentacaoData = ""; ch = true; }
+    if (p.prazoFinalCNSugerido === undefined) { p.prazoFinalCNSugerido = ""; ch = true; }
     if (ch) await DB.put("proposicoes", p);
   }
 
@@ -930,18 +984,8 @@ async function smartFetch(url) {
 }
 
 // ===== GEMINI API =====
-// Baixa o PDF e converte para base64 (usando o proxy CORS se configurado)
-async function fetchPdfAsBase64(url, onProgress) {
-  const proxy = (await getConfig("proxy", "")) || "";
-  const target = proxy ? proxy.replace("{url}", encodeURIComponent(url)) : url;
-  if (onProgress) onProgress("baixando PDF...");
-  const res = await fetch(target);
-  if (!res.ok) throw new Error(`Falha ao baixar PDF: HTTP ${res.status}`);
-  const buf = await res.arrayBuffer();
-  // Limite de ~20MB para inline (limite Gemini é ~20MB de payload)
-  if (buf.byteLength > 18 * 1024 * 1024) throw new Error(`PDF muito grande (${(buf.byteLength / 1024 / 1024).toFixed(1)} MB). Limite ~18 MB.`);
-  if (onProgress) onProgress(`convertendo (${(buf.byteLength / 1024).toFixed(0)} KB)...`);
-  // Conversão eficiente para base64
+// Conversão eficiente de ArrayBuffer para base64
+function arrayBufferToBase64(buf) {
   const bytes = new Uint8Array(buf);
   let binary = "";
   const chunkSize = 0x8000;
@@ -951,17 +995,48 @@ async function fetchPdfAsBase64(url, onProgress) {
   return btoa(binary);
 }
 
-async function analisarPdfComGemini(urlInteiroTeor, apiKey, model, onProgress) {
-  const pdfBase64 = await fetchPdfAsBase64(urlInteiroTeor, onProgress);
-  if (onProgress) onProgress("enviando para Gemini...");
-  const prompt = `Você está analisando um Requerimento de Informação (RIC) do Congresso Nacional do Brasil dirigido à Casa Civil da Presidência da República. Leia o documento em anexo e responda SOMENTE com um JSON válido no formato exato:
-{"objeto": "...", "resumo": "..."}
+// Tenta baixar o PDF via fetch direto, depois via proxy se configurado.
+// Lança erro com flag isCorsError=true se ambos falharem por CORS/rede.
+async function fetchPdfComFallback(url, onProgress) {
+  // Tentativa 1: fetch direto
+  try {
+    if (onProgress) onProgress("baixando PDF (tentativa direta)...");
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return await r.arrayBuffer();
+  } catch (e1) {
+    // Tentativa 2: via proxy CORS (se configurado)
+    const proxy = (await getConfig("proxy", "")) || "";
+    if (proxy) {
+      try {
+        if (onProgress) onProgress("baixando PDF (via proxy)...");
+        const target = proxy.replace("{url}", encodeURIComponent(url));
+        const r2 = await fetch(target);
+        if (!r2.ok) throw new Error(`HTTP ${r2.status} via proxy`);
+        return await r2.arrayBuffer();
+      } catch (e2) {
+        const err = new Error(`CORS: download bloqueado (${e2.message})`);
+        err.isCorsError = true;
+        throw err;
+      }
+    }
+    const err = new Error(`CORS: download bloqueado — ${e1.message}`);
+    err.isCorsError = true;
+    throw err;
+  }
+}
 
-Onde:
-- "objeto": frase curta (máximo 15 palavras) identificando o tema central do pedido. Não inclua "Requer informações sobre" — vá direto ao tema. Ex.: "Agendas do Presidente da República com o STF", "Custos das obras do Novo PAC", "Viagens internacionais oficiais em 2025".
-- "resumo": parágrafo de até 5 linhas descrevendo objetivamente os quesitos formulados (sem mencionar nome do parlamentar requerente, sem citações literais longas).
+// Envia PDF (em base64) para Gemini e retorna { apelido, resumo, palavrasChave }
+async function _enviarPdfBase64AoGemini(pdfBase64, apiKey, model) {
+  const prompt = `Você está analisando um Requerimento de Informação (RIC) do Congresso Nacional do Brasil. Leia o documento em anexo e responda SOMENTE com um JSON válido no formato:
+{"apelido":"...","resumo":"...","palavrasChave":"..."}
 
-Responda APENAS o JSON, sem texto antes ou depois, sem markdown, sem \`\`\`.`;
+Regras obrigatórias:
+- "apelido": frase de ATÉ 150 CARACTERES que sintetize o OBJETO do requerimento. NÃO mencione o destinatário (ministério, órgão, ministro ou cargo). Foco exclusivo na demanda. Exemplos: "Custos das obras do Novo PAC no Nordeste", "Agendas do Presidente com o Supremo Tribunal Federal", "Viagens internacionais oficiais em 2025 e despesas".
+- "resumo": texto de ATÉ 700 CARACTERES. Descreva os quesitos, questionamentos e itens pedidos SEM mencionar o destinatário. Ao final, inclua síntese das alegações do autor que justificariam o requerimento (máximo 20% do total do resumo).
+- "palavrasChave": 3 a 6 termos separados por vírgula, representando os temas centrais do requerimento.
+
+Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
 
   const payload = {
     contents: [{
@@ -970,11 +1045,7 @@ Responda APENAS o JSON, sem texto antes ou depois, sem markdown, sem \`\`\`.`;
         { text: prompt }
       ]
     }],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 1024,
-      responseMimeType: "application/json"
-    }
+    generationConfig: { temperature: 0.2, maxOutputTokens: 1024, responseMimeType: "application/json" }
   };
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -992,17 +1063,29 @@ Responda APENAS o JSON, sem texto antes ou depois, sem markdown, sem \`\`\`.`;
   const data = await res.json();
   const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!txt) throw new Error("Resposta Gemini vazia");
-  // Limpa eventuais cercas de markdown
   let limpo = txt.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/g, "").trim();
   let parsed;
   try { parsed = JSON.parse(limpo); }
   catch (e) {
-    // Tenta extrair primeiro objeto JSON da string
     const m = limpo.match(/\{[\s\S]*\}/);
     if (m) { parsed = JSON.parse(m[0]); }
     else throw new Error(`Resposta Gemini não é JSON válido: ${limpo.substring(0, 100)}`);
   }
-  return { objeto: parsed.objeto || "", resumo: parsed.resumo || "" };
+  return {
+    apelido: parsed.apelido || parsed.objeto || "",
+    resumo: parsed.resumo || "",
+    palavrasChave: parsed.palavrasChave || parsed["palavras-chave"] || ""
+  };
+}
+
+// Pipeline completo: baixa PDF, converte e envia ao Gemini
+async function analisarPdfComGemini(urlInteiroTeor, apiKey, model, onProgress) {
+  const buf = await fetchPdfComFallback(urlInteiroTeor, onProgress);
+  if (buf.byteLength > 18 * 1024 * 1024) throw new Error(`PDF muito grande (${(buf.byteLength/1024/1024).toFixed(1)} MB). Limite ~18 MB.`);
+  if (onProgress) onProgress(`convertendo (${(buf.byteLength/1024).toFixed(0)} KB)...`);
+  const pdfBase64 = arrayBufferToBase64(buf);
+  if (onProgress) onProgress("enviando para Gemini...");
+  return await _enviarPdfBase64AoGemini(pdfBase64, apiKey, model);
 }
 
 async function getFiltroRegex() {
@@ -1010,6 +1093,104 @@ async function getFiltroRegex() {
   try { return new RegExp(t, "i"); } catch (e) { return new RegExp(CONFIG_PADRAO.regex, "i"); }
 }
 function ementaCasaCivil(t, regex) { return regex.test(normalizar(t || "")); }
+
+// ===== TF-IDF para busca de RICs análogos =====
+const STOPWORDS_PT = new Set([
+  "a","o","as","os","um","uma","uns","umas","de","da","do","das","dos",
+  "em","no","na","nos","nas","por","para","pela","pelo","pelas","pelos",
+  "com","sem","sob","sobre","ate","ate","entre","contra","desde",
+  "e","ou","mas","que","se","como","quando","onde","porque","pois",
+  "ja","nao","sim","tambem","mesmo","muito","muita","muitos","muitas",
+  "todo","toda","todos","todas","cada","alguns","algumas","outro","outra","outros","outras",
+  "este","esta","estes","estas","esse","essa","esses","essas","aquele","aquela","aqueles","aquelas",
+  "isso","isto","aquilo","seu","sua","seus","suas","meu","minha","meus","minhas",
+  "nosso","nossa","nossos","nossas","ele","ela","eles","elas",
+  "ser","ter","haver","estar","fazer","ir","vir","dar","ver","saber","poder","dever",
+  "informacoes","informacao","requerimento","requerimentos","requeiro","requeiros",
+  "ric","rqs","req","casa","civil","ministerio","ministro","ministra","sr","sra","exmo","exma",
+  "presidencia","republica","federativa","brasil","brasileira","governo","federal","executivo",
+  "presidente","gabinete","secretaria","secretaria-executiva","secretario","secretaria",
+  "art","artigo","lei","decreto","portaria","resolucao","normativo","norma",
+  "anos","ano","mes","mes","mesmo","periodo","data","desde","ate"
+]);
+
+function tokenizarTfidf(texto) {
+  const norm = normalizar(texto || "");
+  const tokens = norm.split(/[^a-z0-9]+/).filter(t =>
+    t.length >= 3 && t.length <= 30 && !STOPWORDS_PT.has(t) && !/^\d+$/.test(t)
+  );
+  return tokens;
+}
+
+function construirDocumento(p, m) {
+  const partes = [
+    m.palavrasChave || "",
+    m.apelido || "",
+    p.ementa || "",
+    p.keywords || "",
+    m.resumo || ""
+  ];
+  return partes.filter(Boolean).join(" ");
+}
+
+// Calcula similaridade do RIC corrente com todos os outros usando TF-IDF + cosseno
+function buscarRicsAnalogos(idCorrente, todosRics, marcMap, opts = {}) {
+  const { minScore = 0.15, top = 10 } = opts;
+
+  // Documentos de todos os RICs (ID -> tokens)
+  const docs = new Map();
+  for (const p of todosRics) {
+    const m = marcMap.get(p.id) || {};
+    const tokens = tokenizarTfidf(construirDocumento(p, m));
+    if (tokens.length > 0) docs.set(p.id, tokens);
+  }
+
+  if (!docs.has(idCorrente)) return [];
+  const docCorrente = docs.get(idCorrente);
+  if (docCorrente.length === 0) return [];
+
+  // df: número de documentos que contêm cada termo
+  const df = new Map();
+  for (const tokens of docs.values()) {
+    const unique = new Set(tokens);
+    for (const t of unique) df.set(t, (df.get(t) || 0) + 1);
+  }
+  const N = docs.size;
+
+  // Vetor TF-IDF de um documento
+  function vetor(tokens) {
+    const tf = new Map();
+    for (const t of tokens) tf.set(t, (tf.get(t) || 0) + 1);
+    const v = new Map();
+    for (const [t, c] of tf) {
+      const idf = Math.log(N / (df.get(t) || 1));
+      v.set(t, c * idf);
+    }
+    return v;
+  }
+  function norma(v) { let s = 0; for (const x of v.values()) s += x * x; return Math.sqrt(s); }
+  function cos(a, b) {
+    let dot = 0;
+    for (const [t, va] of a) {
+      const vb = b.get(t);
+      if (vb) dot += va * vb;
+    }
+    const na = norma(a), nb = norma(b);
+    if (na === 0 || nb === 0) return 0;
+    return dot / (na * nb);
+  }
+
+  const vCorrente = vetor(docCorrente);
+  const resultados = [];
+  for (const [id, tokens] of docs) {
+    if (id === idCorrente) continue;
+    const v = vetor(tokens);
+    const score = cos(vCorrente, v);
+    if (score >= minScore) resultados.push({ id, score });
+  }
+  resultados.sort((a, b) => b.score - a.score);
+  return resultados.slice(0, top);
+}
 
 async function registrarSituacaoNaoMapeada(situacao, origem) {
   if (!situacao) return;
@@ -1107,7 +1288,7 @@ async function camaraBuscarTramitacoes(prop) {
 
 async function detectarSituacaoCamara(prop) {
   const hist = prop.historico || [];
-  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "" };
+  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "", prazoFinalCNSugerido: "" };
   if (hist.length === 0) return det;
   // Ordenar ascendente por data
   hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
@@ -1147,6 +1328,19 @@ async function detectarSituacaoCamara(prop) {
     else det.situacao = "tramitacao_inicial";
   } else {
     det.situacao = "tramitacao_inicial";
+  }
+  // Extração de prazo Câmara: "Prazo para Resposta Externas (de DD/MM/YYYY a DD/MM/YYYY)"
+  for (const t of hist) {
+    if (det.prazoFinalCNSugerido) break;
+    const txt = (t.descricao || "") + " " + (t.despacho || "");
+    const pm = txt.match(REGEX_PRAZO_CAMARA);
+    if (pm) {
+      const partes = pm[1].split("/");
+      if (partes.length === 3) {
+        const ano = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+        det.prazoFinalCNSugerido = `${ano}-${partes[1].padStart(2,"0")}-${partes[0].padStart(2,"0")}`;
+      }
+    }
   }
   return det;
 }
@@ -1249,47 +1443,75 @@ async function senadoBuscarMovimentacoes(prop) {
 
 async function detectarSituacaoSenado(prop) {
   const hist = prop.historico || [];
-  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "" };
+  const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "", prazoFinalCNSugerido: "" };
   if (hist.length === 0) return det;
   hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
   det.ultimaMovimentacaoData = (hist[hist.length - 1].dataHora || hist[hist.length - 1].data || "").substring(0, 10);
 
-  // Detecta primeiro evento com situacao mapeada como "aprovado"
-  let aprovEv = null;
+  let aprovEv = null, respEv = null, arqEv = null, retiradoEv = null;
+
   for (const e of hist) {
+    const texto = (e.despacho || "") + " " + (e.descricao || "");
+    const textoN = normalizar(texto);
     const sn = normalizar(e.situacao || "");
-    if (sn && MAP_SIT_SENADO[sn] === "aprovado") { aprovEv = e; break; }
-    // Fallback textual: matérias aprovadas explicitamente
-    if (!aprovEv) {
-      const t = normalizar(e.despacho || e.descricao || "");
-      if (/\b(deferid[oa]|consignada\s+a\s+aprovac[ãa]o|comiss[ãa]o\s+diretora\s+aprov(ou|ado))\b/i.test(t)) {
-        aprovEv = e; break;
+
+    // Respondido (texto)
+    if (!respEv && REGEX_RESP_SENADO.test(texto)) respEv = e;
+    // Arquivado/encerrado (texto)
+    if (!arqEv && REGEX_ARQ_SENADO.test(textoN)) arqEv = e;
+    // Aprovação textual (Comissão Diretora)
+    if (!aprovEv && REGEX_APROV_SENADO.test(texto)) aprovEv = e;
+    // Aprovação via campo estruturado (fallback)
+    if (!aprovEv && sn && MAP_SIT_SENADO[sn] === "aprovado") aprovEv = e;
+    // Retirada
+    if (!retiradoEv && (REGEX_RETIRADO_SENADO.test(textoN) || MAP_SIT_SENADO[sn] === "retirado")) retiradoEv = e;
+
+    // Extrair prazo do texto
+    if (!det.prazoFinalCNSugerido) {
+      const pm = texto.match(REGEX_PRAZO_SENADO);
+      if (pm) {
+        const partes = pm[1].split("/");
+        if (partes.length === 3) {
+          const ano = partes[2].length === 2 ? "20" + partes[2] : partes[2];
+          det.prazoFinalCNSugerido = `${ano}-${partes[1].padStart(2,"0")}-${partes[0].padStart(2,"0")}`;
+        }
       }
     }
   }
+
+  // Captura despacho de aprovação
   if (aprovEv) {
     det.dataAprovacao = aprovEv.data;
-    det.despachoAprovacao = (aprovEv.despacho || aprovEv.descricao || aprovEv.situacao).substring(0, 500);
+    det.despachoAprovacao = (aprovEv.despacho || aprovEv.descricao || aprovEv.situacao || "").substring(0, 500);
   }
 
-  // Última situação encontrada na ordem do histórico
-  const ultimaComSituacao = [...hist].reverse().find(e => e.situacao);
-  if (ultimaComSituacao) {
-    const sn = normalizar(ultimaComSituacao.situacao);
-    if (MAP_SIT_SENADO[sn]) {
-      det.situacao = MAP_SIT_SENADO[sn];
-    } else {
-      registrarSituacaoNaoMapeada(ultimaComSituacao.situacao, "senado");
-      // Fallback heurístico
-      if (/arquiv|retirad|rejeit|prejudic/.test(sn)) det.situacao = "retirado";
-      else if (/aguard.+resp|aguardando\s+inform/.test(sn)) det.situacao = "aguardando_resposta";
-      else if (/aprov/.test(sn)) det.situacao = "aprovado";
-      else det.situacao = "tramitacao_inicial";
-    }
+  // Determinação por precedência: respondido > aprovado+prazo > aprovado > retirado > fallback
+  if (respEv || arqEv) {
+    det.situacao = "respondido";
+  } else if (aprovEv && det.prazoFinalCNSugerido) {
+    det.situacao = "aguardando_resposta";
   } else if (aprovEv) {
     det.situacao = "aprovado";
+  } else if (retiradoEv) {
+    det.situacao = "retirado";
   } else {
-    det.situacao = "tramitacao_inicial";
+    // Fallback 1: último evento com situacao no dicionário
+    const ultimaComMapa = [...hist].reverse().find(e => e.situacao && MAP_SIT_SENADO[normalizar(e.situacao)]);
+    if (ultimaComMapa) {
+      det.situacao = MAP_SIT_SENADO[normalizar(ultimaComMapa.situacao)];
+    } else {
+      // Fallback 2: heurística textual sobre último evento com situacao
+      const ult = [...hist].reverse().find(e => e.situacao);
+      if (ult) {
+        registrarSituacaoNaoMapeada(ult.situacao, "senado");
+        const t = normalizar(ult.situacao);
+        if (/arquiv|retirad|rejeit|prejudic/.test(t)) det.situacao = "retirado";
+        else if (/aprov/.test(t)) det.situacao = "aprovado";
+        else det.situacao = "tramitacao_inicial";
+      } else {
+        det.situacao = "tramitacao_inicial";
+      }
+    }
   }
   return det;
 }
@@ -1314,6 +1536,7 @@ async function enriquecerProposicao(prop, opts = {}) {
       prop.dataAprovacao = det.dataAprovacao;
       prop.despachoAprovacao = det.despachoAprovacao;
       prop.ultimaMovimentacaoData = det.ultimaMovimentacaoData;
+      prop.prazoFinalCNSugerido = det.prazoFinalCNSugerido || "";
     } else {
       if (!prop.urlInteiroTeor) { await senadoBuscarInteiroTeor(prop); await sleep(THROTTLE_MS); }
       try { prop.historico = await senadoBuscarMovimentacoes(prop); }
@@ -1323,6 +1546,7 @@ async function enriquecerProposicao(prop, opts = {}) {
       prop.dataAprovacao = det.dataAprovacao;
       prop.despachoAprovacao = det.despachoAprovacao;
       prop.ultimaMovimentacaoData = det.ultimaMovimentacaoData;
+      prop.prazoFinalCNSugerido = det.prazoFinalCNSugerido || "";
     }
     prop.dataEnriquecimento = new Date().toISOString();
   } catch (e) {
@@ -1557,7 +1781,7 @@ let listaEstado = {
   marcacoes: new Map(),
   unidades: UNIDADES_PADRAO.slice()
 };
-let painelEstado = { aprovDias: 7 };
+let painelEstado = { aprovDias: 7, aprovAcompPeriodo: "7" };
 
 async function carregarLista() {
   listaEstado.itens = await DB.getAll("proposicoes");
@@ -1572,7 +1796,7 @@ function getMarcacao(id) {
   return listaEstado.marcacoes.get(id) || {
     proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
     tematica: "", palavrasChave: "", unidadesConsultadas: [],
-    objeto: "", resumo: "", comentarios: "",
+    resumo: "", comentarios: "",
     etapa: "", prazoEtapa: "",
     nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
     prazoFinalCN: "", dataResposta: "", tipoResposta: ""
@@ -1608,12 +1832,11 @@ function ehAguardandoResposta(p, m) {
   return p.situacaoLegislativa === "aguardando_resposta";
 }
 
-// Calcula prazo final CN automaticamente quando há dataRecebimentoSEI
-function calcPrazoFinalCN(m) {
-  if (m.dataRecebimentoSEI && (!m.prazoFinalCN || m.prazoFinalCN === "")) {
-    return addDiasIso(m.dataRecebimentoSEI, 30);
-  }
-  return m.prazoFinalCN || "";
+// Prazo final CN: prefere o que o usuário já preencheu; senão usa sugestão extraída do histórico
+function calcPrazoFinalCN(m, prop) {
+  if (m.prazoFinalCN) return m.prazoFinalCN;
+  if (prop && prop.prazoFinalCNSugerido) return prop.prazoFinalCNSugerido;
+  return "";
 }
 
 // ===== POPULAR SELECTS =====
@@ -1690,7 +1913,7 @@ function aplicarFiltros() {
     if (busca) {
       const blob = normalizar([
         p.identificacao, p.ementa, p.autor, p.numero,
-        m.objeto, m.resumo, m.comentarios, m.apelido, m.palavrasChave,
+        m.apelido, m.resumo, m.comentarios, m.palavrasChave,
         m.nupRecebimento, m.nupResposta
       ].join(" "));
       if (!blob.includes(busca)) return false;
@@ -1719,11 +1942,17 @@ function renderBadgeLegislativo(p) {
   return html;
 }
 
-function renderBadgePrazo(m) {
-  if (!m.prazoEtapa) return "";
+function renderBadgePrazo(m, tipo) {
+  // tipo: "etapa" (default) lê m.prazoEtapa, "cn" lê m.prazoFinalCN ou m.prazoCN
+  // Se m for string, trata como data direta
+  let data;
+  if (typeof m === "string") data = m;
+  else if (tipo === "cn") data = m.prazoFinalCN || m.prazoCN || "";
+  else data = m.prazoEtapa || "";
+  if (!data) return "";
   const hoje = isoHoje();
-  const cls = m.prazoEtapa < hoje ? "badge-vencido" : (m.prazoEtapa === hoje ? "badge-hoje" : "");
-  return `<span class="badge ${cls}">${formatarData(m.prazoEtapa)}</span>`;
+  const cls = data < hoje ? "badge-vencido" : (data === hoje ? "badge-hoje" : "badge-prazo-ok");
+  return `<span class="badge ${cls}">${formatarData(data)}</span>`;
 }
 
 function renderTabela() {
@@ -1734,7 +1963,7 @@ function renderTabela() {
   document.querySelectorAll("th[data-sort]").forEach(th => th.classList.toggle("sorted", th.dataset.sort === listaEstado.ordemColuna));
 
   if (listaEstado.filtrados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="11" class="empty">Nenhum requerimento corresponde aos filtros.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="empty">Nenhum requerimento corresponde aos filtros.</td></tr>`;
     document.getElementById("lista-pagination").innerHTML = "";
     return;
   }
@@ -1752,6 +1981,7 @@ function renderTabela() {
     const portal = p.urlPortal
       ? `<a href="${escapeAttr(p.urlPortal)}" target="_blank" rel="noopener" title="Portal oficial" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : "";
     const etapaLabel = (ETAPAS.find(e => e.v === m.etapa) || {}).t || "";
+    const prazoCNValor = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
     return `<tr>
       <td><span class="star ${m.relevante ? "on" : ""}" data-toggle-rel="${p.id}" title="Marcar como relevante">★</span></td>
       <td><span class="badge badge-${p.origem}">${p.origem === "camara" ? "Câmara" : "Senado"}</span></td>
@@ -1762,7 +1992,8 @@ function renderTabela() {
       <td>${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span>` : ""}</td>
       <td>${renderBadgeLegislativo(p)}</td>
       <td class="text-small">${escapeHtml(etapaLabel)}</td>
-      <td>${renderBadgePrazo(m)}</td>
+      <td>${renderBadgePrazo(m, "etapa")}</td>
+      <td>${prazoCNValor ? renderBadgePrazo(prazoCNValor) : ""}</td>
       <td class="col-acoes">${inteiroTeor}${portal}<button class="btn btn-sm" data-detalhe="${p.id}">Detalhes</button></td>
     </tr>`;
   }).join("");
@@ -1874,8 +2105,8 @@ async function abrirDetalhe(id) {
   const p = listaEstado.itens.find(x => x.id === id);
   if (!p) return;
   const m = getMarcacao(id);
-  // Preenche prazoFinalCN automático se aplicável
-  m.prazoFinalCN = calcPrazoFinalCN(m);
+  // Preenche prazoFinalCN com sugestão do histórico se ainda vazio
+  m.prazoFinalCN = calcPrazoFinalCN(m, p);
 
   document.getElementById("modal-titulo").textContent = p.identificacao + (m.apelido ? ` — ${m.apelido}` : "");
 
@@ -1912,13 +2143,12 @@ async function abrirDetalhe(id) {
     <div class="modal-section">
       <h3>Identificação interna</h3>
       <div class="field-row-3">
-        <div><label>Apelido</label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: Agendas STF, PAC viagens..."></div>
+        <div style="grid-column:span 2"><label>Objeto (apelido) <span class="text-small text-muted">(máx. 150 caracteres)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: Custos das obras do Novo PAC; Agendas do Presidente com STF" maxlength="150"></div>
         <div><label>Temática</label><select id="m-tematica">${tematicaOpts}</select></div>
-        <div><label>Relevante</label><label style="display:flex;align-items:center;gap:8px;padding:7px 0"><input type="checkbox" id="m-relevante"${m.relevante ? " checked" : ""} style="width:auto"> Acompanhar prioritariamente</label></div>
       </div>
       <div class="field-row-2">
         <div><label>Palavras-chave</label><input type="text" id="m-palavraschave" value="${escapeAttr(m.palavrasChave || "")}" placeholder="separadas por vírgula"></div>
-        <div><label>Objeto</label><input type="text" id="m-objeto" value="${escapeAttr(m.objeto || "")}" placeholder="ex.: Aquisição de aparelhos de ar-condicionado"></div>
+        <div><label>Relevante</label><label style="display:flex;align-items:center;gap:8px;padding:7px 0"><input type="checkbox" id="m-relevante"${m.relevante ? " checked" : ""} style="width:auto"> Acompanhar prioritariamente</label></div>
       </div>
     </div>
 
@@ -1955,7 +2185,7 @@ async function abrirDetalhe(id) {
       </div>
       <div class="field-row-3">
         <div><label>Data do recebimento (SEI)</label><input type="date" id="m-data-recebimento-sei" value="${escapeAttr(m.dataRecebimentoSEI || "")}"></div>
-        <div><label>Prazo final CN (auto: SEI + 30 dias)</label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
+        <div><label>Prazo final CN <span class="text-small text-muted">(sugerido do histórico — editável)</span></label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
         <div><label>Data da resposta</label><input type="date" id="m-data-resposta" value="${escapeAttr(m.dataResposta || "")}"></div>
       </div>
       <div class="field-row-3">
@@ -1974,14 +2204,84 @@ async function abrirDetalhe(id) {
       <h3>Histórico de tramitação ${p.historico && p.historico.length ? `(${p.historico.length} eventos)` : "(não enriquecido)"}</h3>
       ${renderHistorico(p)}
     </div>
+
+    <div class="modal-section">
+      <h3>🔗 Requerimentos análogos</h3>
+      <p class="text-small text-muted" style="margin-bottom:8px">Busca outros RICs com afinidade temática a este, com base nas palavras-chave e no objeto preenchidos. Quanto melhores as palavras-chave e o objeto, melhor a busca.</p>
+      <button class="btn btn-sm" id="btn-buscar-analogos" ${(!m.palavrasChave && !m.apelido && !p.ementa) ? "disabled title='Preencha palavras-chave ou objeto para habilitar'" : ""}>🔍 Buscar análogos</button>
+      <span class="save-feedback" id="analogos-status" style="margin-left:8px"></span>
+      <div id="analogos-resultado" style="margin-top:12px"></div>
+    </div>
   `;
 
-  // Auto-cálculo do prazo final ao mudar dataRecebimentoSEI
+  // Handler do botão de RICs análogos
+  const btnAnalogos = document.getElementById("btn-buscar-analogos");
+  if (btnAnalogos) {
+    btnAnalogos.addEventListener("click", async () => {
+      const status = document.getElementById("analogos-status");
+      const resultado = document.getElementById("analogos-resultado");
+      status.classList.add("show");
+      status.style.color = "var(--muted)";
+      status.textContent = "Calculando…";
+      btnAnalogos.disabled = true;
+      try {
+        // Carrega base completa para garantir cobertura
+        const todas = await DB.getAll("proposicoes");
+        const marcs = await DB.getAll("marcacoes");
+        const marcMap = new Map(marcs.map(x => [x.proposicaoId, x]));
+        // Garante que a marcação corrente (pode ter sido editada e ainda não salva) seja considerada
+        const marcCorrente = {
+          proposicaoId: id,
+          apelido: document.getElementById("m-apelido")?.value.trim() || m.apelido || "",
+          palavrasChave: document.getElementById("m-palavraschave")?.value.trim() || m.palavrasChave || "",
+          resumo: document.getElementById("m-resumo")?.value.trim() || m.resumo || ""
+        };
+        marcMap.set(id, marcCorrente);
+        const t0 = performance.now();
+        const analogos = buscarRicsAnalogos(id, todas, marcMap, { minScore: 0.15, top: 10 });
+        const dt = (performance.now() - t0).toFixed(0);
+        if (analogos.length === 0) {
+          resultado.innerHTML = `<p class="text-small text-muted"><i>Nenhum RIC análogo encontrado na base atual com base nas palavras-chave e objeto preenchidos.</i></p>`;
+          status.style.color = "var(--muted)";
+          status.textContent = `0 resultados (${dt}ms)`;
+        } else {
+          const todasMap = new Map(todas.map(x => [x.id, x]));
+          const html = `<div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">` +
+            analogos.map(({ id: aid, score }) => {
+              const ap = todasMap.get(aid);
+              const am = marcMap.get(aid) || {};
+              if (!ap) return "";
+              const titulo = am.apelido || (ap.ementa || "").substring(0, 140) + (ap.ementa && ap.ementa.length > 140 ? "…" : "");
+              return `<div class="painel-item" data-analogo-id="${escapeAttr(aid)}" style="cursor:pointer">
+                <div class="painel-item-titulo">
+                  <span class="badge badge-${ap.origem}">${ap.origem === "camara" ? "Câmara" : "Senado"}</span>
+                  <b>${escapeHtml(ap.identificacao)}</b>
+                  <span class="badge badge-tematica" style="margin-left:auto">sim ${(score * 100).toFixed(0)}%</span>
+                </div>
+                <div class="painel-item-ementa">${escapeHtml(titulo)}</div>
+              </div>`;
+            }).join("") + `</div>`;
+          resultado.innerHTML = html;
+          // Bind clicks
+          resultado.querySelectorAll("[data-analogo-id]").forEach(el => {
+            el.onclick = () => abrirDetalhe(el.dataset.analogoId);
+          });
+          status.style.color = "var(--ok)";
+          status.textContent = `${analogos.length} análogo(s) encontrado(s) em ${dt}ms`;
+        }
+      } catch (err) {
+        status.style.color = "var(--err)";
+        status.textContent = `Erro: ${err.message}`;
+        console.error(err);
+      } finally {
+        btnAnalogos.disabled = false;
+      }
+    });
+  }
+
+  // Ao preencher data do recebimento SEI, apenas sugere mudança de status (sem calcular prazo)
   document.getElementById("m-data-recebimento-sei").addEventListener("change", e => {
-    const novo = e.target.value;
-    if (novo) {
-      document.getElementById("m-prazo-final-cn").value = addDiasIso(novo, 30);
-      // Sugestão de status
+    if (e.target.value) {
       const stEl = document.getElementById("m-status-interno");
       if (stEl.value === "novo" || stEl.value === "tramitacao_cn") stEl.value = "andamento_cc";
     }
@@ -2009,21 +2309,81 @@ async function abrirDetalhe(id) {
         status.innerHTML = `<span style="color:var(--err)">Este requerimento não tem inteiro teor disponível.</span>`;
         return;
       }
+      // Confirmação de sobrescrita
+      const elApelido = document.getElementById("m-apelido");
+      const elResumo = document.getElementById("m-resumo");
+      const elPalavras = document.getElementById("m-palavraschave");
+      const camposPreenchidos = [];
+      if (elApelido && elApelido.value.trim()) camposPreenchidos.push("Objeto (apelido)");
+      if (elResumo && elResumo.value.trim()) camposPreenchidos.push("Resumo");
+      if (elPalavras && elPalavras.value.trim()) camposPreenchidos.push("Palavras-chave");
+      if (camposPreenchidos.length > 0) {
+        const ok = confirm(`Os seguintes campos já têm conteúdo e serão substituídos pela análise do Gemini:\n\n• ${camposPreenchidos.join("\n• ")}\n\nContinuar?`);
+        if (!ok) return;
+      }
+
       btnGemini.disabled = true;
       btnGemini.innerHTML = `<span class="spinner"></span> Analisando…`;
       status.innerHTML = `<span class="text-muted">Baixando PDF…</span>`;
       try {
-        const r = await analisarPdfComGemini(p.urlInteiroTeor, apiKey, model, msg => { status.innerHTML = `<span class="text-muted">${escapeHtml(msg)}</span>`; });
-        if (r.objeto) document.getElementById("m-objeto").value = r.objeto;
-        if (r.resumo) document.getElementById("m-resumo").value = r.resumo;
-        status.innerHTML = `<span style="color:var(--ok)">✓ Análise concluída — revise e salve.</span>`;
-      } catch (e) {
-        status.innerHTML = `<span style="color:var(--err)">Falha: ${escapeHtml(e.message)}</span>`;
-      } finally {
+        const r = await analisarPdfComGemini(p.urlInteiroTeor, apiKey, model, msg => {
+          status.innerHTML = `<span class="text-muted">${escapeHtml(msg)}</span>`;
+        });
+        aplicarRespostaGemini(r);
+        status.innerHTML = `<span style="color:var(--ok)">✓ Análise concluída — revise e clique em Salvar análise.</span>`;
         btnGemini.disabled = false;
         btnGemini.innerHTML = `🤖 Analisar com Gemini`;
+      } catch (e) {
+        btnGemini.disabled = false;
+        btnGemini.innerHTML = `🤖 Analisar com Gemini`;
+        if (e.isCorsError) {
+          // CORS bloqueado: mostrar dropzone inline para upload manual
+          status.innerHTML = `<span style="color:var(--warn)">⚠ Download automático bloqueado pelo servidor.</span>`;
+          const dropZone = document.createElement("div");
+          dropZone.style.cssText = "margin-top:10px;padding:16px;border:2px dashed var(--border-strong);border-radius:var(--radius-sm);text-align:center;cursor:pointer;background:var(--surface-2)";
+          dropZone.innerHTML = `<div class="text-small text-muted" style="margin-bottom:8px">Baixe o PDF pelo <a href="${escapeAttr(p.urlInteiroTeor)}" target="_blank" rel="noopener">link do inteiro teor</a> e arraste-o aqui ou clique para selecionar:</div><input type="file" id="gemini-pdf-input" accept="application/pdf" style="display:none"><label for="gemini-pdf-input" class="btn btn-sm" style="cursor:pointer">📂 Selecionar PDF</label>`;
+          status.appendChild(dropZone);
+          dropZone.addEventListener("dragover", ev => { ev.preventDefault(); dropZone.style.borderColor = "var(--accent)"; });
+          dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--border-strong)"; });
+          dropZone.addEventListener("drop", ev => { ev.preventDefault(); const f = ev.dataTransfer.files[0]; if (f) processarPdfFile(f, apiKey, model, status, dropZone); });
+          document.getElementById("gemini-pdf-input").addEventListener("change", ev => { const f = ev.target.files[0]; if (f) processarPdfFile(f, apiKey, model, status, dropZone); });
+        } else {
+          status.innerHTML = `<span style="color:var(--err)">Falha: ${escapeHtml(e.message)}</span>`;
+        }
       }
     });
+  }
+
+  // Função auxiliar para aplicar resposta Gemini aos campos
+  function aplicarRespostaGemini(r) {
+    if (r.apelido) { const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 150); }
+    if (r.resumo) { const el = document.getElementById("m-resumo"); if (el) el.value = r.resumo; }
+    if (r.palavrasChave) { const el = document.getElementById("m-palavraschave"); if (el) el.value = r.palavrasChave; }
+  }
+
+  // Processa PDF carregado manualmente (fallback CORS)
+  async function processarPdfFile(file, apiKey, model, statusEl, dropZone) {
+    if (!file || file.type !== "application/pdf") {
+      statusEl.innerHTML = `<span style="color:var(--err)">Selecione um arquivo PDF válido.</span>`;
+      return;
+    }
+    if (file.size > 18 * 1024 * 1024) {
+      statusEl.innerHTML = `<span style="color:var(--err)">PDF muito grande (${(file.size/1024/1024).toFixed(1)} MB). Limite ~18 MB.</span>`;
+      return;
+    }
+    dropZone.style.display = "none";
+    statusEl.innerHTML = `<span class="text-muted">Lendo PDF (${(file.size/1024).toFixed(0)} KB)…</span>`;
+    try {
+      const buf = await file.arrayBuffer();
+      const pdfBase64 = arrayBufferToBase64(buf);
+      statusEl.innerHTML = `<span class="text-muted">Enviando para Gemini…</span>`;
+      const r = await _enviarPdfBase64AoGemini(pdfBase64, apiKey, model);
+      aplicarRespostaGemini(r);
+      statusEl.innerHTML = `<span style="color:var(--ok)">✓ Análise concluída — revise e clique em Salvar análise.</span>`;
+    } catch (e2) {
+      dropZone.style.display = "";
+      statusEl.innerHTML = `<span style="color:var(--err)">Falha: ${escapeHtml(e2.message)}</span>`;
+    }
   }
 
   document.getElementById("btn-salvar-marcacao").addEventListener("click", async () => {
@@ -2034,7 +2394,6 @@ async function abrirDetalhe(id) {
       tematica: document.getElementById("m-tematica").value,
       relevante: document.getElementById("m-relevante").checked,
       palavrasChave: document.getElementById("m-palavraschave").value.trim(),
-      objeto: document.getElementById("m-objeto").value.trim(),
       resumo: document.getElementById("m-resumo").value.trim(),
       comentarios: document.getElementById("m-comentarios").value.trim(),
       unidadesConsultadas: unidadesMarc,
@@ -2065,7 +2424,7 @@ async function abrirDetalhe(id) {
     const novoM = {
       proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
       tematica: "", palavrasChave: "", unidadesConsultadas: [],
-      objeto: "", resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
+      resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
       nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
       prazoFinalCN: "", dataResposta: "", tipoResposta: "",
       atualizadoEm: new Date().toISOString()
@@ -2120,58 +2479,58 @@ async function renderPainel() {
   document.getElementById("lst-movimentados").innerHTML = renderPainelLista(movimentados, "ultimaMovimentacaoData");
   document.getElementById("lst-aprovados").innerHTML = renderPainelLista(aprovados, "dataAprovacao");
 
-  // Em andamento na CC (status interno = andamento_cc)
-  const andamento = all.filter(p => {
-    const m = marcMap.get(p.id);
-    return m && ehEmAndamentoCC(p, m);
+  // Coluna 1 — Em andamento CC / Aguardando resposta (combinada)
+  // Regra:
+  //   - statusInterno = "andamento_cc"  → conta sempre
+  //   - situacaoLegislativa = "aguardando_resposta" E statusInterno = "novo" (não triado) → conta
+  //   - status interno preenchido com outro valor (respondido/retirado/tramitacao_cn) → NÃO conta
+  const ccAguardando = all.filter(p => {
+    const m = marcMap.get(p.id) || {};
+    if (m.statusInterno === "andamento_cc") return true;
+    if (p.situacaoLegislativa === "aguardando_resposta" && (!m.statusInterno || m.statusInterno === "novo")) return true;
+    return false;
   }).sort((a, b) => {
-    const ma = marcMap.get(a.id), mb = marcMap.get(b.id);
-    return (ma?.prazoEtapa || "9999").localeCompare(mb?.prazoEtapa || "9999");
+    const ma = marcMap.get(a.id) || {}, mb = marcMap.get(b.id) || {};
+    const pa = ma.prazoFinalCN || a.prazoFinalCNSugerido || ma.prazoEtapa || "9999-99-99";
+    const pb = mb.prazoFinalCN || b.prazoFinalCNSugerido || mb.prazoEtapa || "9999-99-99";
+    return pa.localeCompare(pb);
   });
 
-  // Aguardando resposta (situação legislativa OU status interno andamento_cc se não preenchido)
-  const aguardando = all.filter(p => {
-    const m = marcMap.get(p.id) || {};
-    // Se status interno preenchido ≠ novo, ele já é considerado em "andamento" (acima)
-    // Aqui pegamos os que estão aguardando resposta pela API e que NÃO foram triados ainda
-    if (m.statusInterno && m.statusInterno !== "novo") return false;
-    return p.situacaoLegislativa === "aguardando_resposta";
-  }).sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
+  // Coluna 2 — Aprovados com seletor (7d/15d/30d/Todos)
+  let aprovadosAcomp;
+  if (painelEstado.aprovAcompPeriodo === "todos") {
+    // Todos os aprovados que ainda NÃO passaram para "Aguardando resposta" (legislativo)
+    // nem para "Em andamento na Casa Civil" (interno)
+    aprovadosAcomp = all.filter(p => {
+      if (p.situacaoLegislativa !== "aprovado") return false;
+      const m = marcMap.get(p.id) || {};
+      if (m.statusInterno === "andamento_cc") return false;
+      // Se já houve registro SEI mas o status ainda é novo, ainda assim consideramos aprovado bruto
+      return true;
+    });
+  } else {
+    const dias = parseInt(painelEstado.aprovAcompPeriodo, 10) || 7;
+    const limite = addDiasIso(hoje, -dias);
+    aprovadosAcomp = all.filter(p =>
+      p.situacaoLegislativa === "aprovado" &&
+      p.dataAprovacao &&
+      p.dataAprovacao >= limite
+    );
+  }
+  aprovadosAcomp.sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
 
-  // Vencidos: relevantes com prazoEtapa <= hoje e status não final
-  const vencidos = all.filter(p => {
-    const m = marcMap.get(p.id);
-    if (!m || !m.relevante || !m.prazoEtapa) return false;
-    if (["respondido", "retirado"].includes(m.statusInterno)) return false;
-    return m.prazoEtapa <= hoje;
-  }).sort((a, b) => {
-    const ma = marcMap.get(a.id), mb = marcMap.get(b.id);
-    return (ma?.prazoEtapa || "").localeCompare(mb?.prazoEtapa || "");
-  });
+  document.getElementById("cnt-andamento").textContent = ccAguardando.length;
+  document.getElementById("cnt-aprovados-acomp").textContent = aprovadosAcomp.length;
+  document.getElementById("lst-andamento").innerHTML = renderPainelListaAcomp(ccAguardando);
+  document.getElementById("lst-aprovados-acomp").innerHTML = renderPainelListaAcomp(aprovadosAcomp);
 
-  // Aprovados sem registro SEI
-  const aprovSemSEI = all.filter(p => {
-    if (p.situacaoLegislativa !== "aprovado") return false;
-    const m = marcMap.get(p.id) || {};
-    return !m.dataRecebimentoSEI && !m.nupRecebimento;
-  }).sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
-
-  document.getElementById("cnt-andamento").textContent = andamento.length;
-  document.getElementById("cnt-aguardando").textContent = aguardando.length;
-  document.getElementById("cnt-vencidos").textContent = vencidos.length;
-  document.getElementById("cnt-aprov-sem-sei").textContent = aprovSemSEI.length;
-  document.getElementById("lst-andamento").innerHTML = renderPainelListaAcomp(andamento);
-  document.getElementById("lst-aguardando").innerHTML = renderPainelListaAcomp(aguardando);
-  document.getElementById("lst-vencidos").innerHTML = renderPainelListaAcomp(vencidos);
-  document.getElementById("lst-aprov-sem-sei").innerHTML = renderPainelListaAcomp(aprovSemSEI);
-
-  // Barra de alertas no topo
+  // Barra de alertas no topo (sem "vencidos", com combinado e aprovados gerais)
   const novos7d = apresentados.length;
+  const totalAprovados = all.filter(p => p.situacaoLegislativa === "aprovado").length;
   const alertas = [
-    { cls: "critical", num: vencidos.length, label: "vencidos", filtro: { rel: "sim", prazo: "vencido" } },
-    { cls: "warning", num: aguardando.length + andamento.length, label: "aguardando resposta", filtro: { leg: "aguardando_resposta" } },
-    { cls: "purple-pill", num: aprovSemSEI.length, label: "aprovados sem registro SEI", filtro: { leg: "aprovado" } },
-    { cls: "info", num: novos7d, label: "novos (7 dias)", filtro: {} }
+    { cls: "warning", num: ccAguardando.length, label: "em andamento / aguardando resposta", filtro: { leg: "aguardando_resposta" } },
+    { cls: "purple-pill", num: totalAprovados, label: "aprovados", filtro: { leg: "aprovado" } },
+    { cls: "info", num: novos7d, label: "novos (últimos 7 dias)", filtro: {} }
   ];
   document.getElementById("alertas-bar").innerHTML = alertas.map(a => `
     <div class="alerta-pill ${a.cls} ${a.num === 0 ? 'zero' : ''}" data-alerta='${escapeAttr(JSON.stringify(a.filtro))}'>
@@ -2179,12 +2538,8 @@ async function renderPainel() {
     </div>
   `).join("");
 
-  // Bind clicks no painel + alertas
-  document.querySelectorAll("[data-painel-id]").forEach(el => el.addEventListener("click", () => abrirDetalhe(el.dataset.painelId)));
-  document.querySelectorAll(".alerta-pill[data-alerta]").forEach(el => el.addEventListener("click", () => {
-    const f = JSON.parse(el.dataset.alerta);
-    aplicarFiltrosViaPaineis(f);
-  }));
+  // Bind clicks no painel + alertas (DEVE rodar APÓS atualizar todos os innerHTML)
+  bindarPainelClicks();
 
   // Estatísticas
   document.getElementById("stat-camara").textContent = all.filter(p => p.origem === "camara").length;
@@ -2197,6 +2552,21 @@ async function renderPainel() {
     const el = document.getElementById(`stat-leg-${k}`);
     if (el) el.textContent = cont[k];
   }
+}
+
+// Bind dos clicks no painel — separado em função para ser chamado uma única vez por render
+function bindarPainelClicks() {
+  document.querySelectorAll("[data-painel-id]").forEach(el => {
+    el.onclick = () => abrirDetalhe(el.dataset.painelId);
+  });
+  document.querySelectorAll(".alerta-pill[data-alerta]").forEach(el => {
+    el.onclick = () => {
+      try {
+        const f = JSON.parse(el.dataset.alerta);
+        aplicarFiltrosViaPaineis(f);
+      } catch (e) { console.error("alerta filtro:", e); }
+    };
+  });
 }
 
 function aplicarFiltrosViaPaineis(filtros) {
@@ -2219,14 +2589,15 @@ function renderPainelLista(arr, campoData) {
   if (arr.length === 0) return `<div class="empty" style="padding:20px">Nenhum item.</div>`;
   return arr.slice(0, 50).map(p => {
     const m = getMarcacao(p.id);
+    const prazoCN = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
     return `<div class="painel-item" data-painel-id="${p.id}">
       <div class="painel-item-titulo">
         <span class="badge badge-${p.origem}">${p.origem === "camara" ? "Câmara" : "Senado"}</span>
         <b>${escapeHtml(p.identificacao)}</b>
         ${m.relevante ? `<span class="relevante-tag">★ Relevante</span>` : ""}
       </div>
-      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}</div>
-      <div class="painel-item-ementa">${escapeHtml((m.apelido || p.ementa || "").substring(0, 140))}…</div>
+      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}${prazoCN ? ` · Prazo CN: ${formatarData(prazoCN)}` : ""}</div>
+      ${m.apelido ? `<div class="painel-item-ementa"><b>${escapeHtml(m.apelido)}</b></div>` : ""}
     </div>`;
   }).join("");
 }
@@ -2235,17 +2606,19 @@ function renderPainelListaAcomp(arr) {
   if (arr.length === 0) return `<div class="empty" style="padding:20px">Nenhum item.</div>`;
   return arr.slice(0, 50).map(p => {
     const m = getMarcacao(p.id);
-    const etapaLabel = (ETAPAS.find(e => e.v === m.etapa) || {}).t || "—";
+    const etapaLabel = (ETAPAS.find(e => e.v === m.etapa) || {}).t || "";
+    const prazoCN = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
+    const prazoEtapaBadge = renderBadgePrazo(m, "etapa");
     return `<div class="painel-item" data-painel-id="${p.id}">
       <div class="painel-item-titulo">
         <span class="badge badge-${p.origem}">${p.origem === "camara" ? "Câmara" : "Senado"}</span>
         <b>${escapeHtml(p.identificacao)}</b>
+        ${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span>` : ""}
       </div>
       <div class="painel-item-meta">
-        ${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span> ` : ""}
-        ${escapeHtml(etapaLabel)} · Prazo: ${renderBadgePrazo(m) || "—"}
+        ${etapaLabel ? escapeHtml(etapaLabel) + " · " : ""}${prazoCN ? `Prazo CN: ${formatarData(prazoCN)}` : ""}${prazoEtapaBadge ? ` · Etapa: ${prazoEtapaBadge}` : ""}
       </div>
-      <div class="painel-item-ementa">${escapeHtml(m.apelido || m.objeto || (p.ementa || "").substring(0, 140))}</div>
+      ${m.apelido ? `<div class="painel-item-ementa"><b>${escapeHtml(m.apelido)}</b></div>` : ""}
     </div>`;
   }).join("");
 }
@@ -2257,33 +2630,33 @@ document.querySelectorAll("#seg-aprov-dias button").forEach(b => b.addEventListe
   renderPainel();
 }));
 
+// Seletor de período do bloco "Aprovados" no acompanhamento (7d/15d/30d/Todos)
+document.querySelectorAll("#seg-aprov-acomp button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#seg-aprov-acomp button").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  painelEstado.aprovAcompPeriodo = b.dataset.d;
+  renderPainel();
+}));
+
 async function renderHeaderStats() {
   const all = await DB.getAll("proposicoes");
   const marcs = await DB.getAll("marcacoes");
   document.getElementById("stat-total").textContent = all.length;
   const relevantes = marcs.filter(m => m.relevante).length;
   document.getElementById("stat-relevantes").textContent = relevantes;
-  const hoje = isoHoje();
-  const vencidos = marcs.filter(m => m.relevante && m.prazoEtapa && m.prazoEtapa <= hoje && !["respondido","retirado"].includes(m.statusInterno)).length;
-  document.getElementById("stat-vencidos").textContent = vencidos;
   document.getElementById("stat-aprovados").textContent = all.filter(p => p.situacaoLegislativa === "aprovado").length;
-  // Em andamento: status interno = andamento_cc
+  // Em andamento CC / Aguardando resposta (combinado, mesma regra do painel)
   const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
-  const andamento = all.filter(p => {
-    const m = marcMap.get(p.id);
-    return m && m.statusInterno === "andamento_cc";
-  }).length;
-  // Aguardando resposta: aguardando_resposta legislativo OU andamento_cc interno
-  const aguardando = all.filter(p => {
+  const ccAguardando = all.filter(p => {
     const m = marcMap.get(p.id) || {};
-    if (m.statusInterno && m.statusInterno !== "novo") return false;
-    return p.situacaoLegislativa === "aguardando_resposta";
+    if (m.statusInterno === "andamento_cc") return true;
+    if (p.situacaoLegislativa === "aguardando_resposta" && (!m.statusInterno || m.statusInterno === "novo")) return true;
+    return false;
   }).length;
-  document.getElementById("stat-andamento").textContent = andamento;
-  document.getElementById("stat-aguardando").textContent = aguardando;
+  document.getElementById("stat-andamento").textContent = ccAguardando;
   const ult = await getConfig("ultimaSync", null);
   const sd = document.getElementById("stat-sync");
-  sd.textContent = ult ? new Date(ult).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "nunca";
+  if (sd) sd.textContent = ult ? new Date(ult).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "nunca";
 }
 
 // ===== EXPORT =====
@@ -2298,11 +2671,10 @@ function linhaExport(p) {
     Identificacao: p.identificacao,
     Apresentacao: p.dataApresentacao,
     Autor: p.autor || "",
-    Apelido: m.apelido || "",
+    Objeto_Apelido: m.apelido || "",
     Relevante: m.relevante ? "Sim" : "Não",
     Tematica: m.tematica || "",
     Ementa: p.ementa || "",
-    Objeto: m.objeto || "",
     PalavrasChave: m.palavrasChave || "",
     SituacaoLegislativa: LABEL_LEG[p.situacaoLegislativa] || p.situacaoLegislativa || "",
     SituacaoBruta: p.situacaoBruta || "",
@@ -2315,7 +2687,7 @@ function linhaExport(p) {
     Etapa: etapaLabel,
     PrazoEtapa: m.prazoEtapa || "",
     DataRecebimentoSEI: m.dataRecebimentoSEI || "",
-    PrazoFinalCN: m.prazoFinalCN || "",
+    PrazoFinalCN: m.prazoFinalCN || p.prazoFinalCNSugerido || "",
     DataResposta: m.dataResposta || "",
     NUPRecebimento: m.nupRecebimento || "",
     NUPResposta: m.nupResposta || "",
@@ -2536,9 +2908,7 @@ document.querySelectorAll(".statusbar-item[data-stat]").forEach(el => {
     const s = el.dataset.stat;
     if (s === "total") aplicarFiltrosViaPaineis({});
     else if (s === "relevantes") aplicarFiltrosViaPaineis({ rel: "sim" });
-    else if (s === "vencidos") aplicarFiltrosViaPaineis({ rel: "sim", prazo: "vencido" });
     else if (s === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
-    else if (s === "andamento") aplicarFiltrosViaPaineis({ statusInterno: "andamento_cc" });
     else if (s === "aguardando") aplicarFiltrosViaPaineis({ leg: "aguardando_resposta" });
   });
 });
@@ -2571,6 +2941,39 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW falhou:", err));
   });
 }
+
+// ===== Toggle de filtros (aba Requerimentos) =====
+function aplicarEstadoFiltros(visivel) {
+  const cont = document.getElementById("filtros-container");
+  const btn = document.getElementById("btn-toggle-filtros");
+  if (!cont || !btn) return;
+  if (visivel) {
+    cont.classList.remove("collapsed");
+    btn.classList.remove("collapsed");
+    btn.classList.add("expanded");
+    btn.textContent = "▼ Filtros";
+  } else {
+    cont.classList.add("collapsed");
+    btn.classList.remove("expanded");
+    btn.classList.add("collapsed");
+    btn.textContent = "▶ Filtros";
+  }
+}
+(function inicializarFiltrosToggle() {
+  const btn = document.getElementById("btn-toggle-filtros");
+  if (!btn) return;
+  const saved = localStorage.getItem("filtros-visiveis");
+  let visivel;
+  if (saved !== null) visivel = saved === "1";
+  else visivel = window.innerWidth >= 768; // padrão: visível em telas largas
+  aplicarEstadoFiltros(visivel);
+  btn.addEventListener("click", () => {
+    const cont = document.getElementById("filtros-container");
+    const novoEstado = cont.classList.contains("collapsed");
+    aplicarEstadoFiltros(novoEstado);
+    localStorage.setItem("filtros-visiveis", novoEstado ? "1" : "0");
+  });
+})();
 
 // ===== BOOT =====
 (async () => {

@@ -1,20 +1,19 @@
-// Monitor RIC — Service Worker v4
-// Cache-first do shell do app. Não cacheia chamadas às APIs externas
-// (camara.leg.br, senado.leg.br, generativelanguage.googleapis.com),
-// para garantir dados sempre frescos.
-
-const CACHE_NAME = "monitor-ric-v4-1";
+// Monitor RIC — Service Worker v4.2
+// Cache-first do shell. Não cacheia chamadas a APIs externas.
+const CACHE_NAME = "monitor-ric-v4-2";
 const SHELL = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-512-maskable.png",
   "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
 ];
 
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(c => c.addAll(SHELL).catch(err => {
-      // Falha em algum item não impede instalação
       console.warn("SW: falha em pré-cache parcial:", err);
     }))
   );
@@ -32,7 +31,7 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  // Não interceptar chamadas a APIs e proxies — passa direto pra rede
+  // Não interceptar chamadas a APIs externas — passa direto pra rede
   const apisExternas = [
     "dadosabertos.camara.leg.br",
     "legis.senado.leg.br",
@@ -40,12 +39,9 @@ self.addEventListener("fetch", e => {
     "corsproxy.io",
     "allorigins.win"
   ];
-  if (apisExternas.some(d => url.hostname.includes(d))) {
-    return; // Default behavior: passa direto pra rede
-  }
-  // Não interceptar requisições POST/PUT/DELETE
+  if (apisExternas.some(d => url.hostname.includes(d))) return;
   if (e.request.method !== "GET") return;
-  // Strategy: stale-while-revalidate para o shell
+  // stale-while-revalidate para o shell
   e.respondWith(
     caches.match(e.request).then(cached => {
       const networkFetch = fetch(e.request).then(resp => {
