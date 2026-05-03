@@ -260,6 +260,7 @@ td.col-acoes { white-space: nowrap; }
 .badge-vencido { background: var(--err-light); color: var(--err-strong); }
 .badge-hoje { background: var(--warn-light); color: var(--warn-strong); }
 .badge-prazo-ok { background: var(--ok-light); color: var(--ok-strong); }
+.badge-prazo-cn { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border-strong); }
 .badge-prazo-ok { background: var(--ok-light); color: var(--ok-strong); }
 
 /* Star */
@@ -299,6 +300,14 @@ html.dark .log { background: #020617; }
 .modal-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
 .modal-section:last-child { border-bottom: none; }
 .modal-section h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+/* Modal sections colapsáveis */
+.modal-section.collapsible > .section-header { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; padding: 4px 0; margin-bottom: 0; }
+.modal-section.collapsible > .section-header h3 { margin: 0; flex: 1; }
+.modal-section.collapsible > .section-header::before { content: "▼"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.modal-section.collapsible.collapsed > .section-header::before { transform: rotate(-90deg); }
+.modal-section.collapsible.collapsed > .section-header { margin-bottom: 0; padding-bottom: 4px; }
+.modal-section.collapsible > .section-content { overflow: hidden; transition: max-height 0.3s ease, opacity 0.2s; max-height: none; opacity: 1; padding-top: 10px; }
+.modal-section.collapsible.collapsed > .section-content { max-height: 0; opacity: 0; padding-top: 0; }
 
 /* Pagination */
 .pagination { display: flex; gap: 4px; align-items: center; justify-content: center; margin-top: 16px; flex-wrap: wrap; padding: 12px; }
@@ -419,14 +428,24 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="painel-coluna">
       <div class="painel-coluna-header">
         <h3>Apresentados <span class="count" id="cnt-apresentados">—</span></h3>
-        <span class="text-small text-muted">últimos 7 dias</span>
+        <div class="painel-segmented" id="seg-apres-dias">
+          <button data-d="7" class="active">7d</button>
+          <button data-d="15">15d</button>
+          <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
+        </div>
       </div>
       <div class="painel-coluna-body" id="lst-apresentados"></div>
     </div>
     <div class="painel-coluna">
       <div class="painel-coluna-header">
         <h3>Sofreram movimentação <span class="count" id="cnt-movimentados">—</span></h3>
-        <span class="text-small text-muted">últimos 7 dias</span>
+        <div class="painel-segmented" id="seg-mov-dias">
+          <button data-d="7" class="active">7d</button>
+          <button data-d="15">15d</button>
+          <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
+        </div>
       </div>
       <div class="painel-coluna-body" id="lst-movimentados"></div>
     </div>
@@ -437,6 +456,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <button data-d="7" class="active">7d</button>
           <button data-d="15">15d</button>
           <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
         </div>
       </div>
       <div class="painel-coluna-body" id="lst-aprovados"></div>
@@ -1798,7 +1818,7 @@ let listaEstado = {
   marcacoes: new Map(),
   unidades: UNIDADES_PADRAO.slice()
 };
-let painelEstado = { aprovDias: 7 };
+let painelEstado = { apresPeriodo: "7", movPeriodo: "7", aprovPeriodo: "7" };
 
 async function carregarLista() {
   listaEstado.itens = await DB.getAll("proposicoes");
@@ -1960,13 +1980,19 @@ function renderBadgeLegislativo(p) {
 }
 
 function renderBadgePrazo(m, tipo) {
-  // tipo: "etapa" (default) lê m.prazoEtapa, "cn" lê m.prazoFinalCN ou m.prazoCN
-  // Se m for string, trata como data direta
+  // tipo "etapa" (default): cores diferenciadas (vencido/hoje/futuro)
+  // tipo "cn": sempre cinza (badge-prazo-cn)
+  // Se m for string, trata como data direta — usa cinza por padrão (assume prazo CN)
   let data;
   if (typeof m === "string") data = m;
   else if (tipo === "cn") data = m.prazoFinalCN || m.prazoCN || "";
   else data = m.prazoEtapa || "";
   if (!data) return "";
+  // Prazo CN: badge cinza fixo
+  if (tipo === "cn" || typeof m === "string") {
+    return `<span class="badge badge-prazo-cn">${formatarData(data)}</span>`;
+  }
+  // Prazo etapa: cor varia conforme vencimento
   const hoje = isoHoje();
   const cls = data < hoje ? "badge-vencido" : (data === hoje ? "badge-hoje" : "badge-prazo-ok");
   return `<span class="badge ${cls}">${formatarData(data)}</span>`;
@@ -2136,12 +2162,40 @@ async function abrirDetalhe(id) {
   const etapaOpts = ETAPAS.map(e => `<option value="${e.v}"${e.v === m.etapa ? " selected" : ""}>${e.t}</option>`).join("");
   const tipoRespOpts = TIPOS_RESPOSTA.map(e => `<option value="${e.v}"${e.v === m.tipoResposta ? " selected" : ""}>${e.t}</option>`).join("");
 
-  const unidadesHtml = listaEstado.unidades.map(u => `
-    <label class="unidade-chk"><input type="checkbox" value="${escapeAttr(u)}"${(m.unidadesConsultadas || []).includes(u) ? " checked" : ""}> ${escapeHtml(u)}</label>
-  `).join("");
+  const unidadesHtml = listaEstado.unidades.map(u =>
+    `<option value="${escapeAttr(u)}"${(m.unidadesConsultadas || []).includes(u) ? " selected" : ""}>${escapeHtml(u)}</option>`
+  ).join("");
+
+  // Renderiza prévia dos análogos salvos (quando existirem na marcação)
+  const analogosSalvos = m.analogos && Array.isArray(m.analogos) ? m.analogos : [];
+  let analogosHtmlInicial = "";
+  if (analogosSalvos.length > 0) {
+    const todasMap = new Map(listaEstado.itens.map(x => [x.id, x]));
+    const itensValidos = analogosSalvos.map(a => {
+      const ap = todasMap.get(a.id);
+      return ap ? { ap, am: listaEstado.marcacoes.get(a.id) || {}, score: a.score } : null;
+    }).filter(Boolean);
+    if (itensValidos.length > 0) {
+      analogosHtmlInicial = `<div class="text-small text-muted" style="margin:6px 0">Resultado salvo (${itensValidos.length}). Clique em <b>🔄 Recalcular</b> para atualizar.</div>` +
+        `<div style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">` +
+        itensValidos.map(({ ap, am, score }) => {
+          const titulo = am.apelido || (ap.ementa || "").substring(0, 140) + (ap.ementa && ap.ementa.length > 140 ? "…" : "");
+          return `<div class="painel-item" data-analogo-id="${escapeAttr(ap.id)}" style="cursor:pointer">
+            <div class="painel-item-titulo">
+              <span class="badge badge-${ap.origem}">${ap.origem === "camara" ? "Câmara" : "Senado"}</span>
+              <b>${escapeHtml(ap.identificacao)}</b>
+              <span class="badge badge-tematica" style="margin-left:auto">sim ${(score * 100).toFixed(0)}%</span>
+            </div>
+            <div class="painel-item-ementa">${escapeHtml(titulo)}</div>
+          </div>`;
+        }).join("") + `</div>`;
+    }
+  }
 
   document.getElementById("modal-body").innerHTML = `
-    <div class="modal-section">
+    <div class="modal-section collapsible" data-sec="ident">
+      <div class="section-header"><h3>Identificação</h3></div>
+      <div class="section-content">
       <dl>
         <dt>Casa</dt><dd>${p.origem === "camara" ? "Câmara dos Deputados" : "Senado Federal"}</dd>
         <dt>Tipo</dt><dd>${escapeHtml(p.sigla)}${p.siglaComissao ? " — " + escapeHtml(p.siglaComissao) : ""}</dd>
@@ -2155,10 +2209,12 @@ async function abrirDetalhe(id) {
         ${p.dataEnriquecimento ? `<dt>Enriquecido em</dt><dd>${new Date(p.dataEnriquecimento).toLocaleString("pt-BR")}</dd>` : ""}
         ${links.length ? `<dt>Links</dt><dd>${links.join(" &nbsp;|&nbsp; ")}</dd>` : ""}
       </dl>
+      </div>
     </div>
 
-    <div class="modal-section">
-      <h3>Identificação interna</h3>
+    <div class="modal-section collapsible" data-sec="ident-int">
+      <div class="section-header"><h3>Identificação interna</h3></div>
+      <div class="section-content">
       <div class="field-row-3">
         <div style="grid-column:span 2"><label>Objeto (apelido) <span class="text-small text-muted">(máx. 150 caracteres)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: Custos das obras do Novo PAC; Agendas do Presidente com STF" maxlength="150"></div>
         <div><label>Temática</label><select id="m-tematica">${tematicaOpts}</select></div>
@@ -2167,17 +2223,21 @@ async function abrirDetalhe(id) {
         <div><label>Palavras-chave</label><input type="text" id="m-palavraschave" value="${escapeAttr(m.palavrasChave || "")}" placeholder="separadas por vírgula"></div>
         <div><label>Relevante</label><label style="display:flex;align-items:center;gap:8px;padding:7px 0"><input type="checkbox" id="m-relevante"${m.relevante ? " checked" : ""} style="width:auto"> Acompanhar prioritariamente</label></div>
       </div>
+      </div>
     </div>
 
-    <div class="modal-section">
-      <h3>Ementa</h3>
+    <div class="modal-section collapsible" data-sec="ementa">
+      <div class="section-header"><h3>Ementa</h3></div>
+      <div class="section-content">
       <div class="ementa-full">${escapeHtml(p.ementa || "")}</div>
       ${p.ementaDetalhada ? `<details><summary>Ementa detalhada</summary><div class="ementa-full" style="margin-top:8px">${escapeHtml(p.ementaDetalhada)}</div></details>` : ""}
       ${p.keywords ? `<div class="text-small text-muted" style="margin-top:8px"><b>Palavras-chave (API):</b> ${escapeHtml(p.keywords)}</div>` : ""}
+      </div>
     </div>
 
-    <div class="modal-section">
-      <h3>Análise da SSGP</h3>
+    <div class="modal-section collapsible" data-sec="analise">
+      <div class="section-header"><h3>Análise da SSGP</h3></div>
+      <div class="section-content">
       <div class="toolbar" style="margin-bottom:10px">
         <button class="btn btn-gemini btn-sm" id="btn-gemini-analisar" ${p.urlInteiroTeor ? "" : "disabled title='Sem inteiro teor disponível'"}>🤖 Analisar com Gemini</button>
         <span class="text-small text-muted" id="gemini-status"></span>
@@ -2186,15 +2246,32 @@ async function abrirDetalhe(id) {
       <textarea id="m-resumo" rows="3" placeholder="Resumo do conteúdo dos quesitos formulados...">${escapeHtml(m.resumo || "")}</textarea>
       <label style="margin-top:10px">Comentários / Observações</label>
       <textarea id="m-comentarios" rows="4" placeholder="Anotações da triagem (precedentes, observações de admissibilidade etc.)">${escapeHtml(m.comentarios || "")}</textarea>
+      </div>
     </div>
 
-    <div class="modal-section">
-      <h3>Unidades consultadas</h3>
-      <div class="unidades-grid" id="m-unidades">${unidadesHtml}</div>
+    <div class="modal-section collapsible" data-sec="analogos">
+      <div class="section-header"><h3>🔗 Requerimentos análogos</h3></div>
+      <div class="section-content">
+      <p class="text-small text-muted" style="margin-bottom:8px">Busca outros RICs com afinidade temática, com base nas palavras-chave e no objeto preenchidos.</p>
+      <div class="toolbar" style="gap:6px">
+        <button class="btn btn-sm" id="btn-buscar-analogos" ${(!m.palavrasChave && !m.apelido && !p.ementa) ? "disabled title='Preencha palavras-chave ou objeto para habilitar'" : ""}>${analogosSalvos.length > 0 ? "🔄 Recalcular" : "🔍 Buscar análogos"}</button>
+        <span class="save-feedback" id="analogos-status"></span>
+      </div>
+      <div id="analogos-resultado" style="margin-top:12px">${analogosHtmlInicial}</div>
+      </div>
     </div>
 
-    <div class="modal-section">
-      <h3>Tramitação interna</h3>
+    <div class="modal-section collapsible" data-sec="unidades">
+      <div class="section-header"><h3>Unidades consultadas${m.unidadesConsultadas && m.unidadesConsultadas.length ? ` <span class="count" style="font-size:11px;font-weight:500;padding:2px 8px;background:var(--surface-2);border-radius:10px;color:var(--muted)">${m.unidadesConsultadas.length}</span>` : ""}</h3></div>
+      <div class="section-content">
+      <p class="text-small text-muted" style="margin-bottom:6px">Segure Ctrl (Command no Mac) para selecionar várias. Use a barra de rolagem se necessário.</p>
+      <select id="m-unidades" multiple size="8" style="width:100%;font-family:inherit;padding:6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)">${unidadesHtml}</select>
+      </div>
+    </div>
+
+    <div class="modal-section collapsible" data-sec="tramitacao-int">
+      <div class="section-header"><h3>Tramitação interna</h3></div>
+      <div class="section-content">
       <div class="field-row-3">
         <div><label>Status interno</label><select id="m-status-interno">${statusIntOpts}</select></div>
         <div><label>Etapa do fluxo</label><select id="m-etapa">${etapaOpts}</select></div>
@@ -2215,19 +2292,14 @@ async function abrirDetalhe(id) {
         <button class="btn btn-danger btn-sm" id="btn-limpar-marcacao" title="Apagar todos os dados internos deste requerimento (não apaga o requerimento em si)">Limpar análise</button>
         <span class="save-feedback" id="save-feedback">Salvo ✓</span>
       </div>
+      </div>
     </div>
 
-    <div class="modal-section">
-      <h3>Histórico de tramitação ${p.historico && p.historico.length ? `(${p.historico.length} eventos)` : "(não enriquecido)"}</h3>
+    <div class="modal-section collapsible collapsed" data-sec="historico">
+      <div class="section-header"><h3>Histórico de tramitação ${p.historico && p.historico.length ? `(${p.historico.length} eventos)` : "(não enriquecido)"}</h3></div>
+      <div class="section-content">
       ${renderHistorico(p)}
-    </div>
-
-    <div class="modal-section">
-      <h3>🔗 Requerimentos análogos</h3>
-      <p class="text-small text-muted" style="margin-bottom:8px">Busca outros RICs com afinidade temática a este, com base nas palavras-chave e no objeto preenchidos. Quanto melhores as palavras-chave e o objeto, melhor a busca.</p>
-      <button class="btn btn-sm" id="btn-buscar-analogos" ${(!m.palavrasChave && !m.apelido && !p.ementa) ? "disabled title='Preencha palavras-chave ou objeto para habilitar'" : ""}>🔍 Buscar análogos</button>
-      <span class="save-feedback" id="analogos-status" style="margin-left:8px"></span>
-      <div id="analogos-resultado" style="margin-top:12px"></div>
+      </div>
     </div>
   `;
 
@@ -2257,6 +2329,22 @@ async function abrirDetalhe(id) {
         const t0 = performance.now();
         const analogos = buscarRicsAnalogos(id, todas, marcMap, { minScore: 0.15, top: 10 });
         const dt = (performance.now() - t0).toFixed(0);
+
+        // Persiste resultado na marcação imediatamente (via DB)
+        const marcAtual = await DB.get("marcacoes", id) || {
+          proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
+          tematica: "", palavrasChave: "", unidadesConsultadas: [],
+          resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
+          nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
+          prazoFinalCN: "", dataResposta: "", tipoResposta: ""
+        };
+        marcAtual.analogos = analogos.map(a => ({ id: a.id, score: a.score }));
+        marcAtual.analogosCalculadoEm = new Date().toISOString();
+        marcAtual.atualizadoEm = new Date().toISOString();
+        await DB.put("marcacoes", marcAtual);
+        listaEstado.marcacoes.set(id, marcAtual);
+        m.analogos = marcAtual.analogos;
+
         if (analogos.length === 0) {
           resultado.innerHTML = `<p class="text-small text-muted"><i>Nenhum RIC análogo encontrado na base atual com base nas palavras-chave e objeto preenchidos.</i></p>`;
           status.style.color = "var(--muted)";
@@ -2279,13 +2367,14 @@ async function abrirDetalhe(id) {
               </div>`;
             }).join("") + `</div>`;
           resultado.innerHTML = html;
-          // Bind clicks
           resultado.querySelectorAll("[data-analogo-id]").forEach(el => {
             el.onclick = () => abrirDetalhe(el.dataset.analogoId);
           });
           status.style.color = "var(--ok)";
-          status.textContent = `${analogos.length} análogo(s) encontrado(s) em ${dt}ms`;
+          status.textContent = `${analogos.length} análogo(s) em ${dt}ms · salvo`;
         }
+        // Atualiza label do botão para "🔄 Recalcular"
+        btnAnalogos.innerHTML = `🔄 Recalcular`;
       } catch (err) {
         status.style.color = "var(--err)";
         status.textContent = `Erro: ${err.message}`;
@@ -2404,7 +2493,8 @@ async function abrirDetalhe(id) {
   }
 
   document.getElementById("btn-salvar-marcacao").addEventListener("click", async () => {
-    const unidadesMarc = [...document.querySelectorAll("#m-unidades input:checked")].map(c => c.value);
+    const unidadesMarc = [...document.querySelectorAll("#m-unidades option:checked")].map(o => o.value);
+    const marcAnterior = listaEstado.marcacoes.get(id) || {};
     const novoM = {
       proposicaoId: id,
       apelido: document.getElementById("m-apelido").value.trim(),
@@ -2423,6 +2513,9 @@ async function abrirDetalhe(id) {
       nupRecebimento: document.getElementById("m-nup-receb").value.trim(),
       nupResposta: document.getElementById("m-nup-resp").value.trim(),
       tipoResposta: document.getElementById("m-tipo-resposta").value,
+      // Preserva resultados de busca de análogos previamente calculados
+      analogos: marcAnterior.analogos || [],
+      analogosCalculadoEm: marcAnterior.analogosCalculadoEm || "",
       atualizadoEm: new Date().toISOString()
     };
     await DB.put("marcacoes", novoM);
@@ -2452,7 +2545,32 @@ async function abrirDetalhe(id) {
     renderTabela(); renderHeaderStats(); renderPainel();
   });
 
+  // Toggle das seções colapsáveis (clique no header alterna)
+  document.querySelectorAll("#modal-detalhe .modal-section.collapsible > .section-header").forEach(h => {
+    h.addEventListener("click", () => {
+      const sec = h.parentElement;
+      sec.classList.toggle("collapsed");
+    });
+  });
+
+  // Bind dos itens análogos pré-renderizados (caso existam dados salvos)
+  document.querySelectorAll("#analogos-resultado [data-analogo-id]").forEach(el => {
+    el.onclick = () => abrirDetalhe(el.dataset.analogoId);
+  });
+
   abrirModal("modal-detalhe");
+
+  // Scroll do modal para o topo (importante quando reabre um modal já com scroll)
+  const modalBg = document.getElementById("modal-detalhe");
+  if (modalBg) {
+    modalBg.scrollTop = 0;
+    // Delay extra para o caso de a transição de display ainda estar em curso
+    setTimeout(() => {
+      modalBg.scrollTop = 0;
+      const modal = modalBg.querySelector(".modal");
+      if (modal && modal.scrollIntoView) modal.scrollIntoView({ block: "start" });
+    }, 50);
+  }
 }
 
 function renderHistorico(p) {
@@ -2476,18 +2594,40 @@ async function renderPainel() {
   const all = listaEstado.itens;
   const marcMap = listaEstado.marcacoes;
   const hoje = isoHoje();
-  const lim7 = addDiasIso(hoje, -7);
-  const limAprov = addDiasIso(hoje, -painelEstado.aprovDias);
 
-  // Apresentados (últimos 7 dias)
-  const apresentados = all.filter(p => p.dataApresentacao && p.dataApresentacao >= lim7)
+  // Função auxiliar para aplicar filtro de período
+  function filtrarPorPeriodo(itens, periodo, campoData) {
+    if (periodo === "todos") return itens.filter(p => p[campoData]);
+    const dias = parseInt(periodo, 10) || 7;
+    const limite = addDiasIso(hoje, -dias);
+    return itens.filter(p => p[campoData] && p[campoData] >= limite);
+  }
+
+  // Apresentados (período configurável)
+  const apresentados = filtrarPorPeriodo(all, painelEstado.apresPeriodo, "dataApresentacao")
     .sort((a, b) => (b.dataApresentacao || "").localeCompare(a.dataApresentacao || ""));
-  // Movimentados (últimos 7 dias) — exclui os recém apresentados
-  const movimentados = all.filter(p => p.ultimaMovimentacaoData && p.ultimaMovimentacaoData >= lim7 && p.dataApresentacao < lim7)
+
+  // Sofreram movimentação (período configurável)
+  // Exclui itens cuja última movimentação coincide com a data de apresentação (ou seja, sem movimentação real além da entrada)
+  const movimentados = filtrarPorPeriodo(all, painelEstado.movPeriodo, "ultimaMovimentacaoData")
+    .filter(p => p.ultimaMovimentacaoData !== p.dataApresentacao)
     .sort((a, b) => (b.ultimaMovimentacaoData || "").localeCompare(a.ultimaMovimentacaoData || ""));
-  // Aprovados (filtro temporal)
-  const aprovados = all.filter(p => p.situacaoLegislativa === "aprovado" && p.dataAprovacao && p.dataAprovacao >= limAprov)
-    .sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
+
+  // Aprovados — TODOS com situacaoLegislativa = "aprovado", sem nenhum outro critério
+  // O período filtra apenas pela data de aprovação; "todos" mostra independente da data
+  let aprovados;
+  if (painelEstado.aprovPeriodo === "todos") {
+    aprovados = all.filter(p => p.situacaoLegislativa === "aprovado");
+  } else {
+    const dias = parseInt(painelEstado.aprovPeriodo, 10) || 7;
+    const limite = addDiasIso(hoje, -dias);
+    aprovados = all.filter(p =>
+      p.situacaoLegislativa === "aprovado" &&
+      p.dataAprovacao &&
+      p.dataAprovacao >= limite
+    );
+  }
+  aprovados.sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
 
   document.getElementById("cnt-apresentados").textContent = apresentados.length;
   document.getElementById("cnt-movimentados").textContent = movimentados.length;
@@ -2517,7 +2657,9 @@ async function renderPainel() {
   document.getElementById("lst-andamento").innerHTML = renderPainelListaAcomp(ccAguardando);
 
   // Barra de alertas no topo (sem "vencidos", com combinado e aprovados gerais)
-  const novos7d = apresentados.length;
+  // "Novos (7 dias)" sempre considera 7 dias fixos, independente do filtro do painel
+  const lim7 = addDiasIso(hoje, -7);
+  const novos7d = all.filter(p => p.dataApresentacao && p.dataApresentacao >= lim7).length;
   const totalAprovados = all.filter(p => p.situacaoLegislativa === "aprovado").length;
   const alertas = [
     { cls: "warning", num: ccAguardando.length, label: "em andamento / aguardando resposta", filtro: { leg: "aguardando_resposta" } },
@@ -2588,7 +2730,7 @@ function renderPainelLista(arr, campoData) {
         <b>${escapeHtml(p.identificacao)}</b>
         ${m.relevante ? `<span class="relevante-tag">★ Relevante</span>` : ""}
       </div>
-      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}${prazoCN ? ` · Prazo CN: ${formatarData(prazoCN)}` : ""}</div>
+      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}${prazoCN ? ` · Prazo CN: ${renderBadgePrazo(prazoCN)}` : ""}</div>
       ${m.apelido ? `<div class="painel-item-ementa"><b>${escapeHtml(m.apelido)}</b></div>` : ""}
     </div>`;
   }).join("");
@@ -2608,19 +2750,25 @@ function renderPainelListaAcomp(arr) {
         ${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span>` : ""}
       </div>
       <div class="painel-item-meta">
-        ${etapaLabel ? escapeHtml(etapaLabel) + " · " : ""}${prazoCN ? `Prazo CN: ${formatarData(prazoCN)}` : ""}${prazoEtapaBadge ? ` · Etapa: ${prazoEtapaBadge}` : ""}
+        ${etapaLabel ? escapeHtml(etapaLabel) + " · " : ""}${prazoCN ? `Prazo CN: ${renderBadgePrazo(prazoCN)}` : ""}${prazoEtapaBadge ? ` · Etapa: ${prazoEtapaBadge}` : ""}
       </div>
       ${m.apelido ? `<div class="painel-item-ementa"><b>${escapeHtml(m.apelido)}</b></div>` : ""}
     </div>`;
   }).join("");
 }
 
-document.querySelectorAll("#seg-aprov-dias button").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll("#seg-aprov-dias button").forEach(x => x.classList.remove("active"));
-  b.classList.add("active");
-  painelEstado.aprovDias = parseInt(b.dataset.d, 10);
-  renderPainel();
-}));
+// Seletores de período dos 3 painéis "Requerimentos no Congresso"
+function bindSegmented(seletor, campoEstado) {
+  document.querySelectorAll(`#${seletor} button`).forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(`#${seletor} button`).forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    painelEstado[campoEstado] = b.dataset.d;
+    renderPainel();
+  }));
+}
+bindSegmented("seg-apres-dias", "apresPeriodo");
+bindSegmented("seg-mov-dias", "movPeriodo");
+bindSegmented("seg-aprov-dias", "aprovPeriodo");
 
 async function renderHeaderStats() {
   const all = await DB.getAll("proposicoes");
