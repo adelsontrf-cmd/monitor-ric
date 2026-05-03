@@ -444,22 +444,10 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 
   <h2 class="painel-titulo">Requerimentos sob acompanhamento</h2>
-  <div class="grid-3" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr));margin-bottom:22px">
+  <div class="grid-3" style="grid-template-columns:1fr;margin-bottom:22px">
     <div class="painel-coluna attention">
       <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
-    </div>
-    <div class="painel-coluna" style="border-left:3px solid var(--leg-aprovado)">
-      <div class="painel-coluna-header">
-        <h3>Aprovados <span class="count" id="cnt-aprovados-acomp">—</span></h3>
-        <div class="painel-segmented" id="seg-aprov-acomp">
-          <button data-d="7" class="active">7d</button>
-          <button data-d="15">15d</button>
-          <button data-d="30">30d</button>
-          <button data-d="todos">Todos</button>
-        </div>
-      </div>
-      <div class="painel-coluna-body" id="lst-aprovados-acomp"></div>
     </div>
   </div>
 
@@ -1045,7 +1033,20 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
         { text: prompt }
       ]
     }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 1024, responseMimeType: "application/json" }
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 4096,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          apelido: { type: "STRING" },
+          resumo: { type: "STRING" },
+          palavrasChave: { type: "STRING" }
+        },
+        required: ["apelido", "resumo", "palavrasChave"]
+      }
+    }
   };
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -1061,18 +1062,34 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
     throw new Error(`Gemini HTTP ${res.status}: ${detail.substring(0, 200)}`);
   }
   const data = await res.json();
-  const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!txt) throw new Error("Resposta Gemini vazia");
+  const cand = data?.candidates?.[0];
+  const fr = cand?.finishReason;
+  // Detecta truncamento ou bloqueio antes de tentar parsear
+  if (fr === "MAX_TOKENS") {
+    throw new Error("Resposta truncada pelo Gemini (limite de tokens). Tente novamente com modelo gemini-2.0-flash-lite ou gemini-1.5-flash.");
+  }
+  if (fr === "SAFETY" || fr === "RECITATION" || fr === "BLOCKLIST" || fr === "PROHIBITED_CONTENT") {
+    throw new Error(`Conteúdo bloqueado pelo Gemini (${fr}). Tente outro modelo.`);
+  }
+  const txt = cand?.content?.parts?.[0]?.text;
+  if (!txt) throw new Error(`Resposta Gemini vazia (finishReason=${fr || "indefinido"})`);
   let limpo = txt.trim().replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/g, "").trim();
   let parsed;
   try { parsed = JSON.parse(limpo); }
   catch (e) {
+    // Tenta extrair primeiro objeto JSON balanceado
     const m = limpo.match(/\{[\s\S]*\}/);
-    if (m) { parsed = JSON.parse(m[0]); }
-    else throw new Error(`Resposta Gemini não é JSON válido: ${limpo.substring(0, 100)}`);
+    if (m) {
+      try { parsed = JSON.parse(m[0]); }
+      catch (e2) {
+        throw new Error(`Resposta Gemini truncada ou malformada. Início: ${limpo.substring(0, 120)}…`);
+      }
+    } else {
+      throw new Error(`Resposta Gemini não é JSON válido: ${limpo.substring(0, 100)}`);
+    }
   }
   return {
-    apelido: parsed.apelido || parsed.objeto || "",
+    apelido: (parsed.apelido || parsed.objeto || "").substring(0, 150),
     resumo: parsed.resumo || "",
     palavrasChave: parsed.palavrasChave || parsed["palavras-chave"] || ""
   };
@@ -1781,7 +1798,7 @@ let listaEstado = {
   marcacoes: new Map(),
   unidades: UNIDADES_PADRAO.slice()
 };
-let painelEstado = { aprovDias: 7, aprovAcompPeriodo: "7" };
+let painelEstado = { aprovDias: 7 };
 
 async function carregarLista() {
   listaEstado.itens = await DB.getAll("proposicoes");
@@ -2496,33 +2513,8 @@ async function renderPainel() {
     return pa.localeCompare(pb);
   });
 
-  // Coluna 2 — Aprovados com seletor (7d/15d/30d/Todos)
-  let aprovadosAcomp;
-  if (painelEstado.aprovAcompPeriodo === "todos") {
-    // Todos os aprovados que ainda NÃO passaram para "Aguardando resposta" (legislativo)
-    // nem para "Em andamento na Casa Civil" (interno)
-    aprovadosAcomp = all.filter(p => {
-      if (p.situacaoLegislativa !== "aprovado") return false;
-      const m = marcMap.get(p.id) || {};
-      if (m.statusInterno === "andamento_cc") return false;
-      // Se já houve registro SEI mas o status ainda é novo, ainda assim consideramos aprovado bruto
-      return true;
-    });
-  } else {
-    const dias = parseInt(painelEstado.aprovAcompPeriodo, 10) || 7;
-    const limite = addDiasIso(hoje, -dias);
-    aprovadosAcomp = all.filter(p =>
-      p.situacaoLegislativa === "aprovado" &&
-      p.dataAprovacao &&
-      p.dataAprovacao >= limite
-    );
-  }
-  aprovadosAcomp.sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
-
   document.getElementById("cnt-andamento").textContent = ccAguardando.length;
-  document.getElementById("cnt-aprovados-acomp").textContent = aprovadosAcomp.length;
   document.getElementById("lst-andamento").innerHTML = renderPainelListaAcomp(ccAguardando);
-  document.getElementById("lst-aprovados-acomp").innerHTML = renderPainelListaAcomp(aprovadosAcomp);
 
   // Barra de alertas no topo (sem "vencidos", com combinado e aprovados gerais)
   const novos7d = apresentados.length;
@@ -2627,14 +2619,6 @@ document.querySelectorAll("#seg-aprov-dias button").forEach(b => b.addEventListe
   document.querySelectorAll("#seg-aprov-dias button").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
   painelEstado.aprovDias = parseInt(b.dataset.d, 10);
-  renderPainel();
-}));
-
-// Seletor de período do bloco "Aprovados" no acompanhamento (7d/15d/30d/Todos)
-document.querySelectorAll("#seg-aprov-acomp button").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll("#seg-aprov-acomp button").forEach(x => x.classList.remove("active"));
-  b.classList.add("active");
-  painelEstado.aprovAcompPeriodo = b.dataset.d;
   renderPainel();
 }));
 
