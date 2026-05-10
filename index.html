@@ -129,6 +129,7 @@ header.app-header { background: var(--surface); border-bottom: 1px solid var(--b
 .header-brand .brand-mark { width: 36px; height: 36px; flex: 0 0 36px; }
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
 .header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
+.versao-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; background: var(--surface-2); color: var(--muted); margin-left: 6px; letter-spacing: 0.05em; align-self: flex-start; margin-top: 8px; }
 .header-actions { display: flex; gap: 6px; align-items: center; }
 .header-statusbar { padding: 10px 24px; background: var(--surface-2); border-top: 1px solid var(--border); display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
 .statusbar-item { display: flex; flex-direction: column; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: background 0.15s; }
@@ -136,6 +137,11 @@ header.app-header { background: var(--surface); border-bottom: 1px solid var(--b
 .statusbar-item .label { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .statusbar-item .value { font-size: 18px; font-weight: 600; color: var(--text); line-height: 1.2; }
 .statusbar-item.alert .value { color: var(--err); }
+.btn-sync-rapida { width: 32px; height: 32px; padding: 0; font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+.btn-sync-rapida.spinning { animation: spin 0.8s linear infinite; pointer-events: none; }
+.gemini-campos-seletor { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.gemini-campos-seletor label { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text); margin: 0; padding: 0 4px; user-select: none; }
+.gemini-campos-seletor input[type=checkbox] { margin: 0; width: 14px; height: 14px; cursor: pointer; }
 .statusbar-item.warn .value { color: var(--warn); }
 .statusbar-item .small-label { font-size: 11px; color: var(--muted-2); margin-top: 2px; }
 
@@ -170,8 +176,30 @@ main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
 .alerta-pill.zero { opacity: 0.5; }
 
 /* Painel — colunas */
-.painel-titulo { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.painel-titulo { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 4px 0; transition: color 0.15s; }
+.painel-titulo:hover { color: var(--text); }
+.painel-titulo::before { content: "▼"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.painel-titulo.collapsed::before { transform: rotate(-90deg); }
+.painel-grupo { transition: max-height 0.3s ease, opacity 0.2s, margin 0.2s; max-height: 2000px; opacity: 1; overflow: hidden; }
+.painel-grupo.collapsed { max-height: 0; opacity: 0; margin: 0 !important; }
 .grid-3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); margin-bottom: 22px; }
+.grid-2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+.grafico-grid { margin-bottom: 0; }
+.grafico-card h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 4px 0; }
+.grafico-card p { margin-bottom: 12px; }
+.graf-container { width: 100%; overflow: visible; }
+.graf-container svg { width: 100%; height: auto; display: block; }
+.graf-container .empty { color: var(--muted); font-style: italic; padding: 20px; text-align: center; font-size: 13px; }
+.graf-bar { fill: var(--primary); transition: opacity 0.15s; }
+.graf-bar:hover { opacity: 0.8; }
+.graf-label { fill: var(--text); font-size: 11px; font-family: inherit; }
+.graf-value { fill: var(--text); font-size: 11px; font-weight: 600; font-family: inherit; }
+.graf-axis { stroke: var(--border-strong); stroke-width: 1; }
+.graf-grid-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,2; }
+.graf-line-path { fill: none; stroke: var(--primary); stroke-width: 2; }
+.graf-line-area { fill: var(--primary); opacity: 0.1; }
+.graf-line-dot { fill: var(--primary); }
+.graf-tick { fill: var(--muted); font-size: 10px; font-family: inherit; }
 .grid-4 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 22px; }
 .painel-coluna { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; max-height: 460px; overflow: hidden; box-shadow: var(--shadow-sm); }
 .painel-coluna-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--surface); }
@@ -391,6 +419,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <path d="M45 48l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
       <h1>Monitor RIC<small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <span class="versao-badge" title="Versão atual">v4.4</span>
     </div>
     <div class="header-actions">
       <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
@@ -402,8 +431,16 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="statusbar-item" data-stat="total" title="Ver todos os requerimentos"><span class="label">Total</span><span class="value tabular" id="stat-total">—</span></div>
     <div class="statusbar-item" data-stat="relevantes" title="Filtrar por relevantes"><span class="label">Relevantes</span><span class="value tabular" id="stat-relevantes">—</span></div>
     <div class="statusbar-item" data-stat="aprovados" title="Filtrar por aprovados"><span class="label">Aprovados</span><span class="value tabular" id="stat-aprovados">—</span></div>
+    <div class="statusbar-item" data-stat="aguardando_aprov" title="Aguardando aprovação no Congresso"><span class="label">Ag. aprovação</span><span class="value tabular" id="stat-ag-aprov">—</span></div>
     <div class="statusbar-item warn" data-stat="aguardando" title="Em andamento CC ou Aguardando resposta sem triagem"><span class="label">Em andamento / Aguardando</span><span class="value tabular" id="stat-andamento">—</span></div>
-    <div class="statusbar-item" style="margin-left:auto"><span class="label">Última sync</span><span class="value tabular" style="font-size:13px" id="stat-sync">nunca</span></div>
+    <div class="statusbar-item alert" data-stat="atrasados" title="Etapas com prazo vencido (sem resposta enviada)"><span class="label">Etapas em atraso</span><span class="value tabular" id="stat-atrasados">—</span></div>
+    <div class="statusbar-item" style="margin-left:auto;flex-direction:row;gap:8px;align-items:center;cursor:default" title="Última sincronização">
+      <div style="display:flex;flex-direction:column">
+        <span class="label">Última sync</span>
+        <span class="value tabular" style="font-size:13px" id="stat-sync">nunca</span>
+      </div>
+      <button class="btn btn-icon btn-ghost btn-sync-rapida" id="btn-sync-rapida" title="Sincronização incremental rápida (usa a quantidade de dias configurada)" aria-label="Sincronização incremental">⟳</button>
+    </div>
   </div>
 </header>
 
@@ -423,8 +460,8 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 
   <div class="alertas-bar" id="alertas-bar"></div>
 
-  <h2 class="painel-titulo">Requerimentos no Congresso</h2>
-  <div class="grid-3">
+  <h2 class="painel-titulo" data-grupo="congresso">Requerimentos no Congresso</h2>
+  <div class="grid-3 painel-grupo" data-grupo-content="congresso">
     <div class="painel-coluna">
       <div class="painel-coluna-header">
         <h3>Apresentados <span class="count" id="cnt-apresentados">—</span></h3>
@@ -463,29 +500,46 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
   </div>
 
-  <h2 class="painel-titulo">Requerimentos sob acompanhamento</h2>
-  <div class="grid-3" style="grid-template-columns:1fr;margin-bottom:22px">
+  <h2 class="painel-titulo" data-grupo="acompanhamento">Requerimentos sob acompanhamento</h2>
+  <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento" style="grid-template-columns:1fr;margin-bottom:22px">
     <div class="painel-coluna attention">
       <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>Distribuição por situação legislativa</h2>
-    <div class="grid-3" style="margin-bottom:0">
-      <div style="background:var(--surface-2);padding:12px;border-radius:var(--radius-sm)"><div class="text-small text-muted">Tramitação inicial</div><div style="font-size:22px;font-weight:600" class="tabular" id="stat-leg-tramitacao_inicial">—</div></div>
-      <div style="background:var(--surface-2);padding:12px;border-radius:var(--radius-sm)"><div class="text-small text-muted">Aguardando aprovação</div><div style="font-size:22px;font-weight:600" class="tabular" id="stat-leg-aguardando_aprovacao">—</div></div>
-      <div style="background:var(--surface-2);padding:12px;border-radius:var(--radius-sm)"><div class="text-small text-muted">Aprovado</div><div style="font-size:22px;font-weight:600;color:var(--leg-aprovado)" class="tabular" id="stat-leg-aprovado">—</div></div>
-      <div style="background:var(--surface-2);padding:12px;border-radius:var(--radius-sm)"><div class="text-small text-muted">Aguardando resposta</div><div style="font-size:22px;font-weight:600;color:var(--leg-aguard-resp)" class="tabular" id="stat-leg-aguardando_resposta">—</div></div>
-      <div style="background:var(--surface-2);padding:12px;border-radius:var(--radius-sm)"><div class="text-small text-muted">Respondido</div><div style="font-size:22px;font-weight:600;color:var(--leg-respondido)" class="tabular" id="stat-leg-respondido">—</div></div>
-      <div style="background:var(--surface-2);padding:12px;border-radius:var(--radius-sm)"><div class="text-small text-muted">Retirado</div><div style="font-size:22px;font-weight:600" class="tabular" id="stat-leg-retirado">—</div></div>
-    </div>
-    <div class="text-small text-muted" style="margin-top:12px">
-      Câmara — RIC: <b id="stat-camara">—</b> ·
-      Senado — RQS: <b id="stat-senado-rqs">—</b> ·
-      Senado — REQ: <b id="stat-senado-req">—</b> ·
-      Não enriquecidos: <b id="stat-leg-pendente">—</b>
+  <h2 class="painel-titulo" data-grupo="graficos">Indicadores</h2>
+  <div class="painel-grupo" data-grupo-content="graficos" style="margin-bottom:22px">
+    <div class="grid-2 grafico-grid">
+      <div class="card grafico-card">
+        <h3>Etapas — em andamento na Casa Civil</h3>
+        <p class="text-small text-muted">RICs com status interno "Em andamento na CC", agrupados pela etapa atual.</p>
+        <div id="graf-etapas" class="graf-container"></div>
+      </div>
+      <div class="card grafico-card">
+        <h3>Situação legislativa</h3>
+        <p class="text-small text-muted">Distribuição dos RICs pelas situações legislativas no Congresso.</p>
+        <div id="graf-leg" class="graf-container"></div>
+      </div>
+      <div class="card grafico-card">
+        <h3>Casa parlamentar</h3>
+        <p class="text-small text-muted">Origem dos RICs (Câmara, Senado, outras).</p>
+        <div id="graf-casa" class="graf-container"></div>
+      </div>
+      <div class="card grafico-card">
+        <h3>Histórico de envio à Casa Civil</h3>
+        <p class="text-small text-muted">Quantidade de RICs com data de recebimento na CC (SEI), por mês.</p>
+        <div class="toolbar" style="gap:6px;margin-bottom:8px">
+          <span class="text-small text-muted">Período:</span>
+          <div class="painel-segmented" id="seg-historico-periodo">
+            <button data-p="6" class="active">6 meses</button>
+            <button data-p="12">12 meses</button>
+            <button data-p="24">24 meses</button>
+            <button data-p="todos">Todos</button>
+          </div>
+        </div>
+        <div id="graf-historico" class="graf-container"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -2017,7 +2071,7 @@ function renderTabela() {
   tbody.innerHTML = pg.map(p => {
     const m = getMarcacao(p.id);
     const tituloCol = m.apelido
-      ? `<b>${escapeHtml(m.apelido)}</b><br><span class="text-small text-muted">${escapeHtml((p.ementa || "").substring(0, 160))}…</span>`
+      ? `<b>${escapeHtml(m.apelido)}</b>`
       : escapeHtml((p.ementa || "").substring(0, 200) + ((p.ementa || "").length > 200 ? "…" : ""));
     const inteiroTeor = p.urlInteiroTeor
       ? `<a href="${escapeAttr(p.urlInteiroTeor)}" target="_blank" rel="noopener" title="Inteiro teor" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></a>` : "";
@@ -2025,7 +2079,7 @@ function renderTabela() {
       ? `<a href="${escapeAttr(p.urlPortal)}" target="_blank" rel="noopener" title="Portal oficial" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : "";
     const etapaLabel = (ETAPAS.find(e => e.v === m.etapa) || {}).t || "";
     const prazoCNValor = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
-    return `<tr>
+    return `<tr data-row-id="${p.id}" style="cursor:pointer" title="Duplo clique para abrir detalhamento">
       <td><span class="star ${m.relevante ? "on" : ""}" data-toggle-rel="${p.id}" title="Marcar como relevante">★</span></td>
       <td><span class="badge badge-${p.origem}">${p.origem === "camara" ? "Câmara" : "Senado"}</span></td>
       <td class="col-id">${escapeHtml(p.identificacao)}</td>
@@ -2046,6 +2100,12 @@ function renderTabela() {
   pag.innerHTML = totalPg <= 1 ? "" : `<button class="btn" ${listaEstado.pagina <= 1 ? "disabled" : ""} data-pagina="prev">‹</button><span class="info">Página ${listaEstado.pagina} de ${totalPg}</span><button class="btn" ${listaEstado.pagina >= totalPg ? "disabled" : ""} data-pagina="next">›</button>`;
 
   tbody.querySelectorAll("button[data-detalhe]").forEach(b => b.addEventListener("click", () => abrirDetalhe(b.dataset.detalhe)));
+  // Duplo-clique em qualquer parte da linha abre o detalhe
+  tbody.querySelectorAll("tr[data-row-id]").forEach(tr => tr.addEventListener("dblclick", e => {
+    // Não abre se o duplo-clique for em link, botão ou estrela (já têm seus próprios handlers)
+    if (e.target.closest("a, button, .star")) return;
+    abrirDetalhe(tr.dataset.rowId);
+  }));
   tbody.querySelectorAll("[data-toggle-rel]").forEach(b => b.addEventListener("click", async e => {
     e.stopPropagation();
     const id = b.dataset.toggleRel;
@@ -2238,8 +2298,14 @@ async function abrirDetalhe(id) {
     <div class="modal-section collapsible" data-sec="analise">
       <div class="section-header"><h3>Análise da SSGP</h3></div>
       <div class="section-content">
-      <div class="toolbar" style="margin-bottom:10px">
+      <div class="toolbar" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">
         <button class="btn btn-gemini btn-sm" id="btn-gemini-analisar" ${p.urlInteiroTeor ? "" : "disabled title='Sem inteiro teor disponível'"}>🤖 Analisar com Gemini</button>
+        <div class="gemini-campos-seletor text-small" title="Campos que serão preenchidos pela resposta">
+          Preencher:
+          <label><input type="checkbox" class="gemini-campo" data-campo="apelido" checked> Objeto</label>
+          <label><input type="checkbox" class="gemini-campo" data-campo="resumo" checked> Resumo</label>
+          <label><input type="checkbox" class="gemini-campo" data-campo="palavrasChave" checked> Palavras-chave</label>
+        </div>
         <span class="text-small text-muted" id="gemini-status"></span>
       </div>
       <label>Resumo</label>
@@ -2461,10 +2527,20 @@ async function abrirDetalhe(id) {
   }
 
   // Função auxiliar para aplicar resposta Gemini aos campos
+  // Respeita os checkboxes "Preencher: Objeto / Resumo / Palavras-chave"
   function aplicarRespostaGemini(r) {
-    if (r.apelido) { const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 150); }
-    if (r.resumo) { const el = document.getElementById("m-resumo"); if (el) el.value = r.resumo; }
-    if (r.palavrasChave) { const el = document.getElementById("m-palavraschave"); if (el) el.value = r.palavrasChave; }
+    const camposAtivos = new Set(
+      [...document.querySelectorAll(".gemini-campo:checked")].map(c => c.dataset.campo)
+    );
+    if (r.apelido && camposAtivos.has("apelido")) {
+      const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 150);
+    }
+    if (r.resumo && camposAtivos.has("resumo")) {
+      const el = document.getElementById("m-resumo"); if (el) el.value = r.resumo;
+    }
+    if (r.palavrasChave && camposAtivos.has("palavrasChave")) {
+      const el = document.getElementById("m-palavraschave"); if (el) el.value = r.palavrasChave;
+    }
   }
 
   // Processa PDF carregado manualmente (fallback CORS)
@@ -2675,23 +2751,221 @@ async function renderPainel() {
   // Bind clicks no painel + alertas (DEVE rodar APÓS atualizar todos os innerHTML)
   bindarPainelClicks();
 
-  // Estatísticas
-  document.getElementById("stat-camara").textContent = all.filter(p => p.origem === "camara").length;
-  document.getElementById("stat-senado-rqs").textContent = all.filter(p => p.origem === "senado" && p.sigla === "RQS").length;
-  document.getElementById("stat-senado-req").textContent = all.filter(p => p.origem === "senado" && p.sigla === "REQ").length;
-
-  const cont = { tramitacao_inicial: 0, aguardando_aprovacao: 0, aprovado: 0, aguardando_resposta: 0, respondido: 0, retirado: 0, pendente: 0 };
-  for (const p of all) cont[p.situacaoLegislativa || "pendente"]++;
-  for (const k of Object.keys(cont)) {
-    const el = document.getElementById(`stat-leg-${k}`);
-    if (el) el.textContent = cont[k];
-  }
+  // Indicadores (gráficos SVG) — passa array de marcacoes (não o Map)
+  await renderIndicadores(all, [...marcMap.values()]);
 }
 
-// Bind dos clicks no painel — separado em função para ser chamado uma única vez por render
+// ===== INDICADORES (gráficos SVG na aba Painéis) =====
+
+// Renderização principal — invocada por renderPainel
+async function renderIndicadores(props, marcs) {
+  if (!props) props = await DB.getAll("proposicoes");
+  if (!marcs) marcs = await DB.getAll("marcacoes");
+  renderGrafEtapas(marcs);
+  renderGrafLeg(props);
+  renderGrafCasa(props);
+  renderGrafHistorico(marcs);
+}
+
+// Helpers de SVG — gráfico de barras horizontais
+function renderBarsHorizontal(containerId, dados, opts) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  if (dados.length === 0) {
+    cont.innerHTML = `<div class="empty">Sem dados.</div>`;
+    return;
+  }
+  const total = dados.reduce((s, d) => s + d.valor, 0) || 1;
+  const maxLabel = Math.max(...dados.map(d => d.label.length));
+  const labelW = Math.min(180, Math.max(80, maxLabel * 7));
+  const valueW = 50;
+  const rowH = 24;
+  const gap = 6;
+  const w = 460;
+  const barW = w - labelW - valueW - 16;
+  const h = dados.length * (rowH + gap) + 8;
+  const max = Math.max(...dados.map(d => d.valor)) || 1;
+  const cor = (opts && opts.cor) || "var(--primary)";
+
+  const bars = dados.map((d, i) => {
+    const y = i * (rowH + gap) + 4;
+    const len = (d.valor / max) * barW;
+    const pct = ((d.valor / total) * 100).toFixed(1);
+    return `
+      <text x="0" y="${y + rowH/2 + 4}" class="graf-label">${escapeHtml(d.label)}</text>
+      <rect x="${labelW}" y="${y}" width="${len}" height="${rowH}" rx="3" fill="${d.cor || cor}" class="graf-bar">
+        <title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)</title>
+      </rect>
+      <text x="${labelW + len + 6}" y="${y + rowH/2 + 4}" class="graf-value">${d.valor}</text>
+    `;
+  }).join("");
+
+  cont.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet">${bars}</svg>`;
+}
+
+// 1. Gráfico de etapas — apenas RICs com statusInterno = "andamento_cc"
+function renderGrafEtapas(marcs) {
+  const cont = marcs.filter(m => m.statusInterno === "andamento_cc");
+  const buckets = {};
+  for (const m of cont) {
+    const e = m.etapa || "(sem etapa)";
+    buckets[e] = (buckets[e] || 0) + 1;
+  }
+  const dados = Object.entries(buckets)
+    .map(([k, v]) => {
+      const label = k === "(sem etapa)" ? "(sem etapa)" : ((ETAPAS.find(et => et.v === k) || {}).t || k);
+      return { label, valor: v };
+    })
+    .sort((a, b) => b.valor - a.valor);
+  renderBarsHorizontal("graf-etapas", dados);
+}
+
+// 2. Gráfico de situação legislativa
+function renderGrafLeg(props) {
+  const ordem = ["tramitacao_inicial", "aguardando_aprovacao", "aprovado", "aguardando_resposta", "respondido", "retirado", "pendente"];
+  const labels = {
+    "tramitacao_inicial": "Tramitação inicial",
+    "aguardando_aprovacao": "Aguardando aprovação",
+    "aprovado": "Aprovado",
+    "aguardando_resposta": "Aguardando resposta",
+    "respondido": "Respondido",
+    "retirado": "Retirado",
+    "pendente": "Pendente / não enriquecido"
+  };
+  const cores = {
+    "aprovado": "var(--leg-aprovado)",
+    "aguardando_resposta": "var(--leg-aguard-resp)",
+    "respondido": "var(--leg-respondido)"
+  };
+  const buckets = {};
+  for (const p of props) {
+    const k = p.situacaoLegislativa || "pendente";
+    buckets[k] = (buckets[k] || 0) + 1;
+  }
+  const dados = ordem
+    .filter(k => buckets[k])
+    .map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k] }));
+  renderBarsHorizontal("graf-leg", dados);
+}
+
+// 3. Gráfico de casa parlamentar
+function renderGrafCasa(props) {
+  const buckets = {};
+  for (const p of props) {
+    const o = p.origem || "(?)";
+    buckets[o] = (buckets[o] || 0) + 1;
+  }
+  const labels = { "camara": "Câmara dos Deputados", "senado": "Senado Federal", "cn": "Congresso Nacional", "cldf": "CLDF" };
+  const dados = Object.entries(buckets)
+    .map(([k, v]) => ({ label: labels[k] || k, valor: v }))
+    .sort((a, b) => b.valor - a.valor);
+  renderBarsHorizontal("graf-casa", dados);
+}
+
+// 4. Gráfico de linha — RICs enviados à Casa Civil ao longo do tempo
+// Considera marcacao.dataRecebimentoSEI (data de protocolo na CC) agrupado por mês
+function renderGrafHistorico(marcs) {
+  if (!marcs) {
+    DB.getAll("marcacoes").then(renderGrafHistorico);
+    return;
+  }
+  const cont = document.getElementById("graf-historico");
+  if (!cont) return;
+  const datas = marcs
+    .map(m => m.dataRecebimentoSEI)
+    .filter(d => d && /^\d{4}-\d{2}/.test(d));
+  if (datas.length === 0) {
+    cont.innerHTML = `<div class="empty">Nenhum RIC com data de recebimento na CC ainda.</div>`;
+    return;
+  }
+  // Determinar limite inferior pelo período selecionado
+  const hoje = new Date();
+  let limite = null;
+  if (historicoPeriodo !== "todos") {
+    const meses = parseInt(historicoPeriodo, 10) || 6;
+    const lim = new Date(hoje.getFullYear(), hoje.getMonth() - meses + 1, 1);
+    limite = `${lim.getFullYear()}-${String(lim.getMonth() + 1).padStart(2, "0")}`;
+  }
+  // Agrupa por mês YYYY-MM
+  const buckets = new Map();
+  for (const d of datas) {
+    const ym = d.substring(0, 7);
+    if (limite && ym < limite) continue;
+    buckets.set(ym, (buckets.get(ym) || 0) + 1);
+  }
+  if (buckets.size === 0) {
+    cont.innerHTML = `<div class="empty">Sem dados no período selecionado.</div>`;
+    return;
+  }
+  // Preencher meses sem dados (zero) entre o min e max do conjunto
+  const meses = [...buckets.keys()].sort();
+  const minM = meses[0], maxM = meses[meses.length - 1];
+  const [minY, minMo] = minM.split("-").map(Number);
+  const [maxY, maxMo] = maxM.split("-").map(Number);
+  const serie = [];
+  let yy = minY, mm = minMo;
+  while (yy < maxY || (yy === maxY && mm <= maxMo)) {
+    const ym = `${yy}-${String(mm).padStart(2, "0")}`;
+    serie.push({ ym, valor: buckets.get(ym) || 0 });
+    mm++; if (mm > 12) { mm = 1; yy++; }
+  }
+
+  // Render SVG line chart
+  const w = 460, h = 200;
+  const padL = 36, padR = 14, padT = 14, padB = 32;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const max = Math.max(...serie.map(s => s.valor)) || 1;
+  // Y ticks (4 linhas)
+  const nTicks = 4;
+  const ticks = [];
+  for (let i = 0; i <= nTicks; i++) {
+    const v = Math.round((max / nTicks) * i);
+    const y = padT + plotH - (v / max) * plotH;
+    ticks.push({ v, y });
+  }
+  // Pontos da linha
+  const dx = serie.length > 1 ? plotW / (serie.length - 1) : plotW / 2;
+  const pts = serie.map((s, i) => ({
+    x: padL + (serie.length > 1 ? i * dx : plotW / 2),
+    y: padT + plotH - (s.valor / max) * plotH,
+    valor: s.valor,
+    ym: s.ym
+  }));
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const areaPath = pts.length > 0
+    ? `M${pts[0].x},${padT + plotH} ` + pts.map(p => `L${p.x},${p.y}`).join(" ") + ` L${pts[pts.length-1].x},${padT + plotH} Z`
+    : "";
+
+  // Labels do eixo X — mostrar a cada N para não poluir
+  const stepX = serie.length <= 6 ? 1 : serie.length <= 12 ? 2 : Math.ceil(serie.length / 6);
+
+  const svg = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet">
+      ${ticks.map(t => `
+        <line x1="${padL}" y1="${t.y}" x2="${w - padR}" y2="${t.y}" class="graf-grid-line"/>
+        <text x="${padL - 4}" y="${t.y + 3}" text-anchor="end" class="graf-tick">${t.v}</text>
+      `).join("")}
+      <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" class="graf-axis"/>
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" class="graf-axis"/>
+      <path d="${areaPath}" class="graf-line-area"/>
+      <path d="${linePath}" class="graf-line-path"/>
+      ${pts.map((p, i) => `
+        <circle cx="${p.x}" cy="${p.y}" r="3" class="graf-line-dot">
+          <title>${p.ym}: ${p.valor} RIC${p.valor === 1 ? "" : "s"}</title>
+        </circle>
+        ${i % stepX === 0 ? `<text x="${p.x}" y="${padT + plotH + 14}" text-anchor="middle" class="graf-tick">${p.ym}</text>` : ""}
+      `).join("")}
+    </svg>
+  `;
+  cont.innerHTML = svg;
+}
+
+// Bind dos clicks no painel — duplo-clique abre o detalhe
 function bindarPainelClicks() {
   document.querySelectorAll("[data-painel-id]").forEach(el => {
-    el.onclick = () => abrirDetalhe(el.dataset.painelId);
+    el.ondblclick = () => abrirDetalhe(el.dataset.painelId);
+    el.style.cursor = "pointer";
+    el.title = "Duplo clique para abrir detalhamento";
   });
   document.querySelectorAll(".alerta-pill[data-alerta]").forEach(el => {
     el.onclick = () => {
@@ -2770,6 +3044,39 @@ bindSegmented("seg-apres-dias", "apresPeriodo");
 bindSegmented("seg-mov-dias", "movPeriodo");
 bindSegmented("seg-aprov-dias", "aprovPeriodo");
 
+// Painéis colapsáveis — toggle + persistência em localStorage
+(function inicializarPaineisColapsaveis() {
+  const LS_KEY = "monitor-ric-paineis-colapsados";
+  let estados = {};
+  try { estados = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) {}
+
+  // Aplicar estado inicial
+  document.querySelectorAll(".painel-titulo[data-grupo]").forEach(titulo => {
+    const grupo = titulo.dataset.grupo;
+    const conteudo = document.querySelector(`[data-grupo-content="${grupo}"]`);
+    if (estados[grupo]) {
+      titulo.classList.add("collapsed");
+      if (conteudo) conteudo.classList.add("collapsed");
+    }
+    titulo.addEventListener("click", () => {
+      const colapsado = !titulo.classList.contains("collapsed");
+      titulo.classList.toggle("collapsed", colapsado);
+      if (conteudo) conteudo.classList.toggle("collapsed", colapsado);
+      estados[grupo] = colapsado;
+      localStorage.setItem(LS_KEY, JSON.stringify(estados));
+    });
+  });
+})();
+
+// Seletor de período do gráfico histórico
+let historicoPeriodo = "6";
+document.querySelectorAll("#seg-historico-periodo button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#seg-historico-periodo button").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  historicoPeriodo = b.dataset.p;
+  renderGrafHistorico();
+}));
+
 async function renderHeaderStats() {
   const all = await DB.getAll("proposicoes");
   const marcs = await DB.getAll("marcacoes");
@@ -2777,6 +3084,9 @@ async function renderHeaderStats() {
   const relevantes = marcs.filter(m => m.relevante).length;
   document.getElementById("stat-relevantes").textContent = relevantes;
   document.getElementById("stat-aprovados").textContent = all.filter(p => p.situacaoLegislativa === "aprovado").length;
+  // Aguardando aprovação no Congresso
+  const agAprov = all.filter(p => p.situacaoLegislativa === "aguardando_aprovacao").length;
+  document.getElementById("stat-ag-aprov").textContent = agAprov;
   // Em andamento CC / Aguardando resposta (combinado, mesma regra do painel)
   const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
   const ccAguardando = all.filter(p => {
@@ -2786,6 +3096,14 @@ async function renderHeaderStats() {
     return false;
   }).length;
   document.getElementById("stat-andamento").textContent = ccAguardando;
+  // Etapas em atraso (prazoEtapa vencido para RICs ainda não respondidos/retirados)
+  const hojeISO = isoHoje();
+  const atrasados = marcs.filter(m => {
+    if (!m.prazoEtapa) return false;
+    if (m.statusInterno === "respondido" || m.statusInterno === "retirado") return false;
+    return m.prazoEtapa < hojeISO;
+  }).length;
+  document.getElementById("stat-atrasados").textContent = atrasados;
   const ult = await getConfig("ultimaSync", null);
   const sd = document.getElementById("stat-sync");
   if (sd) sd.textContent = ult ? new Date(ult).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "nunca";
@@ -3004,6 +3322,28 @@ document.getElementById("btn-reenriquecer").addEventListener("click", async () =
 
 if (location.protocol === "file:") document.getElementById("cors-warning").style.display = "block";
 
+// Sync rápida — botão circular ao lado do badge "Última sync"
+// Usa a configuração de "Últimos N dias" do modal de Sincronização
+document.getElementById("btn-sync-rapida").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-sync-rapida");
+  if (btn.classList.contains("spinning")) return;
+  const dias = parseInt(document.getElementById("sync-dias").value, 10) || 3;
+  btn.classList.add("spinning");
+  btn.title = `Sincronizando últimos ${dias} dia${dias === 1 ? "" : "s"}…`;
+  try {
+    await sincronizarIncremental(dias);
+    await renderHeaderStats();
+    await renderPainel();
+    btn.title = `Sincronização incremental rápida (${dias} dias)`;
+  } catch (e) {
+    console.error("sync-rapida:", e);
+    alert(`Falha na sincronização: ${e.message}`);
+    btn.title = `Falha na última tentativa: ${e.message}`;
+  } finally {
+    btn.classList.remove("spinning");
+  }
+});
+
 // ===== DARK MODE =====
 async function inicializarTema() {
   const saved = await getConfig("tema", null);
@@ -3041,7 +3381,9 @@ document.querySelectorAll(".statusbar-item[data-stat]").forEach(el => {
     if (s === "total") aplicarFiltrosViaPaineis({});
     else if (s === "relevantes") aplicarFiltrosViaPaineis({ rel: "sim" });
     else if (s === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
+    else if (s === "aguardando_aprov") aplicarFiltrosViaPaineis({ leg: "aguardando_aprovacao" });
     else if (s === "aguardando") aplicarFiltrosViaPaineis({ leg: "aguardando_resposta" });
+    else if (s === "atrasados") aplicarFiltrosViaPaineis({ prazo: "vencido" });
   });
 });
 

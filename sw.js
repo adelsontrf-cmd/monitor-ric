@@ -1,6 +1,6 @@
-// Monitor RIC — Service Worker v4.2
+// Monitor RIC — Service Worker v4.4
 // Cache-first do shell. Não cacheia chamadas a APIs externas.
-const CACHE_NAME = "monitor-ric-v4-2";
+const CACHE_NAME = "monitor-ric-v4-4";
 const SHELL = [
   "./",
   "./index.html",
@@ -31,7 +31,6 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  // Não interceptar chamadas a APIs externas — passa direto pra rede
   const apisExternas = [
     "dadosabertos.camara.leg.br",
     "legis.senado.leg.br",
@@ -41,7 +40,6 @@ self.addEventListener("fetch", e => {
   ];
   if (apisExternas.some(d => url.hostname.includes(d))) return;
   if (e.request.method !== "GET") return;
-  // stale-while-revalidate para o shell
   e.respondWith(
     caches.match(e.request).then(cached => {
       const networkFetch = fetch(e.request).then(resp => {
