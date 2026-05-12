@@ -15,20 +15,23 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* Paleta neutra/moderna — base slate + acento índigo */
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text: #0f172a;
-  --text-2: #334155;
-  --muted: #64748b;
-  --muted-2: #94a3b8;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-light: #eef2ff;
-  --accent-strong: #3730a3;
+  /* Paleta v4.5 — modo claro (azul muito claro + ciano escurecido) */
+  --bg: #EFF5F9;
+  --bg-body: #D8E3EB;
+  --bg-header: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #F7FBFD;
+  --border: #C5D9E6;
+  --border-strong: #1F5F63;
+  --text: #0D1117;
+  --text-2: #2C4A6B;
+  --muted: #3D5A80;
+  --muted-2: #6B7F94;
+  --accent: #1F5F63;
+  --accent-hover: #2C7A7E;
+  --accent-light: rgba(31, 95, 99, 0.12);
+  --accent-strong: #1F5F63;
+  /* Cores semânticas — preservadas */
   --warn: #b45309;
   --warn-light: #fef3c7;
   --warn-strong: #92400e;
@@ -38,11 +41,11 @@
   --err: #b91c1c;
   --err-light: #fee2e2;
   --err-strong: #7f1d1d;
-  --info: #2563eb;
-  --info-light: #dbeafe;
-  --info-strong: #1e40af;
-  --neutral: #475569;
-  --neutral-light: #f1f5f9;
+  --info: #2C7A7E;
+  --info-light: #d4eaeb;
+  --info-strong: #1F5F63;
+  --neutral: #3D5A80;
+  --neutral-light: #F7FBFD;
   --gold: #b45309;
   --gold-light: #fef3c7;
   --purple: #7c3aed;
@@ -50,38 +53,43 @@
   --amber: #d97706;
   --amber-light: #fef3c7;
   /* Cores específicas das situações legislativas */
-  --leg-tramitacao: #64748b;
-  --leg-tramitacao-bg: #f1f5f9;
+  --leg-tramitacao: #3D5A80;
+  --leg-tramitacao-bg: #F7FBFD;
   --leg-aguard-aprov: #2563eb;
   --leg-aguard-aprov-bg: #dbeafe;
   --leg-aprovado: #15803d;
   --leg-aprovado-bg: #dcfce7;
   --leg-aguard-resp: #d97706;
   --leg-aguard-resp-bg: #fef3c7;
-  --leg-respondido: #0e7490;
-  --leg-respondido-bg: #cffafe;
+  --leg-respondido: #1F5F63;
+  --leg-respondido-bg: #d4eaeb;
   --leg-retirado: #57534e;
   --leg-retirado-bg: #f5f5f4;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px rgba(13, 17, 23, 0.04);
+  --shadow: 0 2px 4px rgba(13, 17, 23, 0.06);
+  --shadow-md: 0 8px 24px rgba(31, 95, 99, 0.18);
   --radius: 8px;
   --radius-sm: 6px;
+  --radius-lg: 12px;
 }
 html.dark {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --surface-2: #334155;
-  --border: #334155;
-  --border-strong: #475569;
-  --text: #f1f5f9;
-  --text-2: #cbd5e1;
-  --muted: #94a3b8;
-  --muted-2: #64748b;
-  --accent: #818cf8;
-  --accent-hover: #a5b4fc;
-  --accent-light: #312e81;
-  --accent-strong: #c7d2fe;
+  /* Paleta v4.5 — modo escuro (azul profundo + ciano vivo) */
+  --bg: #151D28;
+  --bg-body: #0D1117;
+  --bg-header: #0D1117;
+  --surface: #1E3A52;
+  --surface-2: #2A4A68;
+  --border: rgba(93, 217, 210, 0.2);
+  --border-strong: rgba(93, 217, 210, 0.5);
+  --text: #F0F6FC;
+  --text-2: #B1BFDD;
+  --muted: #8B9DC3;
+  --muted-2: #6B7F94;
+  --accent: #5DD9D2;
+  --accent-hover: #6BE4DC;
+  --accent-light: rgba(93, 217, 210, 0.15);
+  --accent-strong: #6BE4DC;
+  /* Cores semânticas — preservadas (tons escuros) */
   --warn: #fbbf24;
   --warn-light: #422006;
   --warn-strong: #fde68a;
@@ -91,42 +99,49 @@ html.dark {
   --err: #f87171;
   --err-light: #450a0a;
   --err-strong: #fca5a5;
-  --info: #60a5fa;
-  --info-light: #1e3a8a;
-  --info-strong: #93c5fd;
-  --neutral: #94a3b8;
-  --neutral-light: #1e293b;
+  --info: #5DD9D2;
+  --info-light: rgba(93, 217, 210, 0.1);
+  --info-strong: #6BE4DC;
+  --neutral: #B1BFDD;
+  --neutral-light: #1E3A52;
   --gold: #fbbf24;
   --gold-light: #422006;
   --purple: #a78bfa;
   --purple-light: #4c1d95;
   --amber: #fbbf24;
   --amber-light: #422006;
-  --leg-tramitacao: #cbd5e1;
-  --leg-tramitacao-bg: #334155;
+  --leg-tramitacao: #B1BFDD;
+  --leg-tramitacao-bg: #2A4A68;
   --leg-aguard-aprov: #93c5fd;
   --leg-aguard-aprov-bg: #1e3a8a;
   --leg-aprovado: #86efac;
   --leg-aprovado-bg: #052e16;
   --leg-aguard-resp: #fbbf24;
   --leg-aguard-resp-bg: #422006;
-  --leg-respondido: #67e8f9;
-  --leg-respondido-bg: #083344;
+  --leg-respondido: #5DD9D2;
+  --leg-respondido-bg: rgba(93, 217, 210, 0.1);
   --leg-retirado: #d6d3d1;
   --leg-retirado-bg: #292524;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(93, 217, 210, 0.25);
 }
 html, body { height: 100%; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; font-size: 14px; font-feature-settings: "cv02","cv03","cv04","cv11"; }
 .tabular { font-variant-numeric: tabular-nums; }
 
 /* Header */
-header.app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0; }
+header.app-header { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0; }
+html.dark header.app-header { border-bottom: 1px solid var(--border); }
 .header-top { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .header-brand { display: flex; align-items: center; gap: 10px; }
-.header-brand .brand-mark { width: 36px; height: 36px; flex: 0 0 36px; }
+.brand-logo { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 18px; }
+html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
+@media (max-width: 640px) {
+  .brand-logo { width: 32px; height: 32px; flex: 0 0 32px; }
+}
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
 .header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
 .versao-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; background: var(--surface-2); color: var(--muted); margin-left: 6px; letter-spacing: 0.05em; align-self: flex-start; margin-top: 8px; }
@@ -146,10 +161,17 @@ header.app-header { background: var(--surface); border-bottom: 1px solid var(--b
 .statusbar-item .small-label { font-size: 11px; color: var(--muted-2); margin-top: 2px; }
 
 /* Tabs */
-nav.tabs { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 4px; overflow-x: auto; }
-nav.tabs button { background: none; border: none; padding: 12px 16px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; }
-nav.tabs button:hover { color: var(--text); }
+nav.tabs { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0 24px; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+html.dark nav.tabs { border-bottom: 1px solid var(--border); }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs button { background: none; border: none; padding: 14px 18px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; transition: color 0.2s ease, border-bottom-color 0.2s ease; flex-shrink: 0; }
+nav.tabs button:hover:not(.active) { color: var(--text); }
 nav.tabs button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 4px; }
+@media (max-width: 640px) {
+  nav.tabs { padding: 0 12px; }
+  nav.tabs button { padding: 12px 14px; font-size: 13px; }
+}
 
 main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
 .pane { display: none; } .pane.active { display: block; }
@@ -185,6 +207,159 @@ main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
 .grid-3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); margin-bottom: 22px; }
 .grid-2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
 .grafico-grid { margin-bottom: 0; }
+
+/* ===== Stat Cards (v4.5 — aba Painel) ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+@media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+@media (min-width: 1024px) { .stats-grid { gap: 20px; } }
+.stat-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 20px 16px;
+  border: 2px solid var(--border);
+  box-shadow: 0 2px 4px rgba(13, 17, 23, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+html.dark .stat-card {
+  background: linear-gradient(145deg, #1E3A52 0%, #2A4A68 100%);
+  border: 1px solid var(--border);
+}
+@media (min-width: 768px) { .stat-card { padding: 24px 20px; } }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+.stat-card:hover::before { opacity: 1; }
+.stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stat-card-icon {
+  width: 22px; height: 22px;
+  color: rgba(61, 90, 128, 0.4);
+  margin-bottom: 8px;
+}
+html.dark .stat-card-icon { color: rgba(107, 228, 220, 0.5); }
+.stat-card-icon svg { width: 100%; height: 100%; }
+.stat-card-number {
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+@media (min-width: 768px) { .stat-card-number { font-size: 44px; margin-bottom: 10px; } }
+.stat-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+@media (min-width: 768px) { .stat-card-label { font-size: 12px; } }
+
+/* ===== Chart Cards (v4.5 — aba Painel) ===== */
+.charts-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
+@media (min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
+.chart-wide { grid-column: 1 / -1; }
+.chart-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 20px 16px;
+  border: 2px solid var(--border);
+  box-shadow: 0 2px 4px rgba(13, 17, 23, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+html.dark .chart-card { border: 1px solid var(--border); }
+@media (min-width: 768px) { .chart-card { padding: 24px 20px; } }
+.chart-header { margin-bottom: 16px; }
+.chart-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.chart-subtitle { font-size: 11px; color: var(--muted); }
+.chart-area { width: 100%; height: 180px; position: relative; }
+@media (min-width: 768px) { .chart-area { height: 220px; } }
+.chart-area svg { width: 100%; height: 100%; display: block; }
+.chart-area .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-style: italic; font-size: 13px; text-align: center; padding: 16px; }
+.chart-donut { display: flex; align-items: center; justify-content: center; }
+.chart-donut svg { max-width: 220px; max-height: 220px; }
+/* Cores do gráfico de barras (com gradiente) */
+.chart-bar { transition: opacity 0.15s; }
+.chart-bar:hover { opacity: 0.85; }
+.chart-axis-label { fill: var(--muted); font-size: 10px; font-family: inherit; }
+.chart-axis-line { stroke: var(--border-strong); stroke-width: 1; opacity: 0.5; }
+.chart-grid-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,3; opacity: 0.5; }
+.chart-value-label { fill: var(--text); font-size: 11px; font-weight: 600; font-family: inherit; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--text-2); }
+.chart-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.donut-center { font-size: 18px; font-weight: 600; fill: var(--text); }
+.donut-center-sub { font-size: 10px; fill: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ===== Modal XLSX (v4.5) ===== */
+.xlsx-dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 36px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface-2);
+  transition: all 0.15s;
+  user-select: none;
+}
+.xlsx-dropzone:hover, .xlsx-dropzone.dragover { border-color: var(--accent); background: var(--accent-light); }
+.xlsx-dropzone-icon { font-size: 36px; margin-bottom: 8px; }
+.xlsx-dropzone-text { font-size: 14px; }
+.xlsx-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.xlsx-progress-bar { width: 100%; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.xlsx-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); width: 0%; transition: width 0.2s ease; }
+.xlsx-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.xlsx-resumo-item { background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); }
+.xlsx-resumo-item.attention { background: var(--warn-light); border-color: var(--warn); }
+.xlsx-resumo-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.xlsx-resumo-value { font-size: 22px; font-weight: 700; color: var(--accent); }
+.xlsx-resumo-item.attention .xlsx-resumo-value { color: var(--warn-strong); }
+.xlsx-slugs-novos { background: var(--warn-light); border: 1px solid var(--warn); border-radius: var(--radius-sm); padding: 10px 12px; margin: 12px 0 0 0; font-size: 13px; color: var(--warn-strong); }
+.xlsx-diff-filtros { display: flex; gap: 4px; }
+.xlsx-diff-filtros .btn { font-size: 12px; padding: 4px 10px; }
+.xlsx-diff-filtros .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.xlsx-diff-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.xlsx-diff-item { border-bottom: 1px solid var(--border); }
+.xlsx-diff-item:last-child { border-bottom: none; }
+.xlsx-diff-item-header { padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; user-select: none; transition: background 0.15s; }
+.xlsx-diff-item-header:hover { background: var(--surface); }
+.xlsx-diff-item-title { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; }
+.xlsx-diff-item-title b { color: var(--text); }
+.xlsx-diff-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+.xlsx-diff-badge.novo { background: var(--ok-light); color: var(--ok-strong); }
+.xlsx-diff-badge.atualizado { background: var(--info-light); color: var(--info-strong); }
+.xlsx-diff-content { display: none; padding: 0 12px 12px 12px; font-size: 12px; }
+.xlsx-diff-item.open .xlsx-diff-content { display: block; }
+.xlsx-diff-item.open .xlsx-diff-arrow { transform: rotate(90deg); }
+.xlsx-diff-arrow { font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.xlsx-diff-row { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 8px; padding: 4px 0; align-items: start; border-bottom: 1px dashed var(--border); }
+.xlsx-diff-row:last-child { border-bottom: none; }
+.xlsx-diff-row-campo { font-weight: 500; color: var(--text-2); font-size: 11px; padding-top: 2px; }
+.xlsx-diff-row-antigo { background: var(--err-light); color: var(--err-strong); padding: 3px 6px; border-radius: 3px; text-decoration: line-through; word-break: break-word; }
+.xlsx-diff-row-novo { background: var(--ok-light); color: var(--ok-strong); padding: 3px 6px; border-radius: 3px; word-break: break-word; }
+.xlsx-diff-row.criacao .xlsx-diff-row-antigo { display: none; }
+.xlsx-diff-row.criacao { grid-template-columns: 130px 1fr; }
+.xlsx-historico-item { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; background: var(--surface-2); }
+.xlsx-historico-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.xlsx-historico-item-arquivo { font-weight: 500; font-size: 13px; }
+.xlsx-historico-item-data { font-size: 11px; color: var(--muted); }
+.xlsx-historico-item-stats { font-size: 12px; color: var(--text-2); }
+.xlsx-historico-item-acoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .grafico-card h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 4px 0; }
 .grafico-card p { margin-bottom: 12px; }
 .graf-container { width: 100%; overflow: visible; }
@@ -404,26 +579,16 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <header class="app-header">
   <div class="header-top">
     <div class="header-brand">
-      <svg class="brand-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="grad-bg" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#4f46e5"/>
-            <stop offset="100%" stop-color="#7c3aed"/>
-          </linearGradient>
-        </defs>
-        <rect width="64" height="64" rx="14" fill="url(#grad-bg)"/>
-        <path d="M18 14h22l8 8v28a2 2 0 0 1-2 2H18a2 2 0 0 1-2-2V16a2 2 0 0 1 2-2z" fill="white" opacity="0.95"/>
-        <path d="M40 14v8h8" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M22 30h20M22 36h20M22 42h14" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="48" cy="48" r="8" fill="#10b981" stroke="white" stroke-width="2"/>
-        <path d="M45 48l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
+      <div class="brand-logo" aria-hidden="true">
+        <img src="icon-72.png" alt="Monitor RIC" width="36" height="36" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
+      </div>
       <h1>Monitor RIC<small>Requerimentos de Informação do Congresso Nacional</small></h1>
-      <span class="versao-badge" title="Versão atual">v4.4</span>
+      <span class="versao-badge" title="Versão atual">v4.5</span>
     </div>
     <div class="header-actions">
       <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
       <button class="btn btn-icon" id="btn-open-sync" title="Sincronização">⟳ Sincronizar</button>
+      <button class="btn btn-icon" id="btn-open-xlsx" title="Atualizar dados a partir de planilha XLSX">⬆ Atualizar via XLSX</button>
       <button class="btn btn-icon" id="btn-open-config" title="Configurações">⚙ Configurações</button>
     </div>
   </div>
@@ -444,20 +609,96 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 </header>
 
-<nav class="tabs">
-  <button data-pane="painel" class="active">Painel</button>
-  <button data-pane="lista">Requerimentos</button>
+<nav class="tabs" role="tablist">
+  <button data-pane="painel" class="active" role="tab" aria-selected="true">Painel</button>
+  <button data-pane="gerencial" role="tab" aria-selected="false">Gerencial</button>
+  <button data-pane="lista" role="tab" aria-selected="false">Requerimentos</button>
 </nav>
 
 <main>
 
-<!-- PAINEL -->
+<!-- NOVA ABA PAINEL — Cards de indicadores + gráficos -->
 <section class="pane active" id="pane-painel">
   <div id="pwa-install-banner" class="pwa-banner" style="display:none">
     <div class="pwa-banner-text"><b>📱 Instalar como aplicativo</b><br>Instale o Monitor RIC no seu dispositivo para acesso rápido e funcionalidade offline.</div>
     <div><button class="btn btn-primary btn-sm" id="btn-pwa-install">Instalar</button> <button class="btn btn-sm" id="btn-pwa-dismiss">Mais tarde</button></div>
   </div>
 
+  <!-- Cards de indicadores -->
+  <div class="stats-grid" role="region" aria-label="Cards de indicadores">
+    <div class="stat-card" data-stat-card="todos" role="button" tabindex="0" aria-label="Total de RICs (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-todos">—</div>
+      <div class="stat-card-label">Todos</div>
+    </div>
+    <div class="stat-card" data-stat-card="andamento" role="button" tabindex="0" aria-label="Em andamento (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-andamento">—</div>
+      <div class="stat-card-label">Em andamento</div>
+    </div>
+    <div class="stat-card" data-stat-card="aprovados" role="button" tabindex="0" aria-label="Aprovados (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-aprovados">—</div>
+      <div class="stat-card-label">Aprovados</div>
+    </div>
+    <div class="stat-card" data-stat-card="novos" role="button" tabindex="0" aria-label="Novos (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-novos">—</div>
+      <div class="stat-card-label">Novos (7 dias)</div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Etapas — em andamento na Casa Civil</div>
+        <div class="chart-subtitle">Distribuição dos RICs em andamento por etapa atual</div>
+      </div>
+      <div id="chart-etapas" class="chart-area"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Situação legislativa</div>
+        <div class="chart-subtitle">Como os RICs estão no Congresso</div>
+      </div>
+      <div id="chart-situacao" class="chart-area chart-donut"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Casa parlamentar</div>
+        <div class="chart-subtitle">Origem dos RICs</div>
+      </div>
+      <div id="chart-casa" class="chart-area chart-donut"></div>
+    </div>
+    <div class="chart-card chart-wide">
+      <div class="chart-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <div>
+          <div class="chart-title">Evolução — RICs recebidos na Casa Civil</div>
+          <div class="chart-subtitle">RICs com data de recebimento (SEI), por mês</div>
+        </div>
+        <div class="painel-segmented" id="seg-chart-periodo" style="margin:0">
+          <button data-p="6" class="active">6m</button>
+          <button data-p="12">12m</button>
+          <button data-p="24">24m</button>
+          <button data-p="todos">Tudo</button>
+        </div>
+      </div>
+      <div id="chart-evolucao" class="chart-area"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABA GERENCIAL — ex-conteúdo da aba Painel v4.4 (sem gráficos) -->
+<section class="pane" id="pane-gerencial">
   <div class="alertas-bar" id="alertas-bar"></div>
 
   <h2 class="painel-titulo" data-grupo="congresso">Requerimentos no Congresso</h2>
@@ -505,41 +746,6 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="painel-coluna attention">
       <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
-    </div>
-  </div>
-
-  <h2 class="painel-titulo" data-grupo="graficos">Indicadores</h2>
-  <div class="painel-grupo" data-grupo-content="graficos" style="margin-bottom:22px">
-    <div class="grid-2 grafico-grid">
-      <div class="card grafico-card">
-        <h3>Etapas — em andamento na Casa Civil</h3>
-        <p class="text-small text-muted">RICs com status interno "Em andamento na CC", agrupados pela etapa atual.</p>
-        <div id="graf-etapas" class="graf-container"></div>
-      </div>
-      <div class="card grafico-card">
-        <h3>Situação legislativa</h3>
-        <p class="text-small text-muted">Distribuição dos RICs pelas situações legislativas no Congresso.</p>
-        <div id="graf-leg" class="graf-container"></div>
-      </div>
-      <div class="card grafico-card">
-        <h3>Casa parlamentar</h3>
-        <p class="text-small text-muted">Origem dos RICs (Câmara, Senado, outras).</p>
-        <div id="graf-casa" class="graf-container"></div>
-      </div>
-      <div class="card grafico-card">
-        <h3>Histórico de envio à Casa Civil</h3>
-        <p class="text-small text-muted">Quantidade de RICs com data de recebimento na CC (SEI), por mês.</p>
-        <div class="toolbar" style="gap:6px;margin-bottom:8px">
-          <span class="text-small text-muted">Período:</span>
-          <div class="painel-segmented" id="seg-historico-periodo">
-            <button data-p="6" class="active">6 meses</button>
-            <button data-p="12">12 meses</button>
-            <button data-p="24">24 meses</button>
-            <button data-p="todos">Todos</button>
-          </div>
-        </div>
-        <div id="graf-historico" class="graf-container"></div>
-      </div>
     </div>
   </div>
 </section>
@@ -652,6 +858,104 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
     </div>
     <div class="card"><h2>Log</h2><div class="log" id="sync-log">Pronto.</div></div>
+  </div>
+</div>
+
+<!-- MODAL XLSX (v4.5) -->
+<div class="modal-bg" id="modal-xlsx">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>⬆ Atualizar via XLSX</h2>
+      <button class="modal-close" data-close-modal="modal-xlsx">&times;</button>
+    </div>
+
+    <!-- ETAPA 1: Seleção -->
+    <div class="xlsx-step" id="xlsx-step-1">
+      <p class="text-small text-muted" style="margin-bottom:12px">Selecione um arquivo Excel <code>Controle_RICs.xlsx</code> (aba <b>Controle RI</b>, 27 colunas) para atualizar os dados do app. O merge é inteligente — apenas marcações são atualizadas; nada é removido.</p>
+      <div class="xlsx-dropzone" id="xlsx-dropzone">
+        <div class="xlsx-dropzone-icon">📊</div>
+        <div class="xlsx-dropzone-text"><b>Arraste o arquivo aqui</b><br><span class="text-small text-muted">ou clique para selecionar</span></div>
+        <input type="file" id="xlsx-input" accept=".xlsx,.xlsm" style="display:none">
+      </div>
+      <div class="xlsx-actions" style="margin-top:12px">
+        <button class="btn btn-sm" id="btn-xlsx-historico">📜 Ver histórico de importações</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 2: Processando -->
+    <div class="xlsx-step" id="xlsx-step-2" style="display:none">
+      <h3 style="font-size:14px;margin:0 0 12px 0" id="xlsx-progress-title">Processando…</h3>
+      <div class="xlsx-progress-bar"><div class="xlsx-progress-fill" id="xlsx-progress-fill"></div></div>
+      <p class="text-small text-muted" id="xlsx-progress-text">Aguardando…</p>
+    </div>
+
+    <!-- ETAPA 3: Preview -->
+    <div class="xlsx-step" id="xlsx-step-3" style="display:none">
+      <div class="xlsx-resumo" id="xlsx-resumo"></div>
+      <div class="xlsx-slugs-novos" id="xlsx-slugs-novos" style="display:none"></div>
+      <div class="xlsx-diff-header" style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px 0;gap:8px;flex-wrap:wrap">
+        <h3 style="font-size:13px;margin:0">RICs afetados</h3>
+        <div class="xlsx-diff-filtros">
+          <button class="btn btn-sm xlsx-diff-filtro active" data-tipo="todos">Todos</button>
+          <button class="btn btn-sm xlsx-diff-filtro" data-tipo="novo">Apenas novos</button>
+          <button class="btn btn-sm xlsx-diff-filtro" data-tipo="atualizado">Apenas atualizados</button>
+        </div>
+      </div>
+      <div class="xlsx-diff-list" id="xlsx-diff-list"></div>
+      <div class="xlsx-actions" style="margin-top:16px;justify-content:flex-end;gap:8px">
+        <button class="btn" id="btn-xlsx-cancelar">Cancelar</button>
+        <button class="btn btn-primary" id="btn-xlsx-aplicar">Aplicar mudanças</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 4: Aplicação -->
+    <div class="xlsx-step" id="xlsx-step-4" style="display:none">
+      <h3 style="font-size:14px;margin:0 0 12px 0">Aplicando…</h3>
+      <div class="xlsx-progress-bar"><div class="xlsx-progress-fill" id="xlsx-apply-fill"></div></div>
+      <p class="text-small text-muted" id="xlsx-apply-text">Iniciando…</p>
+    </div>
+
+    <!-- ETAPA 5: Sucesso -->
+    <div class="xlsx-step" id="xlsx-step-5" style="display:none">
+      <div class="alert alert-ok" id="xlsx-success-msg"></div>
+      <div class="xlsx-actions">
+        <button class="btn btn-primary" data-close-modal="modal-xlsx">Fechar</button>
+      </div>
+    </div>
+
+    <!-- ETAPA: Erro -->
+    <div class="xlsx-step" id="xlsx-step-erro" style="display:none">
+      <div class="alert alert-err" id="xlsx-erro-msg"></div>
+      <div class="xlsx-actions">
+        <button class="btn" id="btn-xlsx-tentar-novamente">Tentar novamente</button>
+        <button class="btn" data-close-modal="modal-xlsx">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTÓRICO XLSX -->
+<div class="modal-bg" id="modal-xlsx-historico">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📜 Histórico de importações XLSX</h2>
+      <button class="modal-close" data-close-modal="modal-xlsx-historico">&times;</button>
+    </div>
+    <p class="text-small text-muted" style="margin-bottom:12px">Apenas as <b>3 importações mais recentes</b> têm snapshot armazenado para reversão. As demais ficam registradas mas sem possibilidade de rollback.</p>
+    <div id="xlsx-historico-list">
+      <div class="text-small text-muted" style="text-align:center;padding:24px">Carregando…</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DIFF DE HISTÓRICO -->
+<div class="modal-bg" id="modal-xlsx-diff-hist">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>Diff da importação</h2>
+      <button class="modal-close" data-close-modal="modal-xlsx-diff-hist">&times;</button>
+    </div>
+    <div id="xlsx-diff-hist-conteudo"></div>
   </div>
 </div>
 
@@ -1829,12 +2133,14 @@ async function reenriquecerExistentes(forcar) {
 // ===== TABS =====
 document.querySelectorAll("nav.tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll("nav.tabs button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll("nav.tabs button").forEach(b => { b.classList.remove("active"); b.setAttribute("aria-selected", "false"); });
     document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
     btn.classList.add("active");
+    btn.setAttribute("aria-selected", "true");
     document.getElementById(`pane-${btn.dataset.pane}`).classList.add("active");
     if (btn.dataset.pane === "lista") renderLista();
-    if (btn.dataset.pane === "painel") renderPainel();
+    else if (btn.dataset.pane === "gerencial") renderPainel();
+    else if (btn.dataset.pane === "painel") renderDashboard();
   });
 });
 
@@ -2751,78 +3057,176 @@ async function renderPainel() {
   // Bind clicks no painel + alertas (DEVE rodar APÓS atualizar todos os innerHTML)
   bindarPainelClicks();
 
-  // Indicadores (gráficos SVG) — passa array de marcacoes (não o Map)
-  await renderIndicadores(all, [...marcMap.values()]);
+  // (Aba Gerencial não renderiza gráficos — eles ficam na aba Painel via renderDashboard)
 }
 
-// ===== INDICADORES (gráficos SVG na aba Painéis) =====
-
-// Renderização principal — invocada por renderPainel
-async function renderIndicadores(props, marcs) {
-  if (!props) props = await DB.getAll("proposicoes");
-  if (!marcs) marcs = await DB.getAll("marcacoes");
-  renderGrafEtapas(marcs);
-  renderGrafLeg(props);
-  renderGrafCasa(props);
-  renderGrafHistorico(marcs);
+// ===== DASHBOARD (aba Painel — cards + 4 gráficos) =====
+// Renderiza cards de estatísticas e os 4 gráficos da aba Painel.
+async function renderDashboard() {
+  const props = await DB.getAll("proposicoes");
+  const marcs = await DB.getAll("marcacoes");
+  renderStatsCards(props, marcs);
+  renderChartEtapas(marcs);
+  renderChartSituacao(props);
+  renderChartCasa(props);
+  renderChartEvolucao(marcs);
 }
 
-// Helpers de SVG — gráfico de barras horizontais
-function renderBarsHorizontal(containerId, dados, opts) {
-  const cont = document.getElementById(containerId);
+// ----- Cards de indicadores -----
+function renderStatsCards(props, marcs) {
+  // Todos
+  const elTodos = document.getElementById("stat-card-todos");
+  if (elTodos) elTodos.textContent = props.length;
+
+  // Em andamento (statusInterno = andamento_cc) OU situacao aguardando_resposta sem triagem
+  const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
+  const emAndamento = props.filter(p => {
+    const m = marcMap.get(p.id) || {};
+    if (m.statusInterno === "andamento_cc") return true;
+    if (p.situacaoLegislativa === "aguardando_resposta" && (!m.statusInterno || m.statusInterno === "novo")) return true;
+    return false;
+  }).length;
+  const elAnd = document.getElementById("stat-card-andamento");
+  if (elAnd) elAnd.textContent = emAndamento;
+
+  // Aprovados (situacaoLegislativa = aprovado)
+  const aprov = props.filter(p => p.situacaoLegislativa === "aprovado").length;
+  const elApr = document.getElementById("stat-card-aprovados");
+  if (elApr) elApr.textContent = aprov;
+
+  // Novos: marcacoes criadas/proposicoes coletadas nos últimos 7 dias
+  const hoje = new Date();
+  const lim = new Date(hoje.getTime() - 7 * 86400 * 1000).toISOString().substring(0, 10);
+  const novos = props.filter(p => (p.coletadoEm || "").substring(0, 10) >= lim).length;
+  const elNov = document.getElementById("stat-card-novos");
+  if (elNov) elNov.textContent = novos;
+}
+
+// ----- Helpers de gráficos: empty state -----
+function emptyChart(containerId, msg) {
+  const c = document.getElementById(containerId);
+  if (c) c.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`;
+}
+
+// ----- Gráfico 1: BARRAS VERTICAIS — Etapas em andamento -----
+function renderChartEtapas(marcs) {
+  const cont = document.getElementById("chart-etapas");
   if (!cont) return;
-  if (dados.length === 0) {
-    cont.innerHTML = `<div class="empty">Sem dados.</div>`;
-    return;
-  }
-  const total = dados.reduce((s, d) => s + d.valor, 0) || 1;
-  const maxLabel = Math.max(...dados.map(d => d.label.length));
-  const labelW = Math.min(180, Math.max(80, maxLabel * 7));
-  const valueW = 50;
-  const rowH = 24;
-  const gap = 6;
-  const w = 460;
-  const barW = w - labelW - valueW - 16;
-  const h = dados.length * (rowH + gap) + 8;
-  const max = Math.max(...dados.map(d => d.valor)) || 1;
-  const cor = (opts && opts.cor) || "var(--primary)";
-
-  const bars = dados.map((d, i) => {
-    const y = i * (rowH + gap) + 4;
-    const len = (d.valor / max) * barW;
-    const pct = ((d.valor / total) * 100).toFixed(1);
-    return `
-      <text x="0" y="${y + rowH/2 + 4}" class="graf-label">${escapeHtml(d.label)}</text>
-      <rect x="${labelW}" y="${y}" width="${len}" height="${rowH}" rx="3" fill="${d.cor || cor}" class="graf-bar">
-        <title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)</title>
-      </rect>
-      <text x="${labelW + len + 6}" y="${y + rowH/2 + 4}" class="graf-value">${d.valor}</text>
-    `;
-  }).join("");
-
-  cont.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet">${bars}</svg>`;
-}
-
-// 1. Gráfico de etapas — apenas RICs com statusInterno = "andamento_cc"
-function renderGrafEtapas(marcs) {
-  const cont = marcs.filter(m => m.statusInterno === "andamento_cc");
+  const filtrados = marcs.filter(m => m.statusInterno === "andamento_cc");
+  if (filtrados.length === 0) { return emptyChart("chart-etapas", "Nenhum RIC em andamento na CC."); }
   const buckets = {};
-  for (const m of cont) {
+  for (const m of filtrados) {
     const e = m.etapa || "(sem etapa)";
     buckets[e] = (buckets[e] || 0) + 1;
   }
   const dados = Object.entries(buckets)
-    .map(([k, v]) => {
-      const label = k === "(sem etapa)" ? "(sem etapa)" : ((ETAPAS.find(et => et.v === k) || {}).t || k);
-      return { label, valor: v };
-    })
+    .map(([k, v]) => ({ label: k === "(sem etapa)" ? "(sem etapa)" : ((ETAPAS.find(et => et.v === k) || {}).t || k), valor: v }))
     .sort((a, b) => b.valor - a.valor);
-  renderBarsHorizontal("graf-etapas", dados);
+
+  const w = 480, h = 200;
+  const padL = 28, padR = 14, padT = 16, padB = 60;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const max = Math.max(...dados.map(d => d.valor)) || 1;
+  const barGap = 10;
+  const barW = Math.max(20, Math.min(60, (plotW - (dados.length - 1) * barGap) / dados.length));
+  const total = dados.reduce((s, d) => s + d.valor, 0);
+
+  // Y ticks
+  const nTicks = 4;
+  let yTicks = [];
+  for (let i = 0; i <= nTicks; i++) {
+    const v = Math.round((max / nTicks) * i);
+    const y = padT + plotH - (v / max) * plotH;
+    yTicks.push({ v, y });
+  }
+
+  const bars = dados.map((d, i) => {
+    const x = padL + i * (barW + barGap);
+    const len = (d.valor / max) * plotH;
+    const y = padT + plotH - len;
+    const pct = ((d.valor / total) * 100).toFixed(1);
+    // Truncar label longo
+    const lbl = d.label.length > 16 ? d.label.substring(0, 15) + "…" : d.label;
+    return `
+      <rect x="${x}" y="${y}" width="${barW}" height="${len}" rx="3" fill="url(#chart-bar-gradient)" class="chart-bar">
+        <title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)</title>
+      </rect>
+      <text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" class="chart-value-label">${d.valor}</text>
+      <g transform="translate(${x + barW/2},${padT + plotH + 14}) rotate(-25)">
+        <text text-anchor="end" class="chart-axis-label">${escapeHtml(lbl)}</text>
+      </g>
+    `;
+  }).join("");
+
+  cont.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet">
+      <defs>
+        <linearGradient id="chart-bar-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)"/>
+          <stop offset="100%" stop-color="var(--accent-hover)"/>
+        </linearGradient>
+      </defs>
+      ${yTicks.map(t => `
+        <line x1="${padL}" y1="${t.y}" x2="${w - padR}" y2="${t.y}" class="chart-grid-line"/>
+        <text x="${padL - 4}" y="${t.y + 3}" text-anchor="end" class="chart-axis-label">${t.v}</text>
+      `).join("")}
+      <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" class="chart-axis-line"/>
+      ${bars}
+    </svg>
+  `;
 }
 
-// 2. Gráfico de situação legislativa
-function renderGrafLeg(props) {
-  const ordem = ["tramitacao_inicial", "aguardando_aprovacao", "aprovado", "aguardando_resposta", "respondido", "retirado", "pendente"];
+// ----- Helper: gráfico de rosca -----
+function renderDonut(containerId, dados, opts) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  if (dados.length === 0 || dados.every(d => d.valor === 0)) {
+    return emptyChart(containerId, (opts && opts.empty) || "Sem dados.");
+  }
+  const w = 220, h = 220;
+  const cx = w / 2, cy = h / 2;
+  const rOut = 80, rIn = 50;
+  const total = dados.reduce((s, d) => s + d.valor, 0);
+  // Paleta padrão (4 tons)
+  const paleta = ["var(--accent)", "var(--accent-hover)", "#5DD9D2", "#C5D9E6", "#3D5A80", "#2C4A6B"];
+  let acc = 0;
+  const arcs = dados.map((d, i) => {
+    const a1 = (acc / total) * 2 * Math.PI - Math.PI / 2;
+    acc += d.valor;
+    const a2 = (acc / total) * 2 * Math.PI - Math.PI / 2;
+    const large = (a2 - a1) > Math.PI ? 1 : 0;
+    const x1 = cx + rOut * Math.cos(a1), y1 = cy + rOut * Math.sin(a1);
+    const x2 = cx + rOut * Math.cos(a2), y2 = cy + rOut * Math.sin(a2);
+    const x3 = cx + rIn  * Math.cos(a2), y3 = cy + rIn  * Math.sin(a2);
+    const x4 = cx + rIn  * Math.cos(a1), y4 = cy + rIn  * Math.sin(a1);
+    const path = `M ${x1} ${y1} A ${rOut} ${rOut} 0 ${large} 1 ${x2} ${y2} L ${x3} ${y3} A ${rIn} ${rIn} 0 ${large} 0 ${x4} ${y4} Z`;
+    const cor = d.cor || paleta[i % paleta.length];
+    const pct = ((d.valor / total) * 100).toFixed(1);
+    return `<path d="${path}" fill="${cor}" class="chart-bar"><title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)</title></path>`;
+  }).join("");
+
+  // Legenda
+  const legend = dados.map((d, i) => {
+    const cor = d.cor || paleta[i % paleta.length];
+    const pct = ((d.valor / total) * 100).toFixed(0);
+    return `<span class="chart-legend-item"><span class="chart-legend-swatch" style="background:${cor}"></span>${escapeHtml(d.label)} <b>${d.valor}</b> (${pct}%)</span>`;
+  }).join("");
+
+  cont.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:6px">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="max-height:140px;flex-shrink:0">
+        ${arcs}
+        <text x="${cx}" y="${cy - 4}" text-anchor="middle" class="donut-center">${total}</text>
+        <text x="${cx}" y="${cy + 14}" text-anchor="middle" class="donut-center-sub">Total</text>
+      </svg>
+      <div class="chart-legend">${legend}</div>
+    </div>
+  `;
+}
+
+// ----- Gráfico 2: ROSCA — Situação legislativa -----
+function renderChartSituacao(props) {
+  const ordem = ["aprovado", "aguardando_resposta", "respondido", "aguardando_aprovacao", "tramitacao_inicial", "retirado", "pendente"];
   const labels = {
     "tramitacao_inicial": "Tramitação inicial",
     "aguardando_aprovacao": "Aguardando aprovação",
@@ -2830,74 +3234,58 @@ function renderGrafLeg(props) {
     "aguardando_resposta": "Aguardando resposta",
     "respondido": "Respondido",
     "retirado": "Retirado",
-    "pendente": "Pendente / não enriquecido"
+    "pendente": "Pendente"
   };
   const cores = {
-    "aprovado": "var(--leg-aprovado)",
-    "aguardando_resposta": "var(--leg-aguard-resp)",
-    "respondido": "var(--leg-respondido)"
+    "aprovado": "#1F5F63",
+    "aguardando_resposta": "#5DD9D2",
+    "respondido": "#2C7A7E",
+    "aguardando_aprovacao": "#3D5A80",
+    "tramitacao_inicial": "#6BE4DC",
+    "retirado": "#94a3b8",
+    "pendente": "#C5D9E6"
   };
   const buckets = {};
-  for (const p of props) {
-    const k = p.situacaoLegislativa || "pendente";
-    buckets[k] = (buckets[k] || 0) + 1;
-  }
-  const dados = ordem
-    .filter(k => buckets[k])
-    .map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k] }));
-  renderBarsHorizontal("graf-leg", dados);
+  for (const p of props) buckets[p.situacaoLegislativa || "pendente"] = (buckets[p.situacaoLegislativa || "pendente"] || 0) + 1;
+  const dados = ordem.filter(k => buckets[k]).map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k] }));
+  renderDonut("chart-situacao", dados, { empty: "Sem dados de situação legislativa." });
 }
 
-// 3. Gráfico de casa parlamentar
-function renderGrafCasa(props) {
+// ----- Gráfico 3: ROSCA — Casa parlamentar -----
+function renderChartCasa(props) {
+  const labels = { "camara": "Câmara dos Deputados", "senado": "Senado Federal", "cn": "Congresso Nacional", "cldf": "CLDF", "congresso": "Congresso Nacional" };
+  const cores = { "camara": "#1F5F63", "senado": "#5DD9D2", "cn": "#2C7A7E", "congresso": "#2C7A7E", "cldf": "#C5D9E6" };
   const buckets = {};
-  for (const p of props) {
-    const o = p.origem || "(?)";
-    buckets[o] = (buckets[o] || 0) + 1;
-  }
-  const labels = { "camara": "Câmara dos Deputados", "senado": "Senado Federal", "cn": "Congresso Nacional", "cldf": "CLDF" };
-  const dados = Object.entries(buckets)
-    .map(([k, v]) => ({ label: labels[k] || k, valor: v }))
-    .sort((a, b) => b.valor - a.valor);
-  renderBarsHorizontal("graf-casa", dados);
+  for (const p of props) buckets[p.origem || "(?)"] = (buckets[p.origem || "(?)"] || 0) + 1;
+  const dados = Object.entries(buckets).map(([k, v]) => ({ label: labels[k] || k, valor: v, cor: cores[k] })).sort((a, b) => b.valor - a.valor);
+  renderDonut("chart-casa", dados, { empty: "Sem dados de origem." });
 }
 
-// 4. Gráfico de linha — RICs enviados à Casa Civil ao longo do tempo
-// Considera marcacao.dataRecebimentoSEI (data de protocolo na CC) agrupado por mês
-function renderGrafHistorico(marcs) {
-  if (!marcs) {
-    DB.getAll("marcacoes").then(renderGrafHistorico);
-    return;
-  }
-  const cont = document.getElementById("graf-historico");
+// ----- Gráfico 4: LINHA com área — Evolução de RICs recebidos na CC -----
+let chartEvolucaoPeriodo = "6";
+function renderChartEvolucao(marcs) {
+  if (!marcs) { DB.getAll("marcacoes").then(renderChartEvolucao); return; }
+  const cont = document.getElementById("chart-evolucao");
   if (!cont) return;
-  const datas = marcs
-    .map(m => m.dataRecebimentoSEI)
-    .filter(d => d && /^\d{4}-\d{2}/.test(d));
-  if (datas.length === 0) {
-    cont.innerHTML = `<div class="empty">Nenhum RIC com data de recebimento na CC ainda.</div>`;
-    return;
-  }
-  // Determinar limite inferior pelo período selecionado
+  const datas = marcs.map(m => m.dataRecebimentoSEI).filter(d => d && /^\d{4}-\d{2}/.test(d));
+  if (datas.length === 0) return emptyChart("chart-evolucao", "Nenhum RIC com data de recebimento na CC ainda.");
+
   const hoje = new Date();
   let limite = null;
-  if (historicoPeriodo !== "todos") {
-    const meses = parseInt(historicoPeriodo, 10) || 6;
+  if (chartEvolucaoPeriodo !== "todos") {
+    const meses = parseInt(chartEvolucaoPeriodo, 10) || 6;
     const lim = new Date(hoje.getFullYear(), hoje.getMonth() - meses + 1, 1);
     limite = `${lim.getFullYear()}-${String(lim.getMonth() + 1).padStart(2, "0")}`;
   }
-  // Agrupa por mês YYYY-MM
   const buckets = new Map();
   for (const d of datas) {
     const ym = d.substring(0, 7);
     if (limite && ym < limite) continue;
     buckets.set(ym, (buckets.get(ym) || 0) + 1);
   }
-  if (buckets.size === 0) {
-    cont.innerHTML = `<div class="empty">Sem dados no período selecionado.</div>`;
-    return;
-  }
-  // Preencher meses sem dados (zero) entre o min e max do conjunto
+  if (buckets.size === 0) return emptyChart("chart-evolucao", "Sem dados no período selecionado.");
+
+  // Preencher meses sem dado entre min e max
   const meses = [...buckets.keys()].sort();
   const minM = meses[0], maxM = meses[meses.length - 1];
   const [minY, minMo] = minM.split("-").map(Number);
@@ -2910,54 +3298,58 @@ function renderGrafHistorico(marcs) {
     mm++; if (mm > 12) { mm = 1; yy++; }
   }
 
-  // Render SVG line chart
-  const w = 460, h = 200;
-  const padL = 36, padR = 14, padT = 14, padB = 32;
+  const w = 600, h = 220;
+  const padL = 36, padR = 18, padT = 16, padB = 36;
   const plotW = w - padL - padR, plotH = h - padT - padB;
-  const max = Math.max(...serie.map(s => s.valor)) || 1;
-  // Y ticks (4 linhas)
+  const max = Math.max(...serie.map(s => s.valor), 1);
+
   const nTicks = 4;
-  const ticks = [];
+  const yTicks = [];
   for (let i = 0; i <= nTicks; i++) {
     const v = Math.round((max / nTicks) * i);
     const y = padT + plotH - (v / max) * plotH;
-    ticks.push({ v, y });
+    yTicks.push({ v, y });
   }
-  // Pontos da linha
-  const dx = serie.length > 1 ? plotW / (serie.length - 1) : plotW / 2;
+
+  const dx = serie.length > 1 ? plotW / (serie.length - 1) : 0;
   const pts = serie.map((s, i) => ({
     x: padL + (serie.length > 1 ? i * dx : plotW / 2),
     y: padT + plotH - (s.valor / max) * plotH,
-    valor: s.valor,
-    ym: s.ym
+    valor: s.valor, ym: s.ym
   }));
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
   const areaPath = pts.length > 0
-    ? `M${pts[0].x},${padT + plotH} ` + pts.map(p => `L${p.x},${p.y}`).join(" ") + ` L${pts[pts.length-1].x},${padT + plotH} Z`
+    ? `M${pts[0].x.toFixed(2)},${padT + plotH} ` + pts.map(p => `L${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ") + ` L${pts[pts.length-1].x.toFixed(2)},${padT + plotH} Z`
     : "";
 
-  // Labels do eixo X — mostrar a cada N para não poluir
   const stepX = serie.length <= 6 ? 1 : serie.length <= 12 ? 2 : Math.ceil(serie.length / 6);
+  // Label de mês formatado (jan/2025 etc)
+  const monthNames = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  function fmtMonth(ym) { const [y, m] = ym.split("-"); return `${monthNames[+m - 1]}/${y.substring(2)}`; }
 
-  const svg = `
-    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMinYMin meet">
-      ${ticks.map(t => `
-        <line x1="${padL}" y1="${t.y}" x2="${w - padR}" y2="${t.y}" class="graf-grid-line"/>
-        <text x="${padL - 4}" y="${t.y + 3}" text-anchor="end" class="graf-tick">${t.v}</text>
+  cont.innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="chart-area-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.45"/>
+          <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      ${yTicks.map(t => `
+        <line x1="${padL}" y1="${t.y}" x2="${w - padR}" y2="${t.y}" class="chart-grid-line"/>
+        <text x="${padL - 4}" y="${t.y + 3}" text-anchor="end" class="chart-axis-label">${t.v}</text>
       `).join("")}
-      <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" class="graf-axis"/>
-      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" class="graf-axis"/>
-      <path d="${areaPath}" class="graf-line-area"/>
-      <path d="${linePath}" class="graf-line-path"/>
+      <line x1="${padL}" y1="${padT + plotH}" x2="${w - padR}" y2="${padT + plotH}" class="chart-axis-line"/>
+      <path d="${areaPath}" fill="url(#chart-area-gradient)"/>
+      <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
       ${pts.map((p, i) => `
-        <circle cx="${p.x}" cy="${p.y}" r="3" class="graf-line-dot">
-          <title>${p.ym}: ${p.valor} RIC${p.valor === 1 ? "" : "s"}</title>
+        <circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="3.5" fill="var(--accent)">
+          <title>${fmtMonth(p.ym)}: ${p.valor} RIC${p.valor === 1 ? "" : "s"}</title>
         </circle>
-        ${i % stepX === 0 ? `<text x="${p.x}" y="${padT + plotH + 14}" text-anchor="middle" class="graf-tick">${p.ym}</text>` : ""}
+        ${i % stepX === 0 ? `<text x="${p.x.toFixed(2)}" y="${padT + plotH + 16}" text-anchor="middle" class="chart-axis-label">${fmtMonth(p.ym)}</text>` : ""}
       `).join("")}
     </svg>
   `;
-  cont.innerHTML = svg;
 }
 
 // Bind dos clicks no painel — duplo-clique abre o detalhe
@@ -3068,13 +3460,12 @@ bindSegmented("seg-aprov-dias", "aprovPeriodo");
   });
 })();
 
-// Seletor de período do gráfico histórico
-let historicoPeriodo = "6";
-document.querySelectorAll("#seg-historico-periodo button").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll("#seg-historico-periodo button").forEach(x => x.classList.remove("active"));
+// Seletor de período do gráfico de evolução (aba Painel)
+document.querySelectorAll("#seg-chart-periodo button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#seg-chart-periodo button").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
-  historicoPeriodo = b.dataset.p;
-  renderGrafHistorico();
+  chartEvolucaoPeriodo = b.dataset.p;
+  renderChartEvolucao();
 }));
 
 async function renderHeaderStats() {
@@ -3387,6 +3778,19 @@ document.querySelectorAll(".statusbar-item[data-stat]").forEach(el => {
   });
 });
 
+// Handler dos stat-cards da aba Painel — clique abre Requerimentos com filtro aplicado
+document.querySelectorAll(".stat-card[data-stat-card]").forEach(el => {
+  function ativar() {
+    const k = el.dataset.statCard;
+    if (k === "todos") aplicarFiltrosViaPaineis({});
+    else if (k === "andamento") aplicarFiltrosViaPaineis({ statusInterno: "andamento_cc" });
+    else if (k === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
+    else if (k === "novos") aplicarFiltrosViaPaineis({ novos7d: true });
+  }
+  el.addEventListener("click", ativar);
+  el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ativar(); } });
+});
+
 // ===== PWA — Service Worker registration + install banner =====
 let pwaPromptEvent = null;
 window.addEventListener("beforeinstallprompt", e => {
@@ -3449,7 +3853,909 @@ function aplicarEstadoFiltros(visivel) {
   });
 })();
 
-// ===== BOOT =====
+// ===== MÓDULO XLSX_MERGE (v4.5) =====
+// Atualização em lote a partir do Controle_RICs.xlsx
+// Lógica isolada: validação → parse → diff → snapshot → apply → histórico
+
+const XLSX_MERGE = (() => {
+  // Colunas esperadas (27 — exatamente como na planilha de referência)
+  const COLUNAS_ESPERADAS = [
+    "RI (nº)", "TIPO", "Casa", "Status", "Ofício", "Protocolo PR (DATA)",
+    "Prazo final", "Processo de envio", "Processo de resposta", "Autor",
+    "Partido", "UF", "Temáticas", "Temática relevante?", "Objeto", "Resumo",
+    "Status no Congresso", "Unidades", "Etapa", "Prazo da etapa", "Observação",
+    "Data da resposta", "Tipo de resposta", "Atribuição", "Link Congresso",
+    "Link Inteiro teor"
+  ];
+  // Aliases para compatibilidade com pequenas variações no header
+  // (com/sem espaço extra após "Autor", "RI (nº)"/"RI (n°)" etc.)
+  const ALIASES = {
+    "RI (n°)": "RI (nº)",
+    "RI(nº)": "RI (nº)",
+    "Autor ": "Autor",
+    "Protocolo PR DATA": "Protocolo PR (DATA)",
+    "Protocolo PR (data)": "Protocolo PR (DATA)",
+    "Tematicas": "Temáticas",
+    "Tematica relevante?": "Temática relevante?",
+    "Observacao": "Observação",
+    "Oficio": "Ofício",
+    "Atribuicao": "Atribuição",
+  };
+
+  const STATUS_MAP = {
+    "respondido": "respondido",
+    "em andamento na casa civil": "andamento_cc",
+    "em tramitacao no congresso nacional": "tramitacao_cn",
+    "retirado/nao enviado": "retirado",
+  };
+  const ETAPA_MAP = {
+    "admissibilidade": "admissibilidade",
+    "respondido": "respondido",
+    "subsidios": "subsidios",
+    "no congresso": "tramitacao_cn",
+    "no congresso - aprovado": "tramitacao_cn_aprovado",
+    "no congresso - novo": "novo",
+    "cancelado/retirado": "retirado",
+    "conformidade": "conformidade",
+    "validacao ssgp": "validacao_ssgp",
+    "validacao gm": "validacao_gm",
+    "validacao gm / expedicao": "validacao_gm",
+  };
+  const CASA_MAP = {
+    "camara dos deputados": "camara",
+    "senado federal": "senado",
+    "congresso nacional": "congresso",
+    "camara legislativa do distrito federal": "cldf",
+  };
+
+  // Slug puro (fallback para valores não mapeados)
+  function slug(s) {
+    return String(s || "").toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+  function norm(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  }
+
+  function dataParaIso(v) {
+    if (v === null || v === undefined || v === "") return "";
+    if (v instanceof Date && !isNaN(v.getTime())) {
+      const y = v.getFullYear(), m = String(v.getMonth() + 1).padStart(2, "0"), d = String(v.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+    if (typeof v === "number") {
+      const ms = (v - 25569) * 86400 * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) {
+        const y = d.getUTCFullYear(), m = String(d.getUTCMonth() + 1).padStart(2, "0"), dd = String(d.getUTCDate()).padStart(2, "0");
+        return `${y}-${m}-${dd}`;
+      }
+    }
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (m) {
+      const ano = m[3].length === 2 ? "20" + m[3] : m[3];
+      return `${ano}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    }
+    return "";
+  }
+
+  function parseRiNumero(v) {
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim();
+    const m = s.match(/^(\d+)\s*\/\s*(\d{2,4})/);
+    if (m) {
+      const ano = m[2].length === 2 ? "20" + m[2] : m[2];
+      return { numero: m[1], ano };
+    }
+    return null;
+  }
+
+  function splitUnidades(s) {
+    if (!s) return [];
+    return String(s).split(/\s*(?:,|\se\s|\sE\s|;|\/|\|)\s*/i)
+      .map(u => u.trim())
+      .filter(u => u && u.length <= 40);
+  }
+
+  // ============================================================
+  // VALIDAÇÃO DO ARQUIVO
+  // ============================================================
+  async function validar(file) {
+    if (!file) throw new Error("Nenhum arquivo selecionado.");
+    if (!/\.(xlsx|xlsm)$/i.test(file.name)) {
+      throw new Error(`O arquivo "${file.name}" não tem extensão .xlsx ou .xlsm. Selecione um arquivo Excel válido.`);
+    }
+    let workbook;
+    try {
+      const buf = await file.arrayBuffer();
+      workbook = XLSX.read(buf, { type: "array", cellDates: true });
+    } catch (e) {
+      throw new Error("O arquivo selecionado não é um XLSX válido. Verifique se o arquivo não está corrompido ou em outro formato.");
+    }
+    if (!workbook.SheetNames.includes("Controle RI")) {
+      throw new Error(`A aba "Controle RI" não foi encontrada. Abas disponíveis: ${workbook.SheetNames.join(", ")}. Selecione um arquivo com a aba "Controle RI".`);
+    }
+    const ws = workbook.Sheets["Controle RI"];
+    if (!ws['!ref']) throw new Error("A aba 'Controle RI' está vazia.");
+    // Ler primeira linha (header)
+    const headerRow = XLSX.utils.sheet_to_json(ws, { header: 1, range: 0, defval: null })[0] || [];
+    const headers = headerRow.map(h => (h == null ? "" : String(h).trim()));
+    // Resolver aliases
+    const headersNormalizados = headers.map(h => ALIASES[h] || h);
+    // Validar conteúdo
+    if (headersNormalizados.length !== 27) {
+      const faltantes = COLUNAS_ESPERADAS.filter(c => !headersNormalizados.includes(c));
+      const extras = headersNormalizados.filter(h => h && !COLUNAS_ESPERADAS.includes(h));
+      throw new Error(`O cabeçalho tem ${headersNormalizados.length} colunas (esperado: 27).${faltantes.length ? "\nColunas faltantes: " + faltantes.join(", ") : ""}${extras.length ? "\nColunas extras: " + extras.join(", ") : ""}`);
+    }
+    const faltantes = COLUNAS_ESPERADAS.filter(c => !headersNormalizados.includes(c));
+    if (faltantes.length) {
+      throw new Error(`Colunas obrigatórias ausentes no cabeçalho: ${faltantes.join(", ")}. Verifique se as colunas estão com os nomes exatos.`);
+    }
+    return { workbook, ws, headers: headersNormalizados, fileName: file.name };
+  }
+
+  // ============================================================
+  // PARSE: planilha → lista de linhas estruturadas
+  // ============================================================
+  function parseLinhas(ws, headers, onProgress) {
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false });
+    // rows[0] é o header; pular
+    const idxOf = nome => headers.indexOf(nome);
+    const result = { linhasValidas: [], ignoradas: { sem_numero: 0, numero_invalido: 0, sem_tipo: 0 }, slugsNovosEtapa: new Set(), slugsNovosStatus: new Set(), tiposCasasNovos: new Set() };
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length === 0 || row.every(c => c == null || c === "")) continue;
+      if (onProgress) onProgress(i, rows.length - 1);
+
+      const get = nome => {
+        const idx = idxOf(nome);
+        return idx >= 0 ? row[idx] : null;
+      };
+      const gets = nome => {
+        const v = get(nome);
+        if (v === null || v === undefined || v === "") return "";
+        if (v instanceof Date) return "";
+        return String(v).trim();
+      };
+
+      const riRaw = gets("RI (nº)");
+      if (!riRaw) { result.ignoradas.sem_numero++; continue; }
+      const ri = parseRiNumero(riRaw);
+      if (!ri) { result.ignoradas.numero_invalido++; continue; }
+      const tipoRaw = gets("TIPO");
+      if (!tipoRaw) { result.ignoradas.sem_tipo++; continue; }
+
+      // Sigla: aceita RIC/RQS/REQ/REQ-CPI/REQ-CPMI ou slug
+      const tipoNorm = norm(tipoRaw).replace(/[\s_]+/g, "-").toUpperCase();
+      let sigla;
+      if (["RIC", "RQS", "REQ", "REQ-CPI", "REQ-CPMI"].includes(tipoNorm)) {
+        // Reduzir REQ-CPI/REQ-CPMI a REQ (consistente com app, mas guardar original em comentário implícito)
+        sigla = tipoNorm.startsWith("REQ") ? "REQ" : tipoNorm;
+      } else {
+        sigla = slug(tipoRaw).toUpperCase();
+        result.tiposCasasNovos.add(`TIPO=${tipoRaw}`);
+      }
+
+      // Casa → origem
+      const casaRaw = gets("Casa");
+      const casaKey = norm(casaRaw);
+      let origem = CASA_MAP[casaKey];
+      if (!origem) {
+        origem = slug(casaRaw) || "camara";
+        result.tiposCasasNovos.add(`Casa=${casaRaw}`);
+      }
+
+      // Status (planilha) → statusInterno
+      const statusRaw = gets("Status");
+      let statusInterno = "";
+      if (statusRaw) {
+        const k = norm(statusRaw);
+        if (STATUS_MAP[k]) statusInterno = STATUS_MAP[k];
+        else { statusInterno = slug(statusRaw); result.slugsNovosStatus.add(statusInterno); }
+      }
+
+      // Etapa
+      const etapaRaw = gets("Etapa");
+      let etapa = "";
+      if (etapaRaw) {
+        const k = norm(etapaRaw);
+        if (ETAPA_MAP[k] !== undefined) etapa = ETAPA_MAP[k];
+        else { etapa = slug(etapaRaw); result.slugsNovosEtapa.add(etapa); }
+      }
+
+      // Relevante: Sim/sim/true/1
+      const relRaw = gets("Temática relevante?");
+      const relevante = ["sim", "true", "1", "yes"].includes(norm(relRaw));
+
+      // Unidades
+      const unidades = splitUnidades(gets("Unidades"));
+
+      // Montar id da proposição
+      let id;
+      if (origem === "congresso" || origem === "cldf") {
+        id = `${origem}-${ri.numero}-${ri.ano}`;
+      } else {
+        // Para câmara/senado, sem código da API ainda — usar formato sintético até enriquecer
+        id = `${origem}-${ri.numero}-${ri.ano}`;
+      }
+      const identificacao = `${sigla} ${ri.numero}/${ri.ano}`;
+
+      // Proposição (campos do XLSX)
+      const propXlsx = {
+        id, identificacao, origem, sigla, numero: ri.numero, ano: ri.ano,
+        autor: gets("Autor"),
+        urlPortal: gets("Link Congresso"),
+        urlInteiroTeor: gets("Link Inteiro teor"),
+      };
+
+      // Marcação completa (XLSX sempre prevalece, inclusive sobrescrevendo com "")
+      const marcXlsx = {
+        proposicaoId: id,
+        apelido: gets("Objeto"),
+        tematica: gets("Temáticas"),
+        relevante,
+        palavrasChave: "",
+        resumo: gets("Resumo"),
+        comentarios: gets("Observação"),
+        unidadesConsultadas: unidades,
+        statusInterno,
+        etapa,
+        prazoEtapa: dataParaIso(get("Prazo da etapa")),
+        dataRecebimentoSEI: dataParaIso(get("Protocolo PR (DATA)")),
+        prazoFinalCN: dataParaIso(get("Prazo final")),
+        dataResposta: dataParaIso(get("Data da resposta")),
+        nupRecebimento: gets("Processo de envio"),
+        nupResposta: gets("Processo de resposta"),
+        tipoResposta: gets("Tipo de resposta"),
+        oficio: gets("Ofício"),
+        atribuicao: gets("Atribuição"),
+        linkCongresso: gets("Link Congresso"),
+        linkInteiroTeor: gets("Link Inteiro teor"),
+      };
+
+      result.linhasValidas.push({ linha: i + 1, propXlsx, marcXlsx, identificacao });
+    }
+    return result;
+  }
+
+  // ============================================================
+  // DIFF: estado atual vs novas linhas
+  // ============================================================
+  function calcularDiff(linhas, propsAtuais, marcsAtuais) {
+    const propsPorId = new Map(propsAtuais.map(p => [p.id, p]));
+    const propsPorIdentificacao = new Map();
+    for (const p of propsAtuais) {
+      if (p.identificacao) propsPorIdentificacao.set(p.identificacao, p);
+    }
+    const marcsPorId = new Map(marcsAtuais.map(m => [m.proposicaoId, m]));
+
+    const diff = {
+      propsParaCriar: [],
+      marcsParaCriar: [],
+      marcsParaAtualizar: [],
+      propsAtualizadasParaUrl: [], // só atualizamos urlPortal/urlInteiroTeor quando faltam
+      ricsAfetados: [], // {id, identificacao, tipo: 'novo'|'atualizado', mudancas: [{campo, antigo, novo}]}
+    };
+
+    for (const l of linhas) {
+      const propExistente = propsPorIdentificacao.get(l.identificacao) || propsPorId.get(l.propXlsx.id);
+      let propId, isNovo;
+
+      if (propExistente) {
+        propId = propExistente.id;
+        isNovo = false;
+        // Possivelmente atualizar URLs da proposição (se vazias)
+        const propAtualizado = {};
+        if (!propExistente.urlPortal && l.propXlsx.urlPortal) propAtualizado.urlPortal = l.propXlsx.urlPortal;
+        if (!propExistente.urlInteiroTeor && l.propXlsx.urlInteiroTeor) propAtualizado.urlInteiroTeor = l.propXlsx.urlInteiroTeor;
+        if (Object.keys(propAtualizado).length) {
+          diff.propsAtualizadasParaUrl.push({ id: propId, fields: propAtualizado });
+        }
+      } else {
+        propId = l.propXlsx.id;
+        isNovo = true;
+        // Criar proposição-stub (será enriquecida em background)
+        diff.propsParaCriar.push({
+          ...l.propXlsx,
+          ementa: "",
+          ementaDetalhada: "",
+          keywords: "",
+          dataApresentacao: "",
+          situacaoBruta: "",
+          situacaoLegislativa: "pendente",
+          descricaoTramitacao: "",
+          despacho: "",
+          siglaOrgao: "",
+          url: "",
+          historico: [],
+          coletadoEm: new Date().toISOString(),
+          dataEnriquecimento: "",
+          ultimaMovimentacaoData: "",
+          prazoFinalCNSugerido: "",
+          dataAprovacao: "",
+          despachoAprovacao: "",
+          origemDado: "xlsx-import",
+          precisaEnriquecer: (l.propXlsx.origem === "camara" || l.propXlsx.origem === "senado"),
+        });
+      }
+
+      // Ajustar proposicaoId da marcação para o id real (caso a proposição existente tenha id diferente)
+      const marcXlsxAjustada = { ...l.marcXlsx, proposicaoId: propId, atualizadoEm: new Date().toISOString() };
+
+      const marcExistente = marcsPorId.get(propId);
+      const ricInfo = { id: propId, identificacao: l.identificacao, tipo: isNovo ? "novo" : "atualizado", mudancas: [] };
+
+      if (marcExistente) {
+        // Comparar campo a campo
+        const camposComp = ["apelido", "tematica", "relevante", "resumo", "comentarios", "statusInterno", "etapa", "prazoEtapa", "dataRecebimentoSEI", "prazoFinalCN", "dataResposta", "nupRecebimento", "nupResposta", "tipoResposta", "oficio", "atribuicao", "linkCongresso", "linkInteiroTeor"];
+        let temMudanca = false;
+        for (const c of camposComp) {
+          const novo = marcXlsxAjustada[c] === undefined ? "" : marcXlsxAjustada[c];
+          const antigo = marcExistente[c] === undefined ? "" : marcExistente[c];
+          if (String(novo) !== String(antigo)) {
+            ricInfo.mudancas.push({ campo: c, antigo, novo });
+            temMudanca = true;
+          }
+        }
+        // unidadesConsultadas
+        const novoUC = JSON.stringify(marcXlsxAjustada.unidadesConsultadas || []);
+        const antigoUC = JSON.stringify(marcExistente.unidadesConsultadas || []);
+        if (novoUC !== antigoUC) {
+          ricInfo.mudancas.push({ campo: "unidadesConsultadas", antigo: (marcExistente.unidadesConsultadas || []).join(", "), novo: (marcXlsxAjustada.unidadesConsultadas || []).join(", ") });
+          temMudanca = true;
+        }
+        if (temMudanca) {
+          diff.marcsParaAtualizar.push({ marcacao: marcXlsxAjustada, original: marcExistente });
+          ricInfo.tipo = "atualizado";
+          diff.ricsAfetados.push(ricInfo);
+        }
+      } else {
+        diff.marcsParaCriar.push(marcXlsxAjustada);
+        // Para criação, listar todos os campos não vazios
+        for (const c of Object.keys(marcXlsxAjustada)) {
+          if (["proposicaoId", "atualizadoEm", "palavrasChave"].includes(c)) continue;
+          const v = marcXlsxAjustada[c];
+          if (v === "" || v === null || v === undefined || (Array.isArray(v) && v.length === 0) || v === false) continue;
+          ricInfo.mudancas.push({ campo: c, antigo: "", novo: Array.isArray(v) ? v.join(", ") : v });
+        }
+        ricInfo.tipo = isNovo ? "novo" : "atualizado";
+        diff.ricsAfetados.push(ricInfo);
+      }
+    }
+    return diff;
+  }
+
+  // ============================================================
+  // SNAPSHOTS — área dedicada do localStorage
+  // ============================================================
+  const SNAPSHOT_KEY = "monitor-ric-xlsx-snapshots";
+  const HISTORICO_KEY = "monitor-ric-xlsx-historico";
+  const PENDENTE_KEY = "monitor-ric-xlsx-pendente";
+  const MAX_SNAPSHOTS = 3;
+
+  async function snapshotEstadoAtual(nomeArquivo, agregados) {
+    const proposicoes = await DB.getAll("proposicoes");
+    const marcacoes = await DB.getAll("marcacoes");
+    const snap = {
+      id: Date.now() + "_" + Math.random().toString(36).substring(2, 8),
+      timestamp: new Date().toISOString(),
+      nomeArquivo,
+      agregados,
+      proposicoes,
+      marcacoes,
+    };
+    // Snapshots completos (até 3)
+    let snaps = [];
+    try { snaps = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "[]"); } catch (e) {}
+    snaps.unshift(snap);
+    if (snaps.length > MAX_SNAPSHOTS) snaps = snaps.slice(0, MAX_SNAPSHOTS);
+    try {
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps));
+    } catch (e) {
+      console.warn("Falha ao salvar snapshot completo (quota?). Removendo o mais antigo e tentando de novo:", e);
+      snaps = snaps.slice(0, 1);
+      try { localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps)); }
+      catch (e2) { console.error("Sem espaço para snapshots:", e2); }
+    }
+
+    // Histórico (lista completa, sem dados detalhados das proposicoes/marcacoes — só metadados)
+    let hist = [];
+    try { hist = JSON.parse(localStorage.getItem(HISTORICO_KEY) || "[]"); } catch (e) {}
+    hist.unshift({
+      id: snap.id,
+      timestamp: snap.timestamp,
+      nomeArquivo: snap.nomeArquivo,
+      agregados: snap.agregados,
+      ricsAfetados: agregados.ricsAfetados || [],
+      temSnapshot: true,
+    });
+    // Marcar os antigos como "sem snapshot"
+    if (hist.length > MAX_SNAPSHOTS) {
+      for (let i = MAX_SNAPSHOTS; i < hist.length; i++) {
+        hist[i].temSnapshot = false;
+      }
+    }
+    try {
+      localStorage.setItem(HISTORICO_KEY, JSON.stringify(hist));
+    } catch (e) {
+      // Se quota, manter só metadados sem ricsAfetados
+      hist = hist.map(h => ({ ...h, ricsAfetados: undefined }));
+      try { localStorage.setItem(HISTORICO_KEY, JSON.stringify(hist)); } catch (e2) {}
+    }
+    return snap;
+  }
+
+  function lerHistorico() {
+    try { return JSON.parse(localStorage.getItem(HISTORICO_KEY) || "[]"); } catch (e) { return []; }
+  }
+  function lerSnapshots() {
+    try { return JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || "[]"); } catch (e) { return []; }
+  }
+
+  async function reverterSnapshot(snapId) {
+    const snaps = lerSnapshots();
+    const snap = snaps.find(s => s.id === snapId);
+    if (!snap) throw new Error("Snapshot não encontrado ou já expirado.");
+    // Aplicação atômica: limpa e regrava
+    await DB.clear("proposicoes");
+    await DB.clear("marcacoes");
+    if (snap.proposicoes.length) await DB.bulkPut("proposicoes", snap.proposicoes, { sync: false });
+    if (snap.marcacoes.length) await DB.bulkPut("marcacoes", snap.marcacoes, { sync: false });
+    return snap;
+  }
+
+  // ============================================================
+  // APLICAÇÃO ATÔMICA
+  // ============================================================
+  async function aplicar(diff, nomeArquivo) {
+    // Marcar PENDENTE antes de começar (em caso de crash, detectar)
+    localStorage.setItem(PENDENTE_KEY, JSON.stringify({ inicio: new Date().toISOString(), nomeArquivo }));
+
+    // Snapshot ANTES de qualquer mutação (para rollback)
+    const agregados = {
+      atualizadas: diff.marcsParaAtualizar.length,
+      criadas: diff.marcsParaCriar.length,
+      proposicoesCriadas: diff.propsParaCriar.length,
+      ricsAfetados: diff.ricsAfetados,
+    };
+    const snap = await snapshotEstadoAtual(nomeArquivo, agregados);
+
+    try {
+      // 1) Criar proposições novas
+      if (diff.propsParaCriar.length) {
+        await DB.bulkPut("proposicoes", diff.propsParaCriar, { sync: false });
+      }
+      // 2) Atualizar URLs em proposições existentes
+      for (const upd of diff.propsAtualizadasParaUrl) {
+        const p = await DB.get("proposicoes", upd.id);
+        if (p) {
+          Object.assign(p, upd.fields);
+          await DB.put("proposicoes", p, { sync: false });
+        }
+      }
+      // 3) Aplicar marcações novas e atualizadas
+      const todasMarcs = [
+        ...diff.marcsParaCriar,
+        ...diff.marcsParaAtualizar.map(x => x.marcacao),
+      ];
+      if (todasMarcs.length) await DB.bulkPut("marcacoes", todasMarcs, { sync: false });
+
+      // Sucesso: remover PENDENTE
+      localStorage.removeItem(PENDENTE_KEY);
+
+      // Disparar enriquecimento em background para proposições novas
+      const paraEnriquecer = diff.propsParaCriar.filter(p => p.precisaEnriquecer);
+      if (paraEnriquecer.length && typeof enriquecerProposicaoBackground === "function") {
+        // Não aguarda — executa em paralelo, throttled
+        enriquecerProposicaoBackground(paraEnriquecer);
+      }
+      return { agregados, snap };
+    } catch (e) {
+      // Rollback automático
+      console.error("XLSX_MERGE: erro durante aplicação, revertendo:", e);
+      try { await reverterSnapshot(snap.id); } catch (e2) { console.error("Falha no rollback:", e2); }
+      localStorage.removeItem(PENDENTE_KEY);
+      throw new Error("Erro durante aplicação: " + e.message + ". Estado revertido.");
+    }
+  }
+
+  // Detecta estado inconsistente (aplicação interrompida) e oferece rollback automático
+  async function verificarEstadoInconsistente() {
+    const raw = localStorage.getItem(PENDENTE_KEY);
+    if (!raw) return;
+    let pend;
+    try { pend = JSON.parse(raw); } catch (e) { localStorage.removeItem(PENDENTE_KEY); return; }
+    const snaps = lerSnapshots();
+    if (snaps.length === 0) { localStorage.removeItem(PENDENTE_KEY); return; }
+    const ultimoSnap = snaps[0];
+    const confirmar = confirm(`Atenção: a atualização via XLSX "${pend.nomeArquivo}" iniciada em ${new Date(pend.inicio).toLocaleString("pt-BR")} foi interrompida.\n\nIsso pode ter deixado o estado inconsistente. Deseja reverter para o snapshot anterior?`);
+    if (confirmar) {
+      try {
+        await reverterSnapshot(ultimoSnap.id);
+        alert("Estado revertido com sucesso.");
+      } catch (e) {
+        alert("Falha ao reverter: " + e.message);
+      }
+    }
+    localStorage.removeItem(PENDENTE_KEY);
+  }
+
+  return {
+    validar, parseLinhas, calcularDiff, aplicar,
+    lerHistorico, lerSnapshots, reverterSnapshot,
+    verificarEstadoInconsistente,
+    COLUNAS_ESPERADAS, STATUS_MAP, ETAPA_MAP, CASA_MAP,
+  };
+})();
+
+// ===== Enriquecimento em background (para proposições novas via XLSX) =====
+// Throttle de 1 req/seg para evitar rate limit das APIs Câmara/Senado
+async function enriquecerProposicaoBackground(props) {
+  if (typeof enriquecerProposicao !== "function") {
+    console.warn("enriquecerProposicao não disponível — pulando enriquecimento em background");
+    return;
+  }
+  console.log(`XLSX: enriquecendo ${props.length} proposições em background…`);
+  let ok = 0, erro = 0;
+  for (const p of props.slice(0, 100)) { // limite de 100 por execução
+    try {
+      await enriquecerProposicao(p);
+      ok++;
+    } catch (e) {
+      erro++;
+      console.warn(`Falha enriquecer ${p.identificacao}:`, e.message);
+    }
+    await new Promise(r => setTimeout(r, 1000)); // 1 req/s
+  }
+  console.log(`XLSX: enriquecimento concluído — ${ok} ok, ${erro} erros`);
+  await renderHeaderStats();
+}
+
+
+// ===== UI HANDLERS: Modal XLSX (v4.5) =====
+
+let xlsxStateEmMemoria = null; // { fileName, parseResult, diff }
+
+function xlsxIrParaEtapa(n) {
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById(`xlsx-step-${i}`);
+    if (el) el.style.display = (i === n ? "block" : "none");
+  }
+  const elErr = document.getElementById("xlsx-step-erro");
+  if (elErr) elErr.style.display = (n === "erro" ? "block" : "none");
+}
+
+function xlsxResetEstado() {
+  xlsxStateEmMemoria = null;
+  const inp = document.getElementById("xlsx-input");
+  if (inp) inp.value = "";
+  xlsxIrParaEtapa(1);
+}
+
+function xlsxMostrarErro(msg) {
+  const el = document.getElementById("xlsx-erro-msg");
+  if (el) el.textContent = msg;
+  xlsxIrParaEtapa("erro");
+}
+
+document.getElementById("btn-open-xlsx").addEventListener("click", () => {
+  xlsxResetEstado();
+  abrirModal("modal-xlsx");
+});
+
+// Dropzone
+const xlsxDropzone = document.getElementById("xlsx-dropzone");
+const xlsxInput = document.getElementById("xlsx-input");
+xlsxDropzone.addEventListener("click", () => xlsxInput.click());
+xlsxDropzone.addEventListener("dragover", e => { e.preventDefault(); xlsxDropzone.classList.add("dragover"); });
+xlsxDropzone.addEventListener("dragleave", () => xlsxDropzone.classList.remove("dragover"));
+xlsxDropzone.addEventListener("drop", e => {
+  e.preventDefault();
+  xlsxDropzone.classList.remove("dragover");
+  if (e.dataTransfer.files[0]) processarArquivoXlsx(e.dataTransfer.files[0]);
+});
+xlsxInput.addEventListener("change", e => {
+  if (e.target.files[0]) processarArquivoXlsx(e.target.files[0]);
+});
+
+async function processarArquivoXlsx(file) {
+  try {
+    xlsxIrParaEtapa(2);
+    document.getElementById("xlsx-progress-title").textContent = "Validando arquivo…";
+    document.getElementById("xlsx-progress-text").textContent = `Lendo ${file.name}…`;
+    document.getElementById("xlsx-progress-fill").style.width = "10%";
+
+    const val = await XLSX_MERGE.validar(file);
+
+    document.getElementById("xlsx-progress-title").textContent = "Processando linhas…";
+    document.getElementById("xlsx-progress-fill").style.width = "30%";
+    await new Promise(r => setTimeout(r, 30));
+
+    const parseResult = XLSX_MERGE.parseLinhas(val.ws, val.headers, (i, total) => {
+      const pct = 30 + (i / total) * 30;
+      document.getElementById("xlsx-progress-fill").style.width = `${pct}%`;
+      document.getElementById("xlsx-progress-text").textContent = `Linha ${i} de ${total}`;
+    });
+
+    document.getElementById("xlsx-progress-title").textContent = "Calculando diferenças…";
+    document.getElementById("xlsx-progress-text").textContent = `${parseResult.linhasValidas.length} linhas válidas`;
+    document.getElementById("xlsx-progress-fill").style.width = "70%";
+    await new Promise(r => setTimeout(r, 30));
+
+    const propsAtuais = await DB.getAll("proposicoes");
+    const marcsAtuais = await DB.getAll("marcacoes");
+    const diff = XLSX_MERGE.calcularDiff(parseResult.linhasValidas, propsAtuais, marcsAtuais);
+
+    document.getElementById("xlsx-progress-fill").style.width = "100%";
+    await new Promise(r => setTimeout(r, 200));
+
+    xlsxStateEmMemoria = { fileName: val.fileName, parseResult, diff };
+
+    renderXlsxPreview();
+    xlsxIrParaEtapa(3);
+
+  } catch (e) {
+    console.error("XLSX:", e);
+    xlsxMostrarErro(e.message);
+  }
+}
+
+function renderXlsxPreview() {
+  if (!xlsxStateEmMemoria) return;
+  const { parseResult, diff } = xlsxStateEmMemoria;
+  const resumoEl = document.getElementById("xlsx-resumo");
+  const totalIgn = parseResult.ignoradas.sem_numero + parseResult.ignoradas.numero_invalido + parseResult.ignoradas.sem_tipo;
+  resumoEl.innerHTML = `
+    <div class="xlsx-resumo-item">
+      <div class="xlsx-resumo-label">Total no XLSX</div>
+      <div class="xlsx-resumo-value">${parseResult.linhasValidas.length + totalIgn}</div>
+    </div>
+    <div class="xlsx-resumo-item">
+      <div class="xlsx-resumo-label">Marcações a atualizar</div>
+      <div class="xlsx-resumo-value">${diff.marcsParaAtualizar.length}</div>
+    </div>
+    <div class="xlsx-resumo-item">
+      <div class="xlsx-resumo-label">Marcações a criar</div>
+      <div class="xlsx-resumo-value">${diff.marcsParaCriar.length}</div>
+    </div>
+    <div class="xlsx-resumo-item">
+      <div class="xlsx-resumo-label">Proposições novas</div>
+      <div class="xlsx-resumo-value">${diff.propsParaCriar.length}</div>
+    </div>
+    ${totalIgn > 0 ? `<div class="xlsx-resumo-item attention">
+      <div class="xlsx-resumo-label">Linhas ignoradas</div>
+      <div class="xlsx-resumo-value">${totalIgn}</div>
+      <div class="text-small" style="margin-top:4px;color:var(--warn-strong)">
+        ${parseResult.ignoradas.sem_numero ? `Sem número: ${parseResult.ignoradas.sem_numero}<br>` : ""}
+        ${parseResult.ignoradas.numero_invalido ? `Número inválido: ${parseResult.ignoradas.numero_invalido}<br>` : ""}
+        ${parseResult.ignoradas.sem_tipo ? `Sem TIPO: ${parseResult.ignoradas.sem_tipo}` : ""}
+      </div>
+    </div>` : ""}
+  `;
+
+  const slugsEtapa = [...parseResult.slugsNovosEtapa];
+  const slugsStatus = [...parseResult.slugsNovosStatus];
+  const tiposCasasNovos = [...parseResult.tiposCasasNovos];
+  const slugsEl = document.getElementById("xlsx-slugs-novos");
+  const partes = [];
+  if (slugsEtapa.length) partes.push(`<b>Etapas novas (slugs):</b> ${slugsEtapa.map(escapeHtml).join(", ")}`);
+  if (slugsStatus.length) partes.push(`<b>Status novos (slugs):</b> ${slugsStatus.map(escapeHtml).join(", ")}`);
+  if (tiposCasasNovos.length) partes.push(`<b>Tipos/Casas não mapeados:</b> ${tiposCasasNovos.map(escapeHtml).join(", ")}`);
+  if (partes.length) {
+    slugsEl.style.display = "block";
+    slugsEl.innerHTML = `⚠️ Valores novos detectados:<br>${partes.join("<br>")}<br><span class="text-small">Esses valores entrarão como slug puro. Verifique se algum painel precisa de ajuste.</span>`;
+  } else {
+    slugsEl.style.display = "none";
+  }
+
+  renderXlsxDiffList("todos");
+  document.querySelectorAll(".xlsx-diff-filtro").forEach(b => b.classList.toggle("active", b.dataset.tipo === "todos"));
+}
+
+function renderXlsxDiffList(filtroTipo) {
+  if (!xlsxStateEmMemoria) return;
+  const list = document.getElementById("xlsx-diff-list");
+  const labels = {
+    apelido: "Objeto", tematica: "Temáticas", relevante: "Relevante", resumo: "Resumo",
+    comentarios: "Observação", statusInterno: "Status", etapa: "Etapa", prazoEtapa: "Prazo da etapa",
+    dataRecebimentoSEI: "Protocolo PR", prazoFinalCN: "Prazo final", dataResposta: "Data da resposta",
+    nupRecebimento: "Processo de envio", nupResposta: "Processo de resposta", tipoResposta: "Tipo de resposta",
+    oficio: "Ofício", atribuicao: "Atribuição", linkCongresso: "Link Congresso", linkInteiroTeor: "Link Inteiro teor",
+    unidadesConsultadas: "Unidades",
+  };
+  const fmt = v => {
+    if (v === null || v === undefined || v === "") return "<i>(vazio)</i>";
+    if (v === true) return "Sim"; if (v === false) return "Não";
+    return escapeHtml(String(v));
+  };
+  let filtrados = xlsxStateEmMemoria.diff.ricsAfetados;
+  if (filtroTipo !== "todos") filtrados = filtrados.filter(r => r.tipo === filtroTipo);
+
+  if (filtrados.length === 0) {
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted)">Nenhum RIC ${filtroTipo === "todos" ? "afetado" : (filtroTipo === "novo" ? "novo" : "atualizado")} a exibir.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtrados.map((ric, idx) => {
+    const isCriacao = ric.tipo === "novo";
+    return `<div class="xlsx-diff-item" data-idx="${idx}">
+      <div class="xlsx-diff-item-header">
+        <span class="xlsx-diff-arrow">▶</span>
+        <span class="xlsx-diff-item-title"><b>${escapeHtml(ric.identificacao)}</b> <span class="text-small text-muted">— ${ric.mudancas.length} campo${ric.mudancas.length === 1 ? "" : "s"}</span></span>
+        <span class="xlsx-diff-badge ${ric.tipo}">${ric.tipo}</span>
+      </div>
+      <div class="xlsx-diff-content">
+        ${ric.mudancas.map(m => `<div class="xlsx-diff-row${isCriacao ? " criacao" : ""}">
+          <div class="xlsx-diff-row-campo">${escapeHtml(labels[m.campo] || m.campo)}</div>
+          ${!isCriacao ? `<div class="xlsx-diff-row-antigo">${fmt(m.antigo)}</div>` : ""}
+          <div class="xlsx-diff-row-novo">${fmt(m.novo)}</div>
+        </div>`).join("") || `<div class="text-small text-muted" style="padding:8px">Sem mudanças detalhadas</div>`}
+      </div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".xlsx-diff-item-header").forEach(h => h.addEventListener("click", () => h.closest(".xlsx-diff-item").classList.toggle("open")));
+}
+
+// Filtros do diff
+document.querySelectorAll(".xlsx-diff-filtro").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".xlsx-diff-filtro").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  renderXlsxDiffList(b.dataset.tipo);
+}));
+
+// Cancelar
+document.getElementById("btn-xlsx-cancelar").addEventListener("click", () => {
+  if (!confirm("Descartar as mudanças e fechar?")) return;
+  xlsxResetEstado();
+  fecharModal("modal-xlsx");
+});
+
+// Tentar novamente após erro
+document.getElementById("btn-xlsx-tentar-novamente").addEventListener("click", xlsxResetEstado);
+
+// Aplicar mudanças
+document.getElementById("btn-xlsx-aplicar").addEventListener("click", async () => {
+  if (!xlsxStateEmMemoria) return;
+  xlsxIrParaEtapa(4);
+  document.getElementById("xlsx-apply-fill").style.width = "10%";
+  document.getElementById("xlsx-apply-text").textContent = "Salvando snapshot…";
+  try {
+    await new Promise(r => setTimeout(r, 50));
+    document.getElementById("xlsx-apply-fill").style.width = "40%";
+    document.getElementById("xlsx-apply-text").textContent = "Aplicando mudanças…";
+    const { agregados } = await XLSX_MERGE.aplicar(xlsxStateEmMemoria.diff, xlsxStateEmMemoria.fileName);
+    document.getElementById("xlsx-apply-fill").style.width = "80%";
+    document.getElementById("xlsx-apply-text").textContent = "Atualizando painéis…";
+    await renderHeaderStats();
+    await renderDashboard();
+    if (document.getElementById("pane-gerencial").classList.contains("active")) {
+      await renderPainel();
+    }
+    if (document.getElementById("pane-lista").classList.contains("active")) {
+      renderLista();
+    }
+    document.getElementById("xlsx-apply-fill").style.width = "100%";
+    document.getElementById("xlsx-apply-text").textContent = "Concluído.";
+    await new Promise(r => setTimeout(r, 300));
+    const enriqMsg = xlsxStateEmMemoria.diff.propsParaCriar.filter(p => p.precisaEnriquecer).length;
+    document.getElementById("xlsx-success-msg").innerHTML = `
+      <b>✓ Atualização concluída.</b><br>
+      <span class="text-small">
+        ${agregados.atualizadas} marcaç${agregados.atualizadas === 1 ? "ão atualizada" : "ões atualizadas"},
+        ${agregados.criadas} criad${agregados.criadas === 1 ? "a" : "as"},
+        ${agregados.proposicoesCriadas} proposiç${agregados.proposicoesCriadas === 1 ? "ão nova" : "ões novas"}.
+        ${enriqMsg ? `<br>${enriqMsg} proposiç${enriqMsg === 1 ? "ão" : "ões"} em enriquecimento via API (background).` : ""}
+      </span>
+    `;
+    xlsxIrParaEtapa(5);
+  } catch (e) {
+    xlsxMostrarErro(e.message);
+  }
+});
+
+// Histórico
+document.getElementById("btn-xlsx-historico").addEventListener("click", () => {
+  renderXlsxHistorico();
+  abrirModal("modal-xlsx-historico");
+});
+
+function renderXlsxHistorico() {
+  const list = document.getElementById("xlsx-historico-list");
+  const hist = XLSX_MERGE.lerHistorico();
+  if (hist.length === 0) {
+    list.innerHTML = `<div class="text-small text-muted" style="text-align:center;padding:24px">Nenhuma importação registrada ainda.</div>`;
+    return;
+  }
+  list.innerHTML = hist.map((h, i) => {
+    const a = h.agregados || {};
+    return `<div class="xlsx-historico-item">
+      <div class="xlsx-historico-item-header">
+        <div>
+          <div class="xlsx-historico-item-arquivo">${escapeHtml(h.nomeArquivo || "(sem nome)")}</div>
+          <div class="xlsx-historico-item-data">${new Date(h.timestamp).toLocaleString("pt-BR")}</div>
+        </div>
+        ${h.temSnapshot ? `<span class="xlsx-diff-badge atualizado">snapshot disponível</span>` : `<span class="xlsx-diff-badge" style="background:var(--warn-light);color:var(--warn-strong)">snapshot expirado</span>`}
+      </div>
+      <div class="xlsx-historico-item-stats">
+        ${a.atualizadas || 0} atualizada(s), ${a.criadas || 0} criada(s), ${a.proposicoesCriadas || 0} proposições novas
+      </div>
+      <div class="xlsx-historico-item-acoes">
+        ${h.ricsAfetados ? `<button class="btn btn-sm" data-hist-diff="${h.id}">Ver diff</button>` : ""}
+        ${h.temSnapshot ? `<button class="btn btn-sm btn-danger" data-hist-rev="${h.id}" title="Reverter para o estado anterior a esta importação">Reverter para este ponto</button>` : `<button class="btn btn-sm" disabled title="Snapshot expirado">Reverter (indisponível)</button>`}
+      </div>
+    </div>`;
+  }).join("");
+  list.querySelectorAll("[data-hist-diff]").forEach(btn => btn.addEventListener("click", () => abrirDiffHistorico(btn.dataset.histDiff)));
+  list.querySelectorAll("[data-hist-rev]").forEach(btn => btn.addEventListener("click", () => reverterImportacao(btn.dataset.histRev)));
+}
+
+function abrirDiffHistorico(snapId) {
+  const hist = XLSX_MERGE.lerHistorico();
+  const h = hist.find(x => x.id === snapId);
+  if (!h) return alert("Registro não encontrado.");
+  const cont = document.getElementById("xlsx-diff-hist-conteudo");
+  const labels = {
+    apelido: "Objeto", tematica: "Temáticas", relevante: "Relevante", resumo: "Resumo",
+    comentarios: "Observação", statusInterno: "Status", etapa: "Etapa", prazoEtapa: "Prazo da etapa",
+    dataRecebimentoSEI: "Protocolo PR", prazoFinalCN: "Prazo final", dataResposta: "Data da resposta",
+    nupRecebimento: "Processo de envio", nupResposta: "Processo de resposta", tipoResposta: "Tipo de resposta",
+    oficio: "Ofício", atribuicao: "Atribuição", linkCongresso: "Link Congresso", linkInteiroTeor: "Link Inteiro teor",
+    unidadesConsultadas: "Unidades",
+  };
+  const fmt = v => {
+    if (v === null || v === undefined || v === "") return "<i>(vazio)</i>";
+    if (v === true) return "Sim"; if (v === false) return "Não";
+    return escapeHtml(String(v));
+  };
+  const rics = h.ricsAfetados || [];
+  cont.innerHTML = `
+    <p class="text-small text-muted" style="margin-bottom:12px">${rics.length} RIC(s) afetado(s) — importação de ${new Date(h.timestamp).toLocaleString("pt-BR")} (${escapeHtml(h.nomeArquivo)})</p>
+    <div class="xlsx-diff-list">
+    ${rics.map((ric, idx) => {
+      const isCriacao = ric.tipo === "novo";
+      return `<div class="xlsx-diff-item">
+        <div class="xlsx-diff-item-header">
+          <span class="xlsx-diff-arrow">▶</span>
+          <span class="xlsx-diff-item-title"><b>${escapeHtml(ric.identificacao)}</b> <span class="text-small text-muted">— ${ric.mudancas.length} campo(s)</span></span>
+          <span class="xlsx-diff-badge ${ric.tipo}">${ric.tipo}</span>
+        </div>
+        <div class="xlsx-diff-content">
+          ${ric.mudancas.map(m => `<div class="xlsx-diff-row${isCriacao ? " criacao" : ""}">
+            <div class="xlsx-diff-row-campo">${escapeHtml(labels[m.campo] || m.campo)}</div>
+            ${!isCriacao ? `<div class="xlsx-diff-row-antigo">${fmt(m.antigo)}</div>` : ""}
+            <div class="xlsx-diff-row-novo">${fmt(m.novo)}</div>
+          </div>`).join("")}
+        </div>
+      </div>`;
+    }).join("")}
+    </div>
+  `;
+  cont.querySelectorAll(".xlsx-diff-item-header").forEach(h => h.addEventListener("click", () => h.closest(".xlsx-diff-item").classList.toggle("open")));
+  abrirModal("modal-xlsx-diff-hist");
+}
+
+async function reverterImportacao(snapId) {
+  if (!confirm("⚠ Reverter para o estado anterior a esta importação?\n\nIsto restaurará todas as proposições e marcações ao snapshot salvo antes desta importação. Mudanças feitas após este ponto serão PERDIDAS.")) return;
+  try {
+    await XLSX_MERGE.reverterSnapshot(snapId);
+    await renderHeaderStats();
+    await renderDashboard();
+    if (document.getElementById("pane-gerencial").classList.contains("active")) await renderPainel();
+    if (document.getElementById("pane-lista").classList.contains("active")) renderLista();
+    alert("Estado revertido com sucesso.");
+    fecharModal("modal-xlsx-historico");
+  } catch (e) {
+    alert("Falha ao reverter: " + e.message);
+  }
+}
+
+
 (async () => {
   try {
     await DB.open();
@@ -3460,7 +4766,9 @@ function aplicarEstadoFiltros(visivel) {
     popularSelects();
     await carregarConfigUI();
     await renderHeaderStats();
-    await renderPainel();
+    await renderDashboard();
+    // Detectar estado inconsistente de aplicação XLSX (rollback automático)
+    await XLSX_MERGE.verificarEstadoInconsistente();
   } catch (e) {
     alert("Falha ao inicializar: " + e.message);
     console.error(e);
