@@ -160,6 +160,15 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 .statusbar-item.warn .value { color: var(--warn); }
 .statusbar-item .small-label { font-size: 11px; color: var(--muted-2); margin-top: 2px; }
 
+/* Menu de ações (v4.6) */
+.menu-acoes { position: relative; display: inline-block; }
+.menu-acoes-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 220px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-md); z-index: 100; padding: 6px; overflow: hidden; }
+.menu-acoes.open .menu-acoes-dropdown { display: block; }
+.menu-acoes-dropdown .menu-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: none; border: none; border-radius: var(--radius-sm); font: inherit; font-size: 14px; color: var(--text); text-align: left; cursor: pointer; transition: background 0.15s; }
+.menu-acoes-dropdown .menu-item:hover { background: var(--accent-light); color: var(--accent); }
+.menu-acoes-dropdown .menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.menu-acoes-dropdown .menu-item-icon { font-size: 16px; width: 20px; flex-shrink: 0; text-align: center; color: var(--accent); }
+
 /* Tabs */
 nav.tabs { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0 24px; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 html.dark nav.tabs { border-bottom: 1px solid var(--border); }
@@ -209,13 +218,14 @@ main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
 .grafico-grid { margin-bottom: 0; }
 
 /* ===== Stat Cards (v4.5 — aba Painel) ===== */
-.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-@media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
-@media (min-width: 1024px) { .stats-grid { gap: 20px; } }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+@media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
+@media (min-width: 900px) { .stats-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; } }
+@media (min-width: 1200px) { .stats-grid { gap: 12px; } }
 .stat-card {
   background: var(--surface);
-  border-radius: 12px;
-  padding: 20px 16px;
+  border-radius: 10px;
+  padding: 12px 10px;
   border: 2px solid var(--border);
   box-shadow: 0 2px 4px rgba(13, 17, 23, 0.06);
   position: relative;
@@ -228,7 +238,7 @@ html.dark .stat-card {
   background: linear-gradient(145deg, #1E3A52 0%, #2A4A68 100%);
   border: 1px solid var(--border);
 }
-@media (min-width: 768px) { .stat-card { padding: 24px 20px; } }
+@media (min-width: 768px) { .stat-card { padding: 14px 12px; } }
 .stat-card::before {
   content: '';
   position: absolute;
@@ -245,30 +255,35 @@ html.dark .stat-card {
 }
 .stat-card:hover::before { opacity: 1; }
 .stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Variante warn (Em atraso) — destaque em vermelho/âmbar */
+.stat-card.stat-card-warn .stat-card-number { color: var(--err); }
+.stat-card.stat-card-warn::before { background: linear-gradient(90deg, var(--err), var(--warn)); }
+.stat-card.stat-card-warn:hover { border-color: var(--err); }
 .stat-card-icon {
-  width: 22px; height: 22px;
+  width: 16px; height: 16px;
   color: rgba(61, 90, 128, 0.4);
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 html.dark .stat-card-icon { color: rgba(107, 228, 220, 0.5); }
 .stat-card-icon svg { width: 100%; height: 100%; }
 .stat-card-number {
-  font-size: 36px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--accent);
   letter-spacing: -0.02em;
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
-@media (min-width: 768px) { .stat-card-number { font-size: 44px; margin-bottom: 10px; } }
+@media (min-width: 768px) { .stat-card-number { font-size: 26px; margin-bottom: 6px; } }
 .stat-card-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-2);
+  line-height: 1.2;
 }
-@media (min-width: 768px) { .stat-card-label { font-size: 12px; } }
+@media (min-width: 768px) { .stat-card-label { font-size: 11px; } }
 
 /* ===== Chart Cards (v4.5 — aba Painel) ===== */
 .charts-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
@@ -587,18 +602,17 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div class="header-actions">
       <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
-      <button class="btn btn-icon" id="btn-open-sync" title="Sincronização">⟳ Sincronizar</button>
-      <button class="btn btn-icon" id="btn-open-xlsx" title="Atualizar dados a partir de planilha XLSX">⬆ Atualizar via XLSX</button>
-      <button class="btn btn-icon" id="btn-open-config" title="Configurações">⚙ Configurações</button>
     </div>
   </div>
   <div class="header-statusbar">
-    <div class="statusbar-item" data-stat="total" title="Ver todos os requerimentos"><span class="label">Total</span><span class="value tabular" id="stat-total">—</span></div>
-    <div class="statusbar-item" data-stat="relevantes" title="Filtrar por relevantes"><span class="label">Relevantes</span><span class="value tabular" id="stat-relevantes">—</span></div>
-    <div class="statusbar-item" data-stat="aprovados" title="Filtrar por aprovados"><span class="label">Aprovados</span><span class="value tabular" id="stat-aprovados">—</span></div>
-    <div class="statusbar-item" data-stat="aguardando_aprov" title="Aguardando aprovação no Congresso"><span class="label">Ag. aprovação</span><span class="value tabular" id="stat-ag-aprov">—</span></div>
-    <div class="statusbar-item warn" data-stat="aguardando" title="Em andamento CC ou Aguardando resposta sem triagem"><span class="label">Em andamento / Aguardando</span><span class="value tabular" id="stat-andamento">—</span></div>
-    <div class="statusbar-item alert" data-stat="atrasados" title="Etapas com prazo vencido (sem resposta enviada)"><span class="label">Etapas em atraso</span><span class="value tabular" id="stat-atrasados">—</span></div>
+    <div class="menu-acoes" id="menu-acoes">
+      <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
+      <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
+        <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sincronizar</button>
+        <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">⬆</span>Atualizar via XLSX</button>
+        <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
+      </div>
+    </div>
     <div class="statusbar-item" style="margin-left:auto;flex-direction:row;gap:8px;align-items:center;cursor:default" title="Última sincronização">
       <div style="display:flex;flex-direction:column">
         <span class="label">Última sync</span>
@@ -653,6 +667,20 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
       <div class="stat-card-number tabular" id="stat-card-novos">—</div>
       <div class="stat-card-label">Novos (7 dias)</div>
+    </div>
+    <div class="stat-card" data-stat-card="aguardando_aprov" role="button" tabindex="0" aria-label="Aguardando aprovação no Congresso (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-ag-aprov">—</div>
+      <div class="stat-card-label">Ag. aprovação</div>
+    </div>
+    <div class="stat-card stat-card-warn" data-stat-card="atrasados" role="button" tabindex="0" aria-label="Etapas em atraso (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-atrasados">—</div>
+      <div class="stat-card-label">Em atraso</div>
     </div>
   </div>
 
@@ -763,7 +791,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div id="filtros-container" style="margin-top:12px">
       <div class="form-row">
-        <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto (apelido), resumo, comentários"></div>
+        <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto, resumo, comentários"></div>
         <div><label>Casa</label><select id="filter-casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option></select></div>
         <div><label>Sigla</label><select id="filter-sigla"><option value="">Todas</option><option value="RIC">RIC</option><option value="RQS">RQS</option><option value="REQ">REQ</option></select></div>
         <div><label>Ano</label><select id="filter-ano"><option value="">Todos</option></select></div>
@@ -792,7 +820,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <th class="sortable" data-sort="identificacao">Identificação</th>
           <th class="sortable" data-sort="dataApresentacao">Apresentação</th>
           <th>Autor</th>
-          <th>Objeto (apelido) / Ementa</th>
+          <th>Objeto / Ementa</th>
           <th>Temática</th>
           <th class="sortable" data-sort="situacaoLegislativa">Sit. Legislativa</th>
           <th>Etapa</th>
@@ -1000,7 +1028,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div class="card">
       <h2>Situações não-mapeadas detectadas</h2>
-      <p class="text-small text-muted" style="margin-bottom:12px">Strings de situação que aparecem nas APIs e ainda não foram mapeadas para uma das 6 categorias do INFOCO. Use para refinar o de-para.</p>
+      <p class="text-small text-muted" style="margin-bottom:12px">Strings de situação que aparecem nas APIs e ainda não foram mapeadas para uma das 6 categorias internas. Use para refinar o de-para.</p>
       <div id="situacoes-naomapeadas"><i class="text-small text-muted">Nenhuma situação não-mapeada registrada ainda.</i></div>
     </div>
     <div class="card">
@@ -1030,7 +1058,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <script>
 "use strict";
 
-// ===== CONSTANTES INFOCO =====
+// ===== CONSTANTES INTERNAS =====
 const TEMATICAS = [
   "EXTRA - COP30","EXTRA - EMERGENCIA RS","EXTRA - LAVAJATO","EXTRA - PR - 8 DE JANEIRO","EXTRA - PR - VOLUNTARIADO",
   "GGI - CONTRATACOES","GGI - ETICA/DISCIPLINAR/TCE","GGI - GOVERNANCA","GGI - ORGANIZACAO ADM","GGI - PESSOAS",
@@ -1083,7 +1111,7 @@ const SCHEMA_VERSAO_DADOS = 4;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
 
-// ===== MAPEAMENTO DE SITUAÇÕES (tabela INFOCO) =====
+// ===== MAPEAMENTO DE SITUAÇÕES (tabela interna) =====
 // Câmara: descricaoSituacao (última tramitação) e despacho (regra especial)
 const MAP_SIT_CAMARA = {
   // Tramitação inicial
@@ -1115,12 +1143,12 @@ const MAP_SIT_CAMARA = {
   "requerimento rejeitado": "retirado",
   "requerimento retirado": "retirado"
 };
-// Câmara: regra especial sobre despacho — tabela INFOCO
+// Câmara: regra especial sobre despacho — tabela interna
 // "Aprovação pelo Presidente" e "Aguardando Envio ao Executivo" são sinais de Aprovado
 const REGRA_DESPACHO_APROVADO_CAMARA = /aprova[cç][ãa]o\s+pelo\s+presidente|aguardando\s+envio\s+ao\s+(poder\s+)?executivo|ag\.?\s*envio\s+ao\s+executivo/i;
 
 // Senado: tramitacao.situacao.descricao_situacao
-// MAP_SIT_SENADO: mapeamento de descricaoSituacao (campo estruturado) para situação INFOCO
+// MAP_SIT_SENADO: mapeamento de descricaoSituacao (campo estruturado) para situação interna
 // IMPORTANTE: a detecção principal agora é textual (ver detectarSituacaoSenado).
 // Este mapa serve como fallback para eventos com descricaoSituacao preenchido.
 const MAP_SIT_SENADO = {
@@ -1398,7 +1426,16 @@ async function _enviarPdfBase64AoGemini(pdfBase64, apiKey, model) {
 {"apelido":"...","resumo":"...","palavrasChave":"..."}
 
 Regras obrigatórias:
-- "apelido": frase de ATÉ 150 CARACTERES que sintetize o OBJETO do requerimento. NÃO mencione o destinatário (ministério, órgão, ministro ou cargo). Foco exclusivo na demanda. Exemplos: "Custos das obras do Novo PAC no Nordeste", "Agendas do Presidente com o Supremo Tribunal Federal", "Viagens internacionais oficiais em 2025 e despesas".
+- "apelido": campo OBJETO RESUMIDO de ATÉ 300 CARACTERES no total. DEVE começar com o TEMA do RIC sintetizado em ATÉ 3 OU 4 PALAVRAS em CAIXA ALTA, seguido de " - " (espaço, hífen, espaço) e da síntese da demanda. NÃO mencione o destinatário (ministério, órgão, ministro ou cargo). Foco exclusivo na demanda.
+  Exemplos do formato exato esperado:
+    "NOVO PAC - Investimentos do PAC em obras de infraestrutura em São Gonçalo/RJ"
+    "BANCO MASTER - Reuniões entre o Presidente da República com representantes do Banco Master"
+    "COP30 - Custos da delegação brasileira e contratos firmados no âmbito da conferência"
+    "VIAGENS - Viagens internacionais oficiais em 2025 e despesas"
+    "PRIMEIRA-DAMA - Agendas oficiais e gastos com a comitiva da Primeira-Dama"
+    "CRISE DO INSS - Aposentadorias indeferidas e fila de perícias médicas"
+    "REGULAMENTAÇÃO DE LEIS - Atos pendentes para regulamentar a Lei nº 14.818/2024"
+  O TEMA em CAIXA ALTA é OBRIGATÓRIO e deve ser sucinto (até 4 palavras). Use hífen para temas compostos (PRIMEIRA-DAMA, NOVO-PAC). Após o " - ", a síntese deve ser objetiva e em capitalização normal.
 - "resumo": texto de ATÉ 700 CARACTERES. Descreva os quesitos, questionamentos e itens pedidos SEM mencionar o destinatário. Ao final, inclua síntese das alegações do autor que justificariam o requerimento (máximo 20% do total do resumo).
 - "palavrasChave": 3 a 6 termos separados por vírgula, representando os temas centrais do requerimento.
 
@@ -1437,7 +1474,7 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
     let detail = "";
     try { const err = await res.json(); detail = err?.error?.message || JSON.stringify(err); }
     catch (e) { detail = await res.text(); }
-    throw new Error(`Gemini HTTP ${res.status}: ${detail.substring(0, 200)}`);
+    throw new Error(`Gemini HTTP ${res.status}: ${detail.substring(0, 300)}`);
   }
   const data = await res.json();
   const cand = data?.candidates?.[0];
@@ -1467,7 +1504,7 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
     }
   }
   return {
-    apelido: (parsed.apelido || parsed.objeto || "").substring(0, 150),
+    apelido: (parsed.apelido || parsed.objeto || "").substring(0, 300),
     resumo: parsed.resumo || "",
     palavrasChave: parsed.palavrasChave || parsed["palavras-chave"] || ""
   };
@@ -1696,7 +1733,7 @@ async function detectarSituacaoCamara(prop) {
     det.despachoAprovacao = aprovEvento.despacho || aprovEvento.descricao;
   }
 
-  // Regra especial INFOCO: olhar despacho da última tramitação
+  // Regra especial interno: olhar despacho da última tramitação
   const ultima = hist[hist.length - 1];
   if (REGRA_DESPACHO_APROVADO_CAMARA.test(ultima.despacho || "")) {
     det.situacao = "aprovado";
@@ -2378,7 +2415,7 @@ function renderTabela() {
     const m = getMarcacao(p.id);
     const tituloCol = m.apelido
       ? `<b>${escapeHtml(m.apelido)}</b>`
-      : escapeHtml((p.ementa || "").substring(0, 200) + ((p.ementa || "").length > 200 ? "…" : ""));
+      : escapeHtml((p.ementa || "").substring(0, 300) + ((p.ementa || "").length > 300 ? "…" : ""));
     const inteiroTeor = p.urlInteiroTeor
       ? `<a href="${escapeAttr(p.urlInteiroTeor)}" target="_blank" rel="noopener" title="Inteiro teor" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></a>` : "";
     const portal = p.urlPortal
@@ -2582,7 +2619,7 @@ async function abrirDetalhe(id) {
       <div class="section-header"><h3>Identificação interna</h3></div>
       <div class="section-content">
       <div class="field-row-3">
-        <div style="grid-column:span 2"><label>Objeto (apelido) <span class="text-small text-muted">(máx. 150 caracteres)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: Custos das obras do Novo PAC; Agendas do Presidente com STF" maxlength="150"></div>
+        <div style="grid-column:span 2"><label>Objeto <span class="text-small text-muted">(máx. 300 caracteres — formato: TEMA - síntese)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: NOVO PAC - Custos das obras de infraestrutura no Nordeste" maxlength="300"></div>
         <div><label>Temática</label><select id="m-tematica">${tematicaOpts}</select></div>
       </div>
       <div class="field-row-2">
@@ -2792,7 +2829,7 @@ async function abrirDetalhe(id) {
       const elResumo = document.getElementById("m-resumo");
       const elPalavras = document.getElementById("m-palavraschave");
       const camposPreenchidos = [];
-      if (elApelido && elApelido.value.trim()) camposPreenchidos.push("Objeto (apelido)");
+      if (elApelido && elApelido.value.trim()) camposPreenchidos.push("Objeto");
       if (elResumo && elResumo.value.trim()) camposPreenchidos.push("Resumo");
       if (elPalavras && elPalavras.value.trim()) camposPreenchidos.push("Palavras-chave");
       if (camposPreenchidos.length > 0) {
@@ -2839,7 +2876,7 @@ async function abrirDetalhe(id) {
       [...document.querySelectorAll(".gemini-campo:checked")].map(c => c.dataset.campo)
     );
     if (r.apelido && camposAtivos.has("apelido")) {
-      const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 150);
+      const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 300);
     }
     if (r.resumo && camposAtivos.has("resumo")) {
       const el = document.getElementById("m-resumo"); if (el) el.value = r.resumo;
@@ -2912,7 +2949,7 @@ async function abrirDetalhe(id) {
   });
 
   document.getElementById("btn-limpar-marcacao").addEventListener("click", async () => {
-    if (!confirm("Apagar todos os dados internos (apelido, temática, análise, tramitação, NUPs, etc.) deste requerimento? O requerimento em si NÃO será apagado.")) return;
+    if (!confirm("Apagar todos os dados internos (objeto, temática, análise, tramitação, NUPs, etc.) deste requerimento? O requerimento em si NÃO será apagado.")) return;
     const novoM = {
       proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
       tematica: "", palavrasChave: "", unidadesConsultadas: [],
@@ -3074,12 +3111,13 @@ async function renderDashboard() {
 
 // ----- Cards de indicadores -----
 function renderStatsCards(props, marcs) {
+  const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
+
   // Todos
   const elTodos = document.getElementById("stat-card-todos");
   if (elTodos) elTodos.textContent = props.length;
 
   // Em andamento (statusInterno = andamento_cc) OU situacao aguardando_resposta sem triagem
-  const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
   const emAndamento = props.filter(p => {
     const m = marcMap.get(p.id) || {};
     if (m.statusInterno === "andamento_cc") return true;
@@ -3100,6 +3138,21 @@ function renderStatsCards(props, marcs) {
   const novos = props.filter(p => (p.coletadoEm || "").substring(0, 10) >= lim).length;
   const elNov = document.getElementById("stat-card-novos");
   if (elNov) elNov.textContent = novos;
+
+  // Aguardando aprovação no Congresso
+  const agAprov = props.filter(p => p.situacaoLegislativa === "aguardando_aprovacao").length;
+  const elAgAprov = document.getElementById("stat-card-ag-aprov");
+  if (elAgAprov) elAgAprov.textContent = agAprov;
+
+  // Etapas em atraso (prazoEtapa vencido para RICs ainda não respondidos/retirados)
+  const hojeISO = isoHoje();
+  const atrasados = marcs.filter(m => {
+    if (!m.prazoEtapa) return false;
+    if (m.statusInterno === "respondido" || m.statusInterno === "retirado") return false;
+    return m.prazoEtapa < hojeISO;
+  }).length;
+  const elAtr = document.getElementById("stat-card-atrasados");
+  if (elAtr) elAtr.textContent = atrasados;
 }
 
 // ----- Helpers de gráficos: empty state -----
@@ -3469,32 +3522,9 @@ document.querySelectorAll("#seg-chart-periodo button").forEach(b => b.addEventLi
 }));
 
 async function renderHeaderStats() {
-  const all = await DB.getAll("proposicoes");
-  const marcs = await DB.getAll("marcacoes");
-  document.getElementById("stat-total").textContent = all.length;
-  const relevantes = marcs.filter(m => m.relevante).length;
-  document.getElementById("stat-relevantes").textContent = relevantes;
-  document.getElementById("stat-aprovados").textContent = all.filter(p => p.situacaoLegislativa === "aprovado").length;
-  // Aguardando aprovação no Congresso
-  const agAprov = all.filter(p => p.situacaoLegislativa === "aguardando_aprovacao").length;
-  document.getElementById("stat-ag-aprov").textContent = agAprov;
-  // Em andamento CC / Aguardando resposta (combinado, mesma regra do painel)
-  const marcMap = new Map(marcs.map(m => [m.proposicaoId, m]));
-  const ccAguardando = all.filter(p => {
-    const m = marcMap.get(p.id) || {};
-    if (m.statusInterno === "andamento_cc") return true;
-    if (p.situacaoLegislativa === "aguardando_resposta" && (!m.statusInterno || m.statusInterno === "novo")) return true;
-    return false;
-  }).length;
-  document.getElementById("stat-andamento").textContent = ccAguardando;
-  // Etapas em atraso (prazoEtapa vencido para RICs ainda não respondidos/retirados)
-  const hojeISO = isoHoje();
-  const atrasados = marcs.filter(m => {
-    if (!m.prazoEtapa) return false;
-    if (m.statusInterno === "respondido" || m.statusInterno === "retirado") return false;
-    return m.prazoEtapa < hojeISO;
-  }).length;
-  document.getElementById("stat-atrasados").textContent = atrasados;
+  // Header agora só exibe o badge da última sync.
+  // Os contadores anteriores foram movidos para os stat-cards da aba Painel
+  // (ver renderStatsCards). Mantido como função para minimizar quebras.
   const ult = await getConfig("ultimaSync", null);
   const sd = document.getElementById("stat-sync");
   if (sd) sd.textContent = ult ? new Date(ult).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "nunca";
@@ -3512,7 +3542,7 @@ function linhaExport(p) {
     Identificacao: p.identificacao,
     Apresentacao: p.dataApresentacao,
     Autor: p.autor || "",
-    Objeto_Apelido: m.apelido || "",
+    Objeto_Resumido: m.apelido || "",
     Relevante: m.relevante ? "Sim" : "Não",
     Tematica: m.tematica || "",
     Ementa: p.ementa || "",
@@ -3756,26 +3786,34 @@ document.getElementById("btn-dark-toggle").addEventListener("click", async () =>
 
 // ===== HISTORY API: setup dos handlers dos botões abrir-modal =====
 // (abrirModal já é History-aware desde a definição no topo do script UI)
-document.getElementById("btn-open-sync").onclick = () => { popularAnos(); abrirModal("modal-sync"); renderNaoMapeadas(); };
-document.getElementById("btn-open-config").onclick = async () => { await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); };
+document.getElementById("btn-open-sync").onclick = () => { fecharMenuAcoes(); popularAnos(); abrirModal("modal-sync"); renderNaoMapeadas(); };
+document.getElementById("btn-open-config").onclick = async () => { fecharMenuAcoes(); await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); };
+
+// Menu de ações — abre/fecha o dropdown
+const menuAcoesEl = document.getElementById("menu-acoes");
+const btnMenuAcoes = document.getElementById("btn-menu-acoes");
+function fecharMenuAcoes() {
+  menuAcoesEl.classList.remove("open");
+  btnMenuAcoes.setAttribute("aria-expanded", "false");
+}
+btnMenuAcoes.addEventListener("click", e => {
+  e.stopPropagation();
+  const aberto = menuAcoesEl.classList.toggle("open");
+  btnMenuAcoes.setAttribute("aria-expanded", aberto ? "true" : "false");
+});
+// Click fora fecha o menu
+document.addEventListener("click", e => {
+  if (!menuAcoesEl.contains(e.target)) fecharMenuAcoes();
+});
+// ESC fecha o menu
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && menuAcoesEl.classList.contains("open")) fecharMenuAcoes();
+});
 document.querySelectorAll("[data-close-modal]").forEach(b => {
   b.onclick = e => dispararFecharModal(b.dataset.closeModal);
 });
 document.querySelectorAll(".modal-bg").forEach(bg => {
   bg.onclick = e => { if (e.target === bg) dispararFecharModal(bg.id); };
-});
-
-// ===== STATUSBAR clicks → filtros =====
-document.querySelectorAll(".statusbar-item[data-stat]").forEach(el => {
-  el.addEventListener("click", () => {
-    const s = el.dataset.stat;
-    if (s === "total") aplicarFiltrosViaPaineis({});
-    else if (s === "relevantes") aplicarFiltrosViaPaineis({ rel: "sim" });
-    else if (s === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
-    else if (s === "aguardando_aprov") aplicarFiltrosViaPaineis({ leg: "aguardando_aprovacao" });
-    else if (s === "aguardando") aplicarFiltrosViaPaineis({ leg: "aguardando_resposta" });
-    else if (s === "atrasados") aplicarFiltrosViaPaineis({ prazo: "vencido" });
-  });
 });
 
 // Handler dos stat-cards da aba Painel — clique abre Requerimentos com filtro aplicado
@@ -3786,6 +3824,8 @@ document.querySelectorAll(".stat-card[data-stat-card]").forEach(el => {
     else if (k === "andamento") aplicarFiltrosViaPaineis({ statusInterno: "andamento_cc" });
     else if (k === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
     else if (k === "novos") aplicarFiltrosViaPaineis({ novos7d: true });
+    else if (k === "aguardando_aprov") aplicarFiltrosViaPaineis({ leg: "aguardando_aprovacao" });
+    else if (k === "atrasados") aplicarFiltrosViaPaineis({ prazo: "vencido" });
   }
   el.addEventListener("click", ativar);
   el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ativar(); } });
@@ -4445,6 +4485,7 @@ function xlsxMostrarErro(msg) {
 }
 
 document.getElementById("btn-open-xlsx").addEventListener("click", () => {
+  if (typeof fecharMenuAcoes === "function") fecharMenuAcoes();
   xlsxResetEstado();
   abrirModal("modal-xlsx");
 });
