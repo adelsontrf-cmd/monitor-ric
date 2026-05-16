@@ -16,11 +16,12 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   /* Paleta v4.5 — modo claro (azul muito claro + ciano escurecido) */
-  --bg: #EFF5F9;
-  --bg-body: #D8E3EB;
+  /* v4.6: fundo azul-claro 30% mais escuro para melhor contraste com cards */
+  --bg: #A7BFD0;
+  --bg-body: #97AFC0;
   --bg-header: #FFFFFF;
   --surface: #FFFFFF;
-  --surface-2: #F7FBFD;
+  --surface-2: #D9E5EE;
   --border: #C5D9E6;
   --border-strong: #1F5F63;
   --text: #0D1117;
@@ -144,7 +145,9 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 }
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
 .header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
-.versao-badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; background: var(--surface-2); color: var(--muted); margin-left: 6px; letter-spacing: 0.05em; align-self: flex-start; margin-top: 8px; }
+.versao-badge { display: inline-flex; align-items: center; padding: 0; border: none; border-radius: 0; font-size: 9px; font-weight: 600; background: transparent; color: var(--muted); letter-spacing: 0.05em; margin: 0; line-height: 1; opacity: 0.7; }
+.header-actions-tema { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.header-actions-tema .versao-badge { margin-top: 0; }
 .header-actions { display: flex; gap: 6px; align-items: center; }
 .header-statusbar { padding: 10px 24px; background: var(--surface-2); border-top: 1px solid var(--border); display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
 .statusbar-item { display: flex; flex-direction: column; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: background 0.15s; }
@@ -292,22 +295,35 @@ html.dark .stat-card-icon { color: rgba(107, 228, 220, 0.5); }
 .chart-card {
   background: var(--surface);
   border-radius: 12px;
-  padding: 20px 16px;
+  padding: 14px 14px;
   border: 2px solid var(--border);
   box-shadow: 0 2px 4px rgba(13, 17, 23, 0.04);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 html.dark .chart-card { border: 1px solid var(--border); }
-@media (min-width: 768px) { .chart-card { padding: 24px 20px; } }
-.chart-header { margin-bottom: 16px; }
-.chart-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-.chart-subtitle { font-size: 11px; color: var(--muted); }
-.chart-area { width: 100%; height: 180px; position: relative; }
-@media (min-width: 768px) { .chart-area { height: 220px; } }
-.chart-area svg { width: 100%; height: 100%; display: block; }
-.chart-area .empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-style: italic; font-size: 13px; text-align: center; padding: 16px; }
-.chart-donut { display: flex; align-items: center; justify-content: center; }
-.chart-donut svg { max-width: 220px; max-height: 220px; }
+@media (min-width: 768px) { .chart-card { padding: 18px 16px; } }
+.chart-header { margin-bottom: 10px; }
+.chart-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.chart-subtitle { display: none; }
+.chart-area {
+  width: 100%;
+  flex: 1;
+  position: relative;
+  min-height: 180px;
+  max-height: 280px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+.chart-area svg { width: 100%; height: 100%; display: block; max-width: 100%; max-height: 100%; }
+.chart-area .empty { display: flex; align-items: center; justify-content: center; width: 100%; color: var(--muted); font-style: italic; font-size: 13px; text-align: center; padding: 16px; }
+.chart-donut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.chart-donut > div { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 6px; }
+.chart-donut svg { flex: 0 1 auto; max-width: min(180px, 100%); max-height: 60%; }
 /* Cores do gráfico de barras (com gradiente) */
 .chart-bar { transition: opacity 0.15s; }
 .chart-bar:hover { opacity: 0.85; }
@@ -454,7 +470,15 @@ tr.row-detail .detail-grid .v { font-size: 13px; color: var(--text); word-break:
 td.col-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; white-space: nowrap; color: var(--text); font-weight: 500; }
 td.col-data { white-space: nowrap; font-size: 12px; color: var(--muted); }
 td.col-ementa { max-width: 380px; }
+td.col-objeto, th.col-objeto { min-width: 480px; width: 100%; max-width: 720px; }
+td.col-identificacao, th.col-identificacao { white-space: nowrap; min-width: 200px; }
+td.col-identificacao .cell-ident-linha { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+td.col-identificacao .ident-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 500; color: var(--text); }
+td.col-identificacao .icon-btn { width: 22px; height: 22px; }
 td.col-acoes { white-space: nowrap; }
+/* Tabela com layout fixo para Objeto ser sempre o mais largo */
+#tbl-lista { table-layout: auto; width: 100%; }
+#tbl-lista th, #tbl-lista td { vertical-align: top; }
 
 /* Badges */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; line-height: 1.4; }
@@ -598,10 +622,12 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <img src="icon-72.png" alt="Monitor RIC" width="36" height="36" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
       <h1>Monitor RIC<small>Requerimentos de Informação do Congresso Nacional</small></h1>
-      <span class="versao-badge" title="Versão atual">v4.5</span>
     </div>
     <div class="header-actions">
-      <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
+      <div class="header-actions-tema">
+        <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
+        <span class="versao-badge" title="Versão atual">v4.5</span>
+      </div>
     </div>
   </div>
   <div class="header-statusbar">
@@ -689,21 +715,18 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title">Etapas — em andamento na Casa Civil</div>
-        <div class="chart-subtitle">Distribuição dos RICs em andamento por etapa atual</div>
       </div>
       <div id="chart-etapas" class="chart-area"></div>
     </div>
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title">Situação legislativa</div>
-        <div class="chart-subtitle">Como os RICs estão no Congresso</div>
       </div>
       <div id="chart-situacao" class="chart-area chart-donut"></div>
     </div>
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title">Casa parlamentar</div>
-        <div class="chart-subtitle">Origem dos RICs</div>
       </div>
       <div id="chart-casa" class="chart-area chart-donut"></div>
     </div>
@@ -711,7 +734,6 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="chart-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
         <div>
           <div class="chart-title">Evolução — RICs recebidos na Casa Civil</div>
-          <div class="chart-subtitle">RICs com data de recebimento (SEI), por mês</div>
         </div>
         <div class="painel-segmented" id="seg-chart-periodo" style="margin:0">
           <button data-p="6" class="active">6m</button>
@@ -815,18 +837,14 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div style="overflow-x:auto">
       <table id="tbl-lista">
         <thead><tr>
-          <th></th>
-          <th class="sortable" data-sort="origem">Casa</th>
-          <th class="sortable" data-sort="identificacao">Identificação</th>
-          <th class="sortable" data-sort="dataApresentacao">Apresentação</th>
+          <th class="sortable col-identificacao" data-sort="identificacao">Identificação</th>
+          <th class="sortable" data-sort="dataApresentacao">Apresent.</th>
+          <th>Prazo Resposta</th>
           <th>Autor</th>
-          <th>Objeto / Ementa</th>
-          <th>Temática</th>
+          <th class="col-objeto">Objeto / Ementa</th>
           <th class="sortable" data-sort="situacaoLegislativa">Sit. Legislativa</th>
           <th>Etapa</th>
           <th>Prazo etapa</th>
-          <th>Prazo CN</th>
-          <th>Ações</th>
         </tr></thead>
         <tbody id="tbl-lista-body"></tbody>
       </table>
@@ -2403,7 +2421,7 @@ function renderTabela() {
   document.querySelectorAll("th[data-sort]").forEach(th => th.classList.toggle("sorted", th.dataset.sort === listaEstado.ordemColuna));
 
   if (listaEstado.filtrados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="12" class="empty">Nenhum requerimento corresponde aos filtros.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty">Nenhum requerimento corresponde aos filtros.</td></tr>`;
     document.getElementById("lista-pagination").innerHTML = "";
     return;
   }
@@ -2422,19 +2440,22 @@ function renderTabela() {
       ? `<a href="${escapeAttr(p.urlPortal)}" target="_blank" rel="noopener" title="Portal oficial" class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : "";
     const etapaLabel = (ETAPAS.find(e => e.v === m.etapa) || {}).t || "";
     const prazoCNValor = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
+    const casaLabel = p.origem === "camara" ? "Câmara" : (p.origem === "senado" ? "Senado" : escapeHtml(p.origem || ""));
     return `<tr data-row-id="${p.id}" style="cursor:pointer" title="Duplo clique para abrir detalhamento">
-      <td><span class="star ${m.relevante ? "on" : ""}" data-toggle-rel="${p.id}" title="Marcar como relevante">★</span></td>
-      <td><span class="badge badge-${p.origem}">${p.origem === "camara" ? "Câmara" : "Senado"}</span></td>
-      <td class="col-id">${escapeHtml(p.identificacao)}</td>
+      <td class="col-identificacao">
+        <div class="cell-ident-linha">
+          <span class="ident-id">${escapeHtml(p.identificacao)}</span>
+          <span class="badge badge-${p.origem}">${casaLabel}</span>
+          ${inteiroTeor}${portal}
+        </div>
+      </td>
       <td class="col-data">${formatarData(p.dataApresentacao)}</td>
+      <td>${prazoCNValor ? renderBadgePrazo(prazoCNValor) : ""}</td>
       <td>${escapeHtml(p.autor || "")}</td>
-      <td class="col-ementa">${tituloCol}</td>
-      <td>${m.tematica ? `<span class="badge badge-tematica">${escapeHtml(m.tematica)}</span>` : ""}</td>
+      <td class="col-objeto col-ementa">${tituloCol}</td>
       <td>${renderBadgeLegislativo(p)}</td>
       <td class="text-small">${escapeHtml(etapaLabel)}</td>
       <td>${renderBadgePrazo(m, "etapa")}</td>
-      <td>${prazoCNValor ? renderBadgePrazo(prazoCNValor) : ""}</td>
-      <td class="col-acoes">${inteiroTeor}${portal}<button class="btn btn-sm" data-detalhe="${p.id}">Detalhes</button></td>
     </tr>`;
   }).join("");
 
@@ -2449,17 +2470,7 @@ function renderTabela() {
     if (e.target.closest("a, button, .star")) return;
     abrirDetalhe(tr.dataset.rowId);
   }));
-  tbody.querySelectorAll("[data-toggle-rel]").forEach(b => b.addEventListener("click", async e => {
-    e.stopPropagation();
-    const id = b.dataset.toggleRel;
-    const m = getMarcacao(id);
-    m.relevante = !m.relevante;
-    m.atualizadoEm = new Date().toISOString();
-    await DB.put("marcacoes", m);
-    listaEstado.marcacoes.set(id, m);
-    b.classList.toggle("on", m.relevante);
-    renderHeaderStats();
-  }));
+  // (handler de star removido: a coluna 'Relevante' foi retirada da tabela na v4.6)
   pag.querySelectorAll("button[data-pagina]").forEach(b => b.addEventListener("click", () => {
     if (b.dataset.pagina === "prev") listaEstado.pagina--;
     else listaEstado.pagina++;
@@ -3167,22 +3178,39 @@ function renderChartEtapas(marcs) {
   if (!cont) return;
   const filtrados = marcs.filter(m => m.statusInterno === "andamento_cc");
   if (filtrados.length === 0) { return emptyChart("chart-etapas", "Nenhum RIC em andamento na CC."); }
+  // Nomes reduzidos para o gráfico
+  const LBL_REDUZ = {
+    "admissibilidade": "Admissibilidade",
+    "subsidios": "Subsídios",
+    "validacao_ssgp": "SSGP",
+    "conformidade": "Conformidade",
+    "validacao_gm": "GM"
+  };
   const buckets = {};
   for (const m of filtrados) {
     const e = m.etapa || "(sem etapa)";
     buckets[e] = (buckets[e] || 0) + 1;
   }
+  // Só etapas com ocorrências (ordenadas por contagem desc)
   const dados = Object.entries(buckets)
-    .map(([k, v]) => ({ label: k === "(sem etapa)" ? "(sem etapa)" : ((ETAPAS.find(et => et.v === k) || {}).t || k), valor: v }))
+    .map(([k, v]) => ({
+      label: k === "(sem etapa)" ? "(sem etapa)" : (LBL_REDUZ[k] || (ETAPAS.find(et => et.v === k) || {}).t || k),
+      labelFull: k === "(sem etapa)" ? "(sem etapa)" : ((ETAPAS.find(et => et.v === k) || {}).t || k),
+      valor: v
+    }))
+    .filter(d => d.valor > 0)
     .sort((a, b) => b.valor - a.valor);
 
   const w = 480, h = 200;
-  const padL = 28, padR = 14, padT = 16, padB = 60;
+  const padL = 28, padR = 14, padT = 16, padB = 36;
   const plotW = w - padL - padR, plotH = h - padT - padB;
   const max = Math.max(...dados.map(d => d.valor)) || 1;
-  const barGap = 10;
-  const barW = Math.max(20, Math.min(60, (plotW - (dados.length - 1) * barGap) / dados.length));
+  const barGap = 12;
+  const barW = Math.max(24, Math.min(70, (plotW - (dados.length - 1) * barGap) / dados.length));
   const total = dados.reduce((s, d) => s + d.valor, 0);
+  // Centraliza barras se sobrar espaço
+  const usado = dados.length * barW + (dados.length - 1) * barGap;
+  const offsetX = (plotW - usado) / 2;
 
   // Y ticks
   const nTicks = 4;
@@ -3194,20 +3222,16 @@ function renderChartEtapas(marcs) {
   }
 
   const bars = dados.map((d, i) => {
-    const x = padL + i * (barW + barGap);
+    const x = padL + offsetX + i * (barW + barGap);
     const len = (d.valor / max) * plotH;
     const y = padT + plotH - len;
     const pct = ((d.valor / total) * 100).toFixed(1);
-    // Truncar label longo
-    const lbl = d.label.length > 16 ? d.label.substring(0, 15) + "…" : d.label;
     return `
       <rect x="${x}" y="${y}" width="${barW}" height="${len}" rx="3" fill="url(#chart-bar-gradient)" class="chart-bar">
-        <title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)</title>
+        <title>${escapeHtml(d.labelFull)}: ${d.valor} (${pct}%)</title>
       </rect>
       <text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" class="chart-value-label">${d.valor}</text>
-      <g transform="translate(${x + barW/2},${padT + plotH + 14}) rotate(-25)">
-        <text text-anchor="end" class="chart-axis-label">${escapeHtml(lbl)}</text>
-      </g>
+      <text x="${x + barW/2}" y="${padT + plotH + 16}" text-anchor="middle" class="chart-axis-label">${escapeHtml(d.label)}</text>
     `;
   }).join("");
 
@@ -3279,29 +3303,28 @@ function renderDonut(containerId, dados, opts) {
 
 // ----- Gráfico 2: ROSCA — Situação legislativa -----
 function renderChartSituacao(props) {
-  const ordem = ["aprovado", "aguardando_resposta", "respondido", "aguardando_aprovacao", "tramitacao_inicial", "retirado", "pendente"];
+  // Desconsiderar respondido, retirado e pendente — só situações ativas do trâmite
+  const ordem = ["aprovado", "aguardando_resposta", "aguardando_aprovacao", "tramitacao_inicial"];
   const labels = {
     "tramitacao_inicial": "Tramitação inicial",
     "aguardando_aprovacao": "Aguardando aprovação",
     "aprovado": "Aprovado",
-    "aguardando_resposta": "Aguardando resposta",
-    "respondido": "Respondido",
-    "retirado": "Retirado",
-    "pendente": "Pendente"
+    "aguardando_resposta": "Aguardando resposta"
   };
   const cores = {
     "aprovado": "#1F5F63",
     "aguardando_resposta": "#5DD9D2",
-    "respondido": "#2C7A7E",
     "aguardando_aprovacao": "#3D5A80",
-    "tramitacao_inicial": "#6BE4DC",
-    "retirado": "#94a3b8",
-    "pendente": "#C5D9E6"
+    "tramitacao_inicial": "#6BE4DC"
   };
   const buckets = {};
-  for (const p of props) buckets[p.situacaoLegislativa || "pendente"] = (buckets[p.situacaoLegislativa || "pendente"] || 0) + 1;
+  for (const p of props) {
+    const k = p.situacaoLegislativa || "pendente";
+    if (!ordem.includes(k)) continue; // descarta respondido/retirado/pendente
+    buckets[k] = (buckets[k] || 0) + 1;
+  }
   const dados = ordem.filter(k => buckets[k]).map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k] }));
-  renderDonut("chart-situacao", dados, { empty: "Sem dados de situação legislativa." });
+  renderDonut("chart-situacao", dados, { empty: "Sem RICs em situação ativa." });
 }
 
 // ----- Gráfico 3: ROSCA — Casa parlamentar -----
@@ -3531,6 +3554,19 @@ async function renderHeaderStats() {
 }
 
 // ===== EXPORT =====
+// Helper: converte data ISO (YYYY-MM-DD) para formato brasileiro (DD/MM/AAAA)
+// Aceita também datas com timestamp (ISO completo) e strings já em pt-BR.
+function isoParaBr(v) {
+  if (!v) return "";
+  const s = String(v).trim();
+  if (!s) return "";
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  // Já está em dd/mm/aaaa? devolve como está
+  if (s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)) return s;
+  return s;
+}
+
 function linhaExport(p) {
   const m = getMarcacao(p.id);
   const stIntLabel = (STATUS_INTERNO.find(s => s.v === m.statusInterno) || {}).t || "Novo";
@@ -3540,7 +3576,7 @@ function linhaExport(p) {
     Casa: p.origem === "camara" ? "Câmara" : "Senado",
     Sigla: p.sigla, Numero: p.numero, Ano: p.ano,
     Identificacao: p.identificacao,
-    Apresentacao: p.dataApresentacao,
+    Apresentacao: isoParaBr(p.dataApresentacao),
     Autor: p.autor || "",
     Objeto_Resumido: m.apelido || "",
     Relevante: m.relevante ? "Sim" : "Não",
@@ -3549,17 +3585,17 @@ function linhaExport(p) {
     PalavrasChave: m.palavrasChave || "",
     SituacaoLegislativa: LABEL_LEG[p.situacaoLegislativa] || p.situacaoLegislativa || "",
     SituacaoBruta: p.situacaoBruta || "",
-    DataAprovacao: p.dataAprovacao || "",
+    DataAprovacao: isoParaBr(p.dataAprovacao),
     DespachoAprovacao: p.despachoAprovacao || "",
-    UltimaMovimentacao: p.ultimaMovimentacaoData || "",
+    UltimaMovimentacao: isoParaBr(p.ultimaMovimentacaoData),
     InteiroTeor: p.urlInteiroTeor || "",
     Portal: p.urlPortal || "",
     StatusInterno: stIntLabel,
     Etapa: etapaLabel,
-    PrazoEtapa: m.prazoEtapa || "",
-    DataRecebimentoSEI: m.dataRecebimentoSEI || "",
-    PrazoFinalCN: m.prazoFinalCN || p.prazoFinalCNSugerido || "",
-    DataResposta: m.dataResposta || "",
+    PrazoEtapa: isoParaBr(m.prazoEtapa),
+    DataRecebimentoSEI: isoParaBr(m.dataRecebimentoSEI),
+    PrazoFinalCN: isoParaBr(m.prazoFinalCN || p.prazoFinalCNSugerido),
+    DataResposta: isoParaBr(m.dataResposta),
     NUPRecebimento: m.nupRecebimento || "",
     NUPResposta: m.nupResposta || "",
     TipoResposta: tipoRespLabel,
@@ -3961,26 +3997,41 @@ const XLSX_MERGE = (() => {
 
   function dataParaIso(v) {
     if (v === null || v === undefined || v === "") return "";
+    // Date object — extrair via UTC para evitar deslocamento de fuso
     if (v instanceof Date && !isNaN(v.getTime())) {
-      const y = v.getFullYear(), m = String(v.getMonth() + 1).padStart(2, "0"), d = String(v.getDate()).padStart(2, "0");
+      const y = v.getUTCFullYear();
+      const m = String(v.getUTCMonth() + 1).padStart(2, "0");
+      const d = String(v.getUTCDate()).padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
+    // Serial numérico do Excel (dias desde 1899-12-30; ajuste de 25569 para epoch Unix)
     if (typeof v === "number") {
       const ms = (v - 25569) * 86400 * 1000;
       const d = new Date(ms);
       if (!isNaN(d.getTime())) {
-        const y = d.getUTCFullYear(), m = String(d.getUTCMonth() + 1).padStart(2, "0"), dd = String(d.getUTCDate()).padStart(2, "0");
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
         return `${y}-${m}-${dd}`;
       }
     }
     const s = String(v).trim();
+    if (!s) return "";
+    // ISO YYYY-MM-DD ou YYYY-MM-DD'T'...
     let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
     if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+    // DD/MM/AAAA (ou DD/MM/AA)
     m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
     if (m) {
       const ano = m[3].length === 2 ? "20" + m[3] : m[3];
       return `${ano}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
     }
+    // DD-MM-AAAA
+    m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+    if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    // DD.MM.AAAA
+    m = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+    if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
     return "";
   }
 
@@ -4044,7 +4095,7 @@ const XLSX_MERGE = (() => {
   // PARSE: planilha → lista de linhas estruturadas
   // ============================================================
   function parseLinhas(ws, headers, onProgress) {
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false });
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
     // rows[0] é o header; pular
     const idxOf = nome => headers.indexOf(nome);
     const result = { linhasValidas: [], ignoradas: { sem_numero: 0, numero_invalido: 0, sem_tipo: 0 }, slugsNovosEtapa: new Set(), slugsNovosStatus: new Set(), tiposCasasNovos: new Set() };
