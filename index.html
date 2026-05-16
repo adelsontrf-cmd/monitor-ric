@@ -136,12 +136,12 @@ header.app-header { background: var(--bg-header); border-bottom: 2px solid var(-
 html.dark header.app-header { border-bottom: 1px solid var(--border); }
 .header-top { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 12px; }
 .header-brand { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
-.brand-logo { width: 41px; height: 41px; flex: 0 0 41px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
+.brand-logo { width: 47px; height: 47px; flex: 0 0 47px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
 .brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 21px; }
 html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 @media (max-width: 640px) {
-  .brand-logo { width: 37px; height: 37px; flex: 0 0 37px; }
+  .brand-logo { width: 43px; height: 43px; flex: 0 0 43px; }
 }
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; min-width: 0; }
 .header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
@@ -149,9 +149,6 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 .header-actions-tema { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .header-actions-tema .versao-badge { margin-top: 0; }
 .header-actions { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
-/* Espaçador invisível à esquerda: mesma largura do conjunto tema+versão da direita.
-   Garante que o título e subtítulo do app quebrem em mais linhas se necessário (sem empurrar o conjunto da direita para baixo). */
-.header-spacer { flex: 0 0 44px; height: 1px; }
 .header-statusbar { padding: 10px 24px; background: var(--surface-2); border-top: 1px solid var(--border); display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
 .statusbar-item { display: flex; flex-direction: column; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: background 0.15s; }
 .statusbar-item:hover { background: var(--surface); }
@@ -294,7 +291,6 @@ html.dark .stat-card-icon { color: rgba(107, 228, 220, 0.5); }
 /* ===== Chart Cards (v4.5 — aba Painel) ===== */
 .charts-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
 @media (min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
-.chart-wide { grid-column: 1 / -1; }
 .chart-card {
   background: var(--surface);
   border-radius: 12px;
@@ -326,10 +322,8 @@ html.dark .chart-card { border: 1px solid var(--border); }
 .chart-area .empty { display: flex; align-items: center; justify-content: center; width: 100%; color: var(--muted); font-style: italic; font-size: 13px; text-align: center; padding: 16px; }
 .chart-donut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
 .chart-donut > div { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 6px; }
-.chart-donut svg { flex: 0 1 auto; max-width: min(180px, 100%); max-height: 60%; }
-/* Gráfico Evolução (chart-wide) — área maior, mas com proporção controlada */
-.chart-wide .chart-area { min-height: 220px; max-height: 320px; aspect-ratio: auto; }
-.chart-wide .chart-area svg { width: 100%; height: 100%; max-height: 100%; }
+/* v4.6: gráficos de rosca 30% maiores (180 → 234) */
+.chart-donut svg { flex: 0 1 auto; max-width: min(234px, 100%); max-height: 78%; }
 /* Cores do gráfico de barras (com gradiente) */
 .chart-bar { transition: opacity 0.15s; }
 .chart-bar:hover { opacity: 0.85; }
@@ -565,11 +559,29 @@ html.dark .log { background: #020617; }
 .modal-header-actions .save-feedback { font-size: 11px; color: var(--success, #10b981); opacity: 0; transition: opacity 0.3s; }
 .modal-header-actions .save-feedback.show { opacity: 1; }
 
-/* Modal footer (v4.6: Ocultar/Excluir/Limpar) */
+/* Modal header — variante do modal de detalhe (v4.6):
+   - Botão X no canto superior direito
+   - Botão Salvar 50% menor, posicionado ABAIXO do X (também no canto direito)
+   - Título estende-se por TODA a largura do header (quebra de linha conforme necessário)
+   - Em telas estreitas, o título naturalmente cai abaixo dos botões */
+.modal-header-detalhe { position: relative; display: block; padding: 12px 60px 12px 18px; min-height: 64px; }
+.modal-header-detalhe .modal-close { position: absolute; top: 8px; right: 12px; margin: 0; }
+.modal-header-detalhe .btn-salvar-mini { position: absolute; top: 38px; right: 12px; padding: 2px 8px; font-size: 10px; min-height: 18px; height: 18px; line-height: 1; border-radius: 4px; }
+.modal-header-detalhe .save-feedback-mini { position: absolute; top: 40px; right: 60px; font-size: 9px; color: var(--success, #10b981); opacity: 0; transition: opacity 0.3s; }
+.modal-header-detalhe .save-feedback-mini.show { opacity: 1; }
+.modal-header-detalhe h2 { margin: 0; padding-right: 0; font-size: 16px; font-weight: 600; line-height: 1.3; word-wrap: break-word; overflow-wrap: anywhere; }
+
+/* Modal footer (v4.6: Ocultar/Limpar/Excluir) */
 .modal-footer-detalhe { display: flex; align-items: center; gap: 10px; padding: 12px 0 4px; margin-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
-.modal-footer-detalhe .btn-limpar-discreto { color: var(--muted); opacity: 0.65; transition: opacity 0.2s, color 0.2s; }
-.modal-footer-detalhe .btn-limpar-discreto:hover { color: var(--err); opacity: 1; }
-.modal-footer-detalhe .btn-limpar-discreto svg { width: 16px; height: 16px; }
+
+/* IDENTIFICAÇÃO API (v4.6): rótulo em cima, valor embaixo */
+.ident-api-grid { display: grid; grid-template-columns: 1fr; gap: 10px 16px; }
+@media (min-width: 600px) { .ident-api-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .ident-api-grid { grid-template-columns: 1fr 1fr 1fr; } }
+.ident-api-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ident-api-field-full { grid-column: 1 / -1; }
+.ident-api-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.ident-api-value { font-size: 13px; color: var(--text); word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.4; }
 
 /* Unidades consultadas (v4.6: checkboxes ao invés de select multiple) */
 .unidades-checkboxes { display: grid; grid-template-columns: 1fr; gap: 6px 12px; max-height: 260px; overflow-y: auto; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
@@ -645,11 +657,9 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <body>
 <header class="app-header">
   <div class="header-top">
-    <!-- Espaçador invisível: força o brand a ter espaço para o conjunto tema+versão da direita -->
-    <div class="header-spacer" aria-hidden="true"></div>
     <div class="header-brand">
       <div class="brand-logo" aria-hidden="true">
-        <img src="icon-72.png" alt="Monitor RIC" width="41" height="41" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
+        <img src="icon-72.png" alt="Monitor RIC" width="47" height="47" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
       <h1>Monitor RIC<small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
@@ -760,7 +770,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
       <div id="chart-casa" class="chart-area chart-donut"></div>
     </div>
-    <div class="chart-card chart-wide">
+    <div class="chart-card">
       <div class="chart-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
         <div>
           <div class="chart-title">Evolução — RICs recebidos na Casa Civil</div>
@@ -772,7 +782,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <button data-p="todos">Tudo</button>
         </div>
       </div>
-      <div id="chart-evolucao" class="chart-area"></div>
+      <div id="chart-evolucao" class="chart-area chart-evolucao-area"></div>
     </div>
   </div>
 </section>
@@ -888,13 +898,11 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <!-- MODAL DETALHE -->
 <div class="modal-bg" id="modal-detalhe">
   <div class="modal modal-wide">
-    <div class="modal-header">
+    <div class="modal-header modal-header-detalhe">
+      <button class="modal-close" data-close-modal="modal-detalhe">&times;</button>
+      <button class="btn btn-primary btn-salvar-mini" id="btn-salvar-marcacao-header" title="Salvar análise">Salvar</button>
+      <span class="save-feedback save-feedback-mini" id="save-feedback-header">Salvo ✓</span>
       <h2 id="modal-titulo">—</h2>
-      <div class="modal-header-actions">
-        <span class="save-feedback" id="save-feedback-header">Salvo ✓</span>
-        <button class="btn btn-primary btn-sm" id="btn-salvar-marcacao-header" title="Salvar análise">Salvar</button>
-        <button class="modal-close" data-close-modal="modal-detalhe">&times;</button>
-      </div>
     </div>
     <div id="modal-body"></div>
     <div class="modal-footer-detalhe" id="modal-footer-detalhe">
@@ -1080,11 +1088,6 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <p class="text-small text-muted" style="margin-bottom:12px">Lista de siglas usada nos checkboxes do detalhe do requerimento. Uma por linha.</p>
       <textarea id="cfg-unidades" rows="6"></textarea>
       <div style="margin-top:8px"><button class="btn" id="btn-reset-unidades">Restaurar padrão</button></div>
-    </div>
-    <div class="card">
-      <h2>Situações não-mapeadas detectadas</h2>
-      <p class="text-small text-muted" style="margin-bottom:12px">Strings de situação que aparecem nas APIs e ainda não foram mapeadas para uma das 6 categorias internas. Use para refinar o de-para.</p>
-      <div id="situacoes-naomapeadas"><i class="text-small text-muted">Nenhuma situação não-mapeada registrada ainda.</i></div>
     </div>
     <div class="card">
       <h2>Proxy CORS (opcional)</h2>
@@ -2786,28 +2789,28 @@ async function abrirDetalhe(id) {
     <div class="modal-section collapsible" data-sec="ident">
       <div class="section-header"><h3>IDENTIFICAÇÃO API</h3></div>
       <div class="section-content">
-      <dl>
-        <dt>Casa</dt><dd>${p.origem === "camara" ? "Câmara dos Deputados" : "Senado Federal"}</dd>
-        <dt>Tipo</dt><dd>${escapeHtml(p.sigla)}${p.siglaComissao ? " — " + escapeHtml(p.siglaComissao) : ""}</dd>
-        <dt>Apresentado em</dt><dd>${formatarData(p.dataApresentacao) || "—"}</dd>
-        <dt>Autor</dt><dd>${escapeHtml(formatarAutor(p) || "—")}</dd>
-        <dt>Sit. Legislativa</dt><dd>${renderBadgeLegislativo(p)} ${p.situacaoBruta ? `<span class="text-small text-muted">(API: ${escapeHtml(p.situacaoBruta)})</span>` : ""}</dd>
-        ${p.dataAprovacao ? `<dt>Data de aprovação</dt><dd>${formatarData(p.dataAprovacao)}</dd>` : ""}
-        ${p.despachoAprovacao ? `<dt>Despacho de aprovação</dt><dd>${escapeHtml(p.despachoAprovacao)}</dd>` : ""}
-        ${p.ultimaMovimentacaoData ? `<dt>Última movimentação</dt><dd>${formatarData(p.ultimaMovimentacaoData)}</dd>` : ""}
-        <dt>Coletado em</dt><dd>${new Date(p.coletadoEm).toLocaleString("pt-BR")}</dd>
-        ${p.dataEnriquecimento ? `<dt>Enriquecido em</dt><dd>${new Date(p.dataEnriquecimento).toLocaleString("pt-BR")}</dd>` : ""}
-        ${links.length ? `<dt>Links</dt><dd>${links.join(" &nbsp;|&nbsp; ")}</dd>` : ""}
-        <dt>Ementa</dt><dd>
+      <div class="ident-api-grid">
+        <div class="ident-api-field"><div class="ident-api-label">Casa</div><div class="ident-api-value">${p.origem === "camara" ? "Câmara dos Deputados" : "Senado Federal"}</div></div>
+        <div class="ident-api-field"><div class="ident-api-label">Tipo</div><div class="ident-api-value">${escapeHtml(p.sigla)}${p.siglaComissao ? " — " + escapeHtml(p.siglaComissao) : ""}</div></div>
+        <div class="ident-api-field"><div class="ident-api-label">Apresentado em</div><div class="ident-api-value">${formatarData(p.dataApresentacao) || "—"}</div></div>
+        <div class="ident-api-field"><div class="ident-api-label">Autor</div><div class="ident-api-value">${escapeHtml(formatarAutor(p) || "—")}</div></div>
+        <div class="ident-api-field"><div class="ident-api-label">Situação Legislativa</div><div class="ident-api-value">${renderBadgeLegislativo(p)} ${p.situacaoBruta ? `<span class="text-small text-muted">(API: ${escapeHtml(p.situacaoBruta)})</span>` : ""}</div></div>
+        ${p.dataAprovacao ? `<div class="ident-api-field"><div class="ident-api-label">Data de aprovação</div><div class="ident-api-value">${formatarData(p.dataAprovacao)}</div></div>` : ""}
+        ${p.despachoAprovacao ? `<div class="ident-api-field"><div class="ident-api-label">Despacho de aprovação</div><div class="ident-api-value">${escapeHtml(p.despachoAprovacao)}</div></div>` : ""}
+        ${p.ultimaMovimentacaoData ? `<div class="ident-api-field"><div class="ident-api-label">Última movimentação</div><div class="ident-api-value">${formatarData(p.ultimaMovimentacaoData)}</div></div>` : ""}
+        <div class="ident-api-field"><div class="ident-api-label">Coletado em</div><div class="ident-api-value">${new Date(p.coletadoEm).toLocaleString("pt-BR")}</div></div>
+        ${p.dataEnriquecimento ? `<div class="ident-api-field"><div class="ident-api-label">Enriquecido em</div><div class="ident-api-value">${new Date(p.dataEnriquecimento).toLocaleString("pt-BR")}</div></div>` : ""}
+        ${links.length ? `<div class="ident-api-field"><div class="ident-api-label">Links</div><div class="ident-api-value">${links.join(" &nbsp;|&nbsp; ")}</div></div>` : ""}
+        <div class="ident-api-field ident-api-field-full"><div class="ident-api-label">Ementa</div><div class="ident-api-value">
           <div class="ementa-full">${escapeHtml(p.ementa || "—")}</div>
           ${p.ementaDetalhada ? `<details style="margin-top:8px"><summary>Ementa detalhada</summary><div class="ementa-full" style="margin-top:8px">${escapeHtml(p.ementaDetalhada)}</div></details>` : ""}
           ${p.keywords ? `<div class="text-small text-muted" style="margin-top:8px"><b>Palavras-chave (API):</b> ${escapeHtml(p.keywords)}</div>` : ""}
-        </dd>
-      </dl>
+        </div></div>
+      </div>
       </div>
     </div>
 
-    <div class="modal-section collapsible" data-sec="objeto">
+    <div class="modal-section collapsible collapsed" data-sec="objeto">
       <div class="section-header"><h3>OBJETO</h3></div>
       <div class="section-content">
       <div class="field-row-3">
@@ -2821,7 +2824,7 @@ async function abrirDetalhe(id) {
       </div>
     </div>
 
-    <div class="modal-section collapsible" data-sec="analise">
+    <div class="modal-section collapsible collapsed" data-sec="analise">
       <div class="section-header"><h3>Análise da SSGP</h3></div>
       <div class="section-content">
       <label>Resumo</label>
@@ -2842,7 +2845,7 @@ async function abrirDetalhe(id) {
       </div>
     </div>
 
-    <div class="modal-section collapsible" data-sec="tramitacao-int">
+    <div class="modal-section collapsible collapsed" data-sec="tramitacao-int">
       <div class="section-header"><h3>Tramitação interna</h3></div>
       <div class="section-content">
       <div class="field-row-3">
@@ -2887,9 +2890,20 @@ async function abrirDetalhe(id) {
     <div class="modal-section collapsible collapsed" data-sec="gemini">
       <div class="section-header"><h3>🤖 Analisar com Gemini</h3></div>
       <div class="section-content">
-      <div class="toolbar" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">
-        <button class="btn btn-gemini btn-sm" id="btn-gemini-analisar" ${p.urlInteiroTeor ? "" : "disabled title='Sem inteiro teor disponível'"}>🤖 Analisar com Gemini</button>
-        <div class="gemini-campos-seletor text-small" title="Campos que serão preenchidos pela resposta">
+      <div class="toolbar" style="margin-bottom:10px;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <button class="btn btn-gemini btn-sm" id="btn-gemini-analisar" ${p.urlInteiroTeor ? "" : "disabled title='Sem inteiro teor disponível'"}>🤖 Analisar</button>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <label class="text-small" for="m-gemini-model" style="margin:0">Modelo</label>
+          <select id="m-gemini-model" style="padding:6px 8px;font-size:12px;min-width:200px">
+            <option value="gemini-2.5-flash">gemini-2.5-flash (rápido, recomendado)</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro (mais preciso)</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+            <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (econômico)</option>
+            <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+          </select>
+        </div>
+        <div class="gemini-campos-seletor text-small" title="Campos que serão preenchidos pela resposta" style="padding-bottom:4px">
           Preencher:
           <label><input type="checkbox" class="gemini-campo" data-campo="apelido" checked> Objeto</label>
           <label><input type="checkbox" class="gemini-campo" data-campo="resumo" checked> Resumo</label>
@@ -3001,11 +3015,23 @@ async function abrirDetalhe(id) {
 
   // Botão Gemini — analisar PDF do inteiro teor
   const btnGemini = document.getElementById("btn-gemini-analisar");
+  // Sincroniza o seletor de modelo do modal com o valor configurado
+  const selModelo = document.getElementById("m-gemini-model");
+  if (selModelo) {
+    (async () => {
+      selModelo.value = await getConfig("geminiModel", "gemini-2.5-flash");
+    })();
+    // Ao mudar aqui, atualiza a configuração global (mesmo comportamento do seletor das Configurações)
+    selModelo.addEventListener("change", async () => {
+      await setConfig("geminiModel", selModelo.value);
+    });
+  }
   if (btnGemini) {
     btnGemini.addEventListener("click", async () => {
       const status = document.getElementById("gemini-status");
       const apiKey = await getConfig("geminiKey", "");
-      const model = await getConfig("geminiModel", "gemini-2.5-flash");
+      // Usa o modelo do seletor LOCAL do modal (que está sincronizado com a config global)
+      const model = selModelo ? selModelo.value : await getConfig("geminiModel", "gemini-2.5-flash");
       if (!apiKey) {
         status.innerHTML = `<span style="color:var(--err)">Chave Gemini não configurada. Acesse Configurações.</span>`;
         return;
@@ -3164,12 +3190,14 @@ async function abrirDetalhe(id) {
       <button class="btn btn-sm btn-ghost" id="btn-ocultar-ric" title="${jaOculto ? "Reexibir este RIC nas listas" : "Ocultar este RIC das listas (não apaga)"}">
         ${jaOculto ? "👁 Reexibir" : "👁‍🗨 Ocultar"}
       </button>
-      <button class="btn btn-sm btn-danger" id="btn-excluir-ric" title="Excluir este RIC da base (com snapshot para recuperação)">
-        🗑 Excluir RIC
+      <button class="btn btn-sm btn-ghost" id="btn-limpar-marcacao" title="Limpar análise (apaga só os dados internos, mantém o RIC)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L21 10C21.5 10.5 21.5 11.5 21 12L11 22"/><line x1="18" y1="13" x2="9" y2="4"/></svg>
+        Limpar
       </button>
       <div style="flex:1"></div>
-      <button class="btn btn-icon btn-ghost btn-limpar-discreto" id="btn-limpar-marcacao" title="Limpar análise (apaga só os dados internos, mantém o RIC)" aria-label="Limpar análise">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      <button class="btn btn-sm btn-danger" id="btn-excluir-ric" title="Excluir este RIC da base (com snapshot para recuperação)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Excluir RIC
       </button>
     `;
     // Handler Ocultar
@@ -3293,21 +3321,23 @@ async function renderPainel() {
     .filter(p => p.ultimaMovimentacaoData !== p.dataApresentacao)
     .sort((a, b) => (b.ultimaMovimentacaoData || "").localeCompare(a.ultimaMovimentacaoData || ""));
 
-  // Aprovados — TODOS com situacaoLegislativa = "aprovado", sem nenhum outro critério
-  // O período filtra apenas pela data de aprovação; "todos" mostra independente da data
+  // Aprovados — MESMO critério do indicador "Aprovados" da aba Painel:
+  //   p.situacaoLegislativa === "aprovado"
+  // Adicionalmente, filtra pelo período de aprovação selecionado (7/15/30/Todos).
+  // Para o filtro de período, usa dataAprovacao se preenchida; caso vazia, considera ultimaMovimentacaoData como fallback.
   let aprovados;
   if (painelEstado.aprovPeriodo === "todos") {
     aprovados = all.filter(p => p.situacaoLegislativa === "aprovado");
   } else {
     const dias = parseInt(painelEstado.aprovPeriodo, 10) || 7;
     const limite = addDiasIso(hoje, -dias);
-    aprovados = all.filter(p =>
-      p.situacaoLegislativa === "aprovado" &&
-      p.dataAprovacao &&
-      p.dataAprovacao >= limite
-    );
+    aprovados = all.filter(p => {
+      if (p.situacaoLegislativa !== "aprovado") return false;
+      const dataRef = p.dataAprovacao || p.ultimaMovimentacaoData || "";
+      return dataRef && dataRef >= limite;
+    });
   }
-  aprovados.sort((a, b) => (b.dataAprovacao || "").localeCompare(a.dataAprovacao || ""));
+  aprovados.sort((a, b) => ((b.dataAprovacao || b.ultimaMovimentacaoData) || "").localeCompare((a.dataAprovacao || a.ultimaMovimentacaoData) || ""));
 
   document.getElementById("cnt-apresentados").textContent = apresentados.length;
   document.getElementById("cnt-movimentados").textContent = movimentados.length;
@@ -4071,8 +4101,9 @@ document.getElementById("btn-test-conn").addEventListener("click", async () => {
 });
 
 async function renderNaoMapeadas() {
-  const all = await DB.getAll("naomapeadas");
   const div = document.getElementById("situacoes-naomapeadas");
+  if (!div) return; // v4.6: card de não-mapeadas removido da UI
+  const all = await DB.getAll("naomapeadas");
   if (!all.length) { div.innerHTML = `<i class="text-small text-muted">Nenhuma situação não-mapeada registrada ainda.</i>`; return; }
   all.sort((a, b) => (b.count || 0) - (a.count || 0));
   div.innerHTML = `<table style="font-size:12px"><thead><tr><th>Origem</th><th>Situação (texto bruto da API)</th><th>Ocorrências</th><th>Última vez</th></tr></thead><tbody>` +
