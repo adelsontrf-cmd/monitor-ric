@@ -134,21 +134,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Robo
 /* Header */
 header.app-header { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0; }
 html.dark header.app-header { border-bottom: 1px solid var(--border); }
-.header-top { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.header-brand { display: flex; align-items: center; gap: 10px; }
-.brand-logo { width: 36px; height: 36px; flex: 0 0 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
+.header-top { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 12px; }
+.header-brand { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
+.brand-logo { width: 41px; height: 41px; flex: 0 0 41px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
 .brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 18px; }
+.brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 21px; }
 html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 @media (max-width: 640px) {
-  .brand-logo { width: 32px; height: 32px; flex: 0 0 32px; }
+  .brand-logo { width: 37px; height: 37px; flex: 0 0 37px; }
 }
-.header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
+.header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; min-width: 0; }
 .header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
 .versao-badge { display: inline-flex; align-items: center; padding: 0; border: none; border-radius: 0; font-size: 9px; font-weight: 600; background: transparent; color: var(--muted); letter-spacing: 0.05em; margin: 0; line-height: 1; opacity: 0.7; }
 .header-actions-tema { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .header-actions-tema .versao-badge { margin-top: 0; }
-.header-actions { display: flex; gap: 6px; align-items: center; }
+.header-actions { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
+/* Espaçador invisível à esquerda: mesma largura do conjunto tema+versão da direita.
+   Garante que o título e subtítulo do app quebrem em mais linhas se necessário (sem empurrar o conjunto da direita para baixo). */
+.header-spacer { flex: 0 0 44px; height: 1px; }
 .header-statusbar { padding: 10px 24px; background: var(--surface-2); border-top: 1px solid var(--border); display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
 .statusbar-item { display: flex; flex-direction: column; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: background 0.15s; }
 .statusbar-item:hover { background: var(--surface); }
@@ -324,6 +327,9 @@ html.dark .chart-card { border: 1px solid var(--border); }
 .chart-donut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
 .chart-donut > div { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 6px; }
 .chart-donut svg { flex: 0 1 auto; max-width: min(180px, 100%); max-height: 60%; }
+/* Gráfico Evolução (chart-wide) — área maior, mas com proporção controlada */
+.chart-wide .chart-area { min-height: 220px; max-height: 320px; aspect-ratio: auto; }
+.chart-wide .chart-area svg { width: 100%; height: 100%; max-height: 100%; }
 /* Cores do gráfico de barras (com gradiente) */
 .chart-bar { transition: opacity 0.15s; }
 .chart-bar:hover { opacity: 0.85; }
@@ -471,9 +477,11 @@ td.col-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 1
 td.col-data { white-space: nowrap; font-size: 12px; color: var(--muted); }
 td.col-ementa { max-width: 380px; }
 td.col-objeto, th.col-objeto { min-width: 480px; width: 100%; max-width: 720px; }
-td.col-identificacao, th.col-identificacao { white-space: nowrap; min-width: 200px; }
-td.col-identificacao .cell-ident-linha { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
-td.col-identificacao .ident-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 500; color: var(--text); }
+td.col-identificacao, th.col-identificacao { white-space: nowrap; min-width: 130px; max-width: 160px; }
+td.col-identificacao .cell-ident-2linhas { display: flex; flex-direction: column; gap: 4px; }
+td.col-identificacao .ident-linha-id { white-space: nowrap; }
+td.col-identificacao .ident-linha-meta { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+td.col-identificacao .ident-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--text); }
 td.col-identificacao .icon-btn { width: 22px; height: 22px; }
 td.col-acoes { white-space: nowrap; }
 /* Tabela com layout fixo para Objeto ser sempre o mais largo */
@@ -551,6 +559,26 @@ html.dark .log { background: #020617; }
 .modal-section.collapsible > .section-content { overflow: hidden; transition: max-height 0.3s ease, opacity 0.2s; max-height: none; opacity: 1; padding-top: 10px; }
 .modal-section.collapsible.collapsed > .section-content { max-height: 0; opacity: 0; padding-top: 0; }
 
+/* Modal header actions (v4.6: botão Salvar sempre visível) */
+.modal-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.modal-header-actions .btn-sm { padding: 4px 12px; font-size: 12px; min-height: 28px; line-height: 1; }
+.modal-header-actions .save-feedback { font-size: 11px; color: var(--success, #10b981); opacity: 0; transition: opacity 0.3s; }
+.modal-header-actions .save-feedback.show { opacity: 1; }
+
+/* Modal footer (v4.6: Ocultar/Excluir/Limpar) */
+.modal-footer-detalhe { display: flex; align-items: center; gap: 10px; padding: 12px 0 4px; margin-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.modal-footer-detalhe .btn-limpar-discreto { color: var(--muted); opacity: 0.65; transition: opacity 0.2s, color 0.2s; }
+.modal-footer-detalhe .btn-limpar-discreto:hover { color: var(--err); opacity: 1; }
+.modal-footer-detalhe .btn-limpar-discreto svg { width: 16px; height: 16px; }
+
+/* Unidades consultadas (v4.6: checkboxes ao invés de select multiple) */
+.unidades-checkboxes { display: grid; grid-template-columns: 1fr; gap: 6px 12px; max-height: 260px; overflow-y: auto; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+@media (min-width: 600px) { .unidades-checkboxes { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .unidades-checkboxes { grid-template-columns: 1fr 1fr 1fr; } }
+.unidades-checkboxes .unidade-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; padding: 4px 6px; border-radius: 4px; line-height: 1.3; }
+.unidades-checkboxes .unidade-check:hover { background: var(--surface); }
+.unidades-checkboxes .unidade-check input[type="checkbox"] { flex-shrink: 0; width: auto; margin: 0; }
+
 /* Pagination */
 .pagination { display: flex; gap: 4px; align-items: center; justify-content: center; margin-top: 16px; flex-wrap: wrap; padding: 12px; }
 .pagination button { padding: 4px 10px; min-width: 32px; }
@@ -617,9 +645,11 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <body>
 <header class="app-header">
   <div class="header-top">
+    <!-- Espaçador invisível: força o brand a ter espaço para o conjunto tema+versão da direita -->
+    <div class="header-spacer" aria-hidden="true"></div>
     <div class="header-brand">
       <div class="brand-logo" aria-hidden="true">
-        <img src="icon-72.png" alt="Monitor RIC" width="36" height="36" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
+        <img src="icon-72.png" alt="Monitor RIC" width="41" height="41" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
       <h1>Monitor RIC<small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
@@ -860,9 +890,16 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   <div class="modal modal-wide">
     <div class="modal-header">
       <h2 id="modal-titulo">—</h2>
-      <button class="modal-close" data-close-modal="modal-detalhe">&times;</button>
+      <div class="modal-header-actions">
+        <span class="save-feedback" id="save-feedback-header">Salvo ✓</span>
+        <button class="btn btn-primary btn-sm" id="btn-salvar-marcacao-header" title="Salvar análise">Salvar</button>
+        <button class="modal-close" data-close-modal="modal-detalhe">&times;</button>
+      </div>
     </div>
     <div id="modal-body"></div>
+    <div class="modal-footer-detalhe" id="modal-footer-detalhe">
+      <!-- Botões de exclusão/ocultação injetados pelo abrirDetalhe -->
+    </div>
   </div>
 </div>
 
@@ -1066,6 +1103,15 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
     </div>
     <div class="card">
+      <h2>RICs ocultos e excluídos</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Gerencie RICs que foram ocultados (preservados na base, mas fora de listas e estatísticas) ou excluídos (com snapshot para recuperação).</p>
+      <div class="toolbar">
+        <button class="btn" id="btn-listar-ocultos">Listar RICs ocultos</button>
+        <button class="btn" id="btn-listar-excluidos">Histórico de exclusões</button>
+      </div>
+      <div id="gerenciar-ocultos-resultado" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
       <h2>Sobre</h2>
       <p class="text-small text-muted">APIs públicas:<br>• <a href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank">Câmara — Dados Abertos v2</a><br>• <a href="https://legis.senado.leg.br/dadosabertos/docs/" target="_blank">Senado — Dados Abertos</a><br>Filtragem por menção a Casa Civil é feita localmente. Nenhum dado é enviado a servidores de terceiros.</p>
     </div>
@@ -1125,7 +1171,7 @@ const URL_SENADO = "https://legis.senado.leg.br/dadosabertos";
 const DB_NAME = "monitor-ric";
 const DB_NAME_LEGADO = "monitor-sic";
 const DB_VERSION = 1;
-const SCHEMA_VERSAO_DADOS = 4;
+const SCHEMA_VERSAO_DADOS = 5;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
 
@@ -1356,6 +1402,21 @@ async function migrarDados() {
     if (p.dataEnriquecimento === undefined) { p.dataEnriquecimento = ""; ch = true; }
     if (p.ultimaMovimentacaoData === undefined) { p.ultimaMovimentacaoData = ""; ch = true; }
     if (p.prazoFinalCNSugerido === undefined) { p.prazoFinalCNSugerido = ""; ch = true; }
+    // v4 → v5 (Maio/2026): partido/UF do autor (extrair de strings legadas) + flag oculto
+    if (p.autorPartido === undefined) { p.autorPartido = ""; ch = true; }
+    if (p.autorUF === undefined) { p.autorUF = ""; ch = true; }
+    if (p.oculto === undefined) { p.oculto = false; ch = true; }
+    // Se autor tem "(PARTIDO/UF)" embutido e ainda não foi extraído, extrair
+    if (p.autor && !p.autorPartido && !p.autorUF) {
+      const mAut = p.autor.match(/\(([A-Za-zÀ-ÿ\s]+)\/([A-Z]{2})\)/);
+      if (mAut) {
+        p.autorPartido = mAut[1].trim();
+        p.autorUF = mAut[2].trim();
+        // Limpa os parênteses do nome do autor
+        p.autor = p.autor.replace(/\s*\([^()]*\)\s*/g, "").replace(/\s+/g, " ").trim();
+        ch = true;
+      }
+    }
     if (ch) await DB.put("proposicoes", p);
   }
 
@@ -1372,6 +1433,16 @@ function formatarData(s) {
   const d = String(s).substring(0, 10);
   const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
+}
+// Formata autor + (PARTIDO/UF) — usa campos separados se existirem; senão devolve o autor cru.
+function formatarAutor(p) {
+  if (!p) return "";
+  const nome = (p.autor || "").trim();
+  if (!nome) return "";
+  const part = (p.autorPartido || "").trim();
+  const uf = (p.autorUF || "").trim();
+  if (part || uf) return `${nome} (${part}${part && uf ? "/" : ""}${uf})`;
+  return nome;
 }
 function diasDesde(iso) {
   if (!iso) return Infinity;
@@ -1687,6 +1758,8 @@ function normalizaProposicaoCamara(p) {
     keywords: (p.keywords || "").trim(),
     dataApresentacao: (p.dataApresentacao || "").substring(0, 10),
     autor: "",
+    autorPartido: "",
+    autorUF: "",
     situacaoBruta: p.descricaoSituacao || us.descricaoSituacao || "",
     descricaoTramitacao: p.descricaoTramitacao || us.descricaoTramitacao || "",
     despacho: p.despacho || us.despacho || "",
@@ -1704,7 +1777,15 @@ async function camaraEnriquecerAutor(prop) {
   try {
     const url = `${URL_CAMARA}/proposicoes/${prop.idOriginal}/autores`;
     const data = await smartFetch(url);
-    prop.autor = (data.dados || []).map(a => `${a.nome}${a.siglaPartido ? ` (${a.siglaPartido}/${a.siglaUf || ""})` : ""}`).join("; ");
+    const autores = data.dados || [];
+    // Nome puro, sem o "(PARTIDO/UF)" — partido/UF vão em campos separados
+    prop.autor = autores.map(a => a.nome).filter(Boolean).join("; ");
+    // Partido/UF do PRIMEIRO autor com dados (autor principal)
+    const a0 = autores.find(a => a.siglaPartido || a.siglaUf);
+    if (a0) {
+      prop.autorPartido = a0.siglaPartido || "";
+      prop.autorUF = a0.siglaUf || "";
+    }
   } catch (e) { prop.autor = "(não disponível)"; }
 }
 async function camaraEnriquecerDetalhe(prop) {
@@ -1813,6 +1894,19 @@ function normalizaMateriaSenado(m) {
   const numero = parseInt(m.Numero || "0", 10);
   const ano = parseInt(m.Ano || "0", 10);
   const comissao = m.SiglaComissao ? ` - ${m.SiglaComissao}` : "";
+  // Senado vem com "Senador Fulano (PT/SP)" — extrair partido/UF, deixar só o nome em `autor`
+  const autorBruto = (m.Autor || "").trim();
+  let autorLimpo = autorBruto;
+  let autorPartido = "";
+  let autorUF = "";
+  // Match (PARTIDO/UF) — pega o PRIMEIRO conjunto se houver vários autores ("Fulano (PT/SP), Beltrano (MDB/AL)")
+  const mAut = autorBruto.match(/\(([A-Za-zÀ-ÿ\s]+)\/([A-Z]{2})\)/);
+  if (mAut) {
+    autorPartido = mAut[1].trim();
+    autorUF = mAut[2].trim();
+  }
+  // Limpa parênteses do nome (todos os conjuntos)
+  autorLimpo = autorBruto.replace(/\s*\([^()]*\)\s*/g, "").replace(/\s+/g, " ").trim();
   return {
     id: `senado-${m.Codigo}`, idOriginal: m.Codigo, origem: "senado",
     sigla, numero, ano,
@@ -1821,7 +1915,9 @@ function normalizaMateriaSenado(m) {
     ementa: (m.Ementa || "").trim(),
     ementaDetalhada: "", keywords: "",
     dataApresentacao: (m.Data || "").substring(0, 10),
-    autor: m.Autor || "",
+    autor: autorLimpo,
+    autorPartido,
+    autorUF,
     situacaoBruta: "", descricaoTramitacao: "", despacho: "",
     siglaOrgao: m.SiglaComissao || "",
     url: m.UrlDetalheMateria || "",
@@ -2231,7 +2327,8 @@ let listaEstado = {
   itens: [], filtrados: [], pagina: 1, porPagina: 50,
   ordemColuna: "dataApresentacao", ordemDirecao: "desc",
   marcacoes: new Map(),
-  unidades: UNIDADES_PADRAO.slice()
+  unidades: UNIDADES_PADRAO.slice(),
+  mostrarOcultos: false
 };
 let painelEstado = { apresPeriodo: "7", movPeriodo: "7", aprovPeriodo: "7" };
 
@@ -2338,6 +2435,13 @@ function aplicarFiltros() {
 
   listaEstado.filtrados = listaEstado.itens.filter(p => {
     const m = getMarcacao(p.id);
+    // RIC oculto: filtrado por padrão (só aparece se o filtro especial estiver ligado)
+    if (p.oculto && !listaEstado.mostrarOcultos) return false;
+    // Novos (7 dias) — mesma regra do pill do Painel Gerencial
+    if (listaEstado.filtroNovos7d) {
+      const lim7 = new Date(Date.now() - 7 * 86400 * 1000).toISOString().substring(0, 10);
+      if (!p.dataApresentacao || p.dataApresentacao < lim7) return false;
+    }
     if (casa && p.origem !== casa) return false;
     if (sigla && p.sigla !== sigla) return false;
     if (ano && String(p.ano) !== String(ano)) return false;
@@ -2364,7 +2468,7 @@ function aplicarFiltros() {
     }
     if (busca) {
       const blob = normalizar([
-        p.identificacao, p.ementa, p.autor, p.numero,
+        p.identificacao, p.ementa, p.autor, p.autorPartido, p.autorUF, p.numero,
         m.apelido, m.resumo, m.comentarios, m.palavrasChave,
         m.nupRecebimento, m.nupResposta
       ].join(" "));
@@ -2443,15 +2547,17 @@ function renderTabela() {
     const casaLabel = p.origem === "camara" ? "Câmara" : (p.origem === "senado" ? "Senado" : escapeHtml(p.origem || ""));
     return `<tr data-row-id="${p.id}" style="cursor:pointer" title="Duplo clique para abrir detalhamento">
       <td class="col-identificacao">
-        <div class="cell-ident-linha">
-          <span class="ident-id">${escapeHtml(p.identificacao)}</span>
-          <span class="badge badge-${p.origem}">${casaLabel}</span>
-          ${inteiroTeor}${portal}
+        <div class="cell-ident-2linhas">
+          <div class="ident-linha-id"><span class="ident-id">${escapeHtml(p.identificacao)}</span></div>
+          <div class="ident-linha-meta">
+            <span class="badge badge-${p.origem}">${casaLabel}</span>
+            ${inteiroTeor}${portal}
+          </div>
         </div>
       </td>
       <td class="col-data">${formatarData(p.dataApresentacao)}</td>
       <td>${prazoCNValor ? renderBadgePrazo(prazoCNValor) : ""}</td>
-      <td>${escapeHtml(p.autor || "")}</td>
+      <td>${escapeHtml(formatarAutor(p))}</td>
       <td class="col-objeto col-ementa">${tituloCol}</td>
       <td>${renderBadgeLegislativo(p)}</td>
       <td class="text-small">${escapeHtml(etapaLabel)}</td>
@@ -2557,6 +2663,76 @@ document.getElementById("btn-clear-filters").addEventListener("click", () => {
 });
 
 // ===== DETALHE =====
+// ===== EXCLUIR / OCULTAR Requerimento (v4.6) =====
+// Salva um snapshot antes da exclusão, para recuperação. Mesmo storage do XLSX_MERGE.
+const RIC_EXCLUSAO_SNAPSHOTS_KEY = "monitor-ric-exclusao-snapshots";
+const RIC_EXCLUSAO_MAX_SNAPSHOTS = 20;
+
+async function _salvarSnapshotExclusao(prop, marc) {
+  const snap = {
+    id: `excl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    timestamp: new Date().toISOString(),
+    identificacao: prop.identificacao,
+    propId: prop.id,
+    proposicao: prop,
+    marcacao: marc || null,
+  };
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(RIC_EXCLUSAO_SNAPSHOTS_KEY) || "[]"); }
+  catch (e) { arr = []; }
+  arr.unshift(snap);
+  if (arr.length > RIC_EXCLUSAO_MAX_SNAPSHOTS) arr = arr.slice(0, RIC_EXCLUSAO_MAX_SNAPSHOTS);
+  try {
+    localStorage.setItem(RIC_EXCLUSAO_SNAPSHOTS_KEY, JSON.stringify(arr));
+  } catch (e) {
+    // Storage cheio: remove o mais antigo e tenta de novo
+    arr.pop();
+    try { localStorage.setItem(RIC_EXCLUSAO_SNAPSHOTS_KEY, JSON.stringify(arr)); } catch (e2) {}
+  }
+  return snap;
+}
+
+function lerSnapshotsExclusao() {
+  try { return JSON.parse(localStorage.getItem(RIC_EXCLUSAO_SNAPSHOTS_KEY) || "[]"); }
+  catch (e) { return []; }
+}
+
+async function ocultarRic(id) {
+  const p = await DB.get("proposicoes", id);
+  if (!p) throw new Error("Proposição não encontrada.");
+  p.oculto = true;
+  await DB.put("proposicoes", p);
+}
+
+async function reexibirRic(id) {
+  const p = await DB.get("proposicoes", id);
+  if (!p) throw new Error("Proposição não encontrada.");
+  p.oculto = false;
+  await DB.put("proposicoes", p);
+}
+
+async function excluirRic(id) {
+  const p = await DB.get("proposicoes", id);
+  if (!p) throw new Error("Proposição não encontrada.");
+  const m = await DB.get("marcacoes", id);
+  // Snapshot pré-exclusão
+  await _salvarSnapshotExclusao(p, m);
+  // Apaga
+  if (m) await DB.delete("marcacoes", id);
+  await DB.delete("proposicoes", id);
+}
+
+async function reverterExclusao(snapId) {
+  const arr = lerSnapshotsExclusao();
+  const snap = arr.find(s => s.id === snapId);
+  if (!snap) throw new Error("Snapshot não encontrado.");
+  await DB.put("proposicoes", snap.proposicao);
+  if (snap.marcacao) await DB.put("marcacoes", snap.marcacao);
+  // Remove o snapshot consumido
+  const novo = arr.filter(s => s.id !== snapId);
+  localStorage.setItem(RIC_EXCLUSAO_SNAPSHOTS_KEY, JSON.stringify(novo));
+}
+
 async function abrirDetalhe(id) {
   await carregarLista();
   const p = listaEstado.itens.find(x => x.id === id);
@@ -2608,13 +2784,13 @@ async function abrirDetalhe(id) {
 
   document.getElementById("modal-body").innerHTML = `
     <div class="modal-section collapsible" data-sec="ident">
-      <div class="section-header"><h3>Identificação</h3></div>
+      <div class="section-header"><h3>IDENTIFICAÇÃO API</h3></div>
       <div class="section-content">
       <dl>
         <dt>Casa</dt><dd>${p.origem === "camara" ? "Câmara dos Deputados" : "Senado Federal"}</dd>
         <dt>Tipo</dt><dd>${escapeHtml(p.sigla)}${p.siglaComissao ? " — " + escapeHtml(p.siglaComissao) : ""}</dd>
         <dt>Apresentado em</dt><dd>${formatarData(p.dataApresentacao) || "—"}</dd>
-        <dt>Autor</dt><dd>${escapeHtml(p.autor || "—")}</dd>
+        <dt>Autor</dt><dd>${escapeHtml(formatarAutor(p) || "—")}</dd>
         <dt>Sit. Legislativa</dt><dd>${renderBadgeLegislativo(p)} ${p.situacaoBruta ? `<span class="text-small text-muted">(API: ${escapeHtml(p.situacaoBruta)})</span>` : ""}</dd>
         ${p.dataAprovacao ? `<dt>Data de aprovação</dt><dd>${formatarData(p.dataAprovacao)}</dd>` : ""}
         ${p.despachoAprovacao ? `<dt>Despacho de aprovação</dt><dd>${escapeHtml(p.despachoAprovacao)}</dd>` : ""}
@@ -2622,12 +2798,17 @@ async function abrirDetalhe(id) {
         <dt>Coletado em</dt><dd>${new Date(p.coletadoEm).toLocaleString("pt-BR")}</dd>
         ${p.dataEnriquecimento ? `<dt>Enriquecido em</dt><dd>${new Date(p.dataEnriquecimento).toLocaleString("pt-BR")}</dd>` : ""}
         ${links.length ? `<dt>Links</dt><dd>${links.join(" &nbsp;|&nbsp; ")}</dd>` : ""}
+        <dt>Ementa</dt><dd>
+          <div class="ementa-full">${escapeHtml(p.ementa || "—")}</div>
+          ${p.ementaDetalhada ? `<details style="margin-top:8px"><summary>Ementa detalhada</summary><div class="ementa-full" style="margin-top:8px">${escapeHtml(p.ementaDetalhada)}</div></details>` : ""}
+          ${p.keywords ? `<div class="text-small text-muted" style="margin-top:8px"><b>Palavras-chave (API):</b> ${escapeHtml(p.keywords)}</div>` : ""}
+        </dd>
       </dl>
       </div>
     </div>
 
-    <div class="modal-section collapsible" data-sec="ident-int">
-      <div class="section-header"><h3>Identificação interna</h3></div>
+    <div class="modal-section collapsible" data-sec="objeto">
+      <div class="section-header"><h3>OBJETO</h3></div>
       <div class="section-content">
       <div class="field-row-3">
         <div style="grid-column:span 2"><label>Objeto <span class="text-small text-muted">(máx. 300 caracteres — formato: TEMA - síntese)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: NOVO PAC - Custos das obras de infraestrutura no Nordeste" maxlength="300"></div>
@@ -2640,52 +2821,24 @@ async function abrirDetalhe(id) {
       </div>
     </div>
 
-    <div class="modal-section collapsible" data-sec="ementa">
-      <div class="section-header"><h3>Ementa</h3></div>
-      <div class="section-content">
-      <div class="ementa-full">${escapeHtml(p.ementa || "")}</div>
-      ${p.ementaDetalhada ? `<details><summary>Ementa detalhada</summary><div class="ementa-full" style="margin-top:8px">${escapeHtml(p.ementaDetalhada)}</div></details>` : ""}
-      ${p.keywords ? `<div class="text-small text-muted" style="margin-top:8px"><b>Palavras-chave (API):</b> ${escapeHtml(p.keywords)}</div>` : ""}
-      </div>
-    </div>
-
     <div class="modal-section collapsible" data-sec="analise">
       <div class="section-header"><h3>Análise da SSGP</h3></div>
       <div class="section-content">
-      <div class="toolbar" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">
-        <button class="btn btn-gemini btn-sm" id="btn-gemini-analisar" ${p.urlInteiroTeor ? "" : "disabled title='Sem inteiro teor disponível'"}>🤖 Analisar com Gemini</button>
-        <div class="gemini-campos-seletor text-small" title="Campos que serão preenchidos pela resposta">
-          Preencher:
-          <label><input type="checkbox" class="gemini-campo" data-campo="apelido" checked> Objeto</label>
-          <label><input type="checkbox" class="gemini-campo" data-campo="resumo" checked> Resumo</label>
-          <label><input type="checkbox" class="gemini-campo" data-campo="palavrasChave" checked> Palavras-chave</label>
-        </div>
-        <span class="text-small text-muted" id="gemini-status"></span>
-      </div>
       <label>Resumo</label>
       <textarea id="m-resumo" rows="3" placeholder="Resumo do conteúdo dos quesitos formulados...">${escapeHtml(m.resumo || "")}</textarea>
       <label style="margin-top:10px">Comentários / Observações</label>
       <textarea id="m-comentarios" rows="4" placeholder="Anotações da triagem (precedentes, observações de admissibilidade etc.)">${escapeHtml(m.comentarios || "")}</textarea>
-      </div>
-    </div>
 
-    <div class="modal-section collapsible" data-sec="analogos">
-      <div class="section-header"><h3>🔗 Requerimentos análogos</h3></div>
-      <div class="section-content">
-      <p class="text-small text-muted" style="margin-bottom:8px">Busca outros RICs com afinidade temática, com base nas palavras-chave e no objeto preenchidos.</p>
-      <div class="toolbar" style="gap:6px">
-        <button class="btn btn-sm" id="btn-buscar-analogos" ${(!m.palavrasChave && !m.apelido && !p.ementa) ? "disabled title='Preencha palavras-chave ou objeto para habilitar'" : ""}>${analogosSalvos.length > 0 ? "🔄 Recalcular" : "🔍 Buscar análogos"}</button>
-        <span class="save-feedback" id="analogos-status"></span>
+      <!-- Buscar análogos integrado à Análise da SSGP -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+          <b>🔗 Requerimentos análogos</b>
+          <button class="btn btn-sm" id="btn-buscar-analogos" ${(!m.palavrasChave && !m.apelido && !p.ementa) ? "disabled title='Preencha palavras-chave ou objeto para habilitar'" : ""}>${analogosSalvos.length > 0 ? "🔄 Recalcular" : "🔍 Buscar análogos"}</button>
+          <span class="save-feedback" id="analogos-status"></span>
+        </div>
+        <p class="text-small text-muted" style="margin-bottom:8px">Busca outros RICs com afinidade temática, com base nas palavras-chave e no objeto preenchidos.</p>
+        <div id="analogos-resultado">${analogosHtmlInicial}</div>
       </div>
-      <div id="analogos-resultado" style="margin-top:12px">${analogosHtmlInicial}</div>
-      </div>
-    </div>
-
-    <div class="modal-section collapsible" data-sec="unidades">
-      <div class="section-header"><h3>Unidades consultadas${m.unidadesConsultadas && m.unidadesConsultadas.length ? ` <span class="count" style="font-size:11px;font-weight:500;padding:2px 8px;background:var(--surface-2);border-radius:10px;color:var(--muted)">${m.unidadesConsultadas.length}</span>` : ""}</h3></div>
-      <div class="section-content">
-      <p class="text-small text-muted" style="margin-bottom:6px">Segure Ctrl (Command no Mac) para selecionar várias. Use a barra de rolagem se necessário.</p>
-      <select id="m-unidades" multiple size="8" style="width:100%;font-family:inherit;padding:6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)">${unidadesHtml}</select>
       </div>
     </div>
 
@@ -2707,10 +2860,19 @@ async function abrirDetalhe(id) {
         <div><label>NUP de resposta</label><input type="text" id="m-nup-resp" value="${escapeAttr(m.nupResposta || "")}" placeholder="00046.005678/2026-XX"></div>
         <div><label>Tipo de resposta</label><select id="m-tipo-resposta">${tipoRespOpts}</select></div>
       </div>
-      <div class="toolbar" style="margin-top:12px">
-        <button class="btn btn-primary" id="btn-salvar-marcacao">Salvar análise</button>
-        <button class="btn btn-danger btn-sm" id="btn-limpar-marcacao" title="Apagar todos os dados internos deste requerimento (não apaga o requerimento em si)">Limpar análise</button>
-        <span class="save-feedback" id="save-feedback">Salvo ✓</span>
+
+      <!-- Unidades consultadas (checkboxes), no final da tramitação interna -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+        <label style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          <b>Unidades consultadas</b>
+          <span class="count" id="unidades-contador" style="font-size:11px;font-weight:500;padding:2px 8px;background:var(--surface-2);border-radius:10px;color:var(--muted)">${(m.unidadesConsultadas || []).length}</span>
+        </label>
+        <div class="unidades-checkboxes" id="m-unidades-checkboxes">
+          ${listaEstado.unidades.map(u => {
+            const marc = (m.unidadesConsultadas || []).includes(u);
+            return `<label class="unidade-check"><input type="checkbox" class="unid-cb" value="${escapeAttr(u)}"${marc ? " checked" : ""}> ${escapeHtml(u)}</label>`;
+          }).join("")}
+        </div>
       </div>
       </div>
     </div>
@@ -2719,6 +2881,23 @@ async function abrirDetalhe(id) {
       <div class="section-header"><h3>Histórico de tramitação ${p.historico && p.historico.length ? `(${p.historico.length} eventos)` : "(não enriquecido)"}</h3></div>
       <div class="section-content">
       ${renderHistorico(p)}
+      </div>
+    </div>
+
+    <div class="modal-section collapsible collapsed" data-sec="gemini">
+      <div class="section-header"><h3>🤖 Analisar com Gemini</h3></div>
+      <div class="section-content">
+      <div class="toolbar" style="margin-bottom:10px;flex-wrap:wrap;gap:10px">
+        <button class="btn btn-gemini btn-sm" id="btn-gemini-analisar" ${p.urlInteiroTeor ? "" : "disabled title='Sem inteiro teor disponível'"}>🤖 Analisar com Gemini</button>
+        <div class="gemini-campos-seletor text-small" title="Campos que serão preenchidos pela resposta">
+          Preencher:
+          <label><input type="checkbox" class="gemini-campo" data-campo="apelido" checked> Objeto</label>
+          <label><input type="checkbox" class="gemini-campo" data-campo="resumo" checked> Resumo</label>
+          <label><input type="checkbox" class="gemini-campo" data-campo="palavrasChave" checked> Palavras-chave</label>
+        </div>
+        <span class="text-small text-muted" id="gemini-status"></span>
+      </div>
+      <p class="text-small text-muted">Envia o inteiro teor (PDF) à API do Gemini para extrair Objeto resumido, Resumo e Palavras-chave automaticamente. Requer chave de API configurada.</p>
       </div>
     </div>
   `;
@@ -2922,8 +3101,8 @@ async function abrirDetalhe(id) {
     }
   }
 
-  document.getElementById("btn-salvar-marcacao").addEventListener("click", async () => {
-    const unidadesMarc = [...document.querySelectorAll("#m-unidades option:checked")].map(o => o.value);
+  async function salvarMarcacaoAtual() {
+    const unidadesMarc = [...document.querySelectorAll("#m-unidades-checkboxes .unid-cb:checked")].map(o => o.value);
     const marcAnterior = listaEstado.marcacoes.get(id) || {};
     const novoM = {
       proposicaoId: id,
@@ -2950,36 +3129,106 @@ async function abrirDetalhe(id) {
     };
     await DB.put("marcacoes", novoM);
     listaEstado.marcacoes.set(id, novoM);
-    const fb = document.getElementById("save-feedback");
-    fb.classList.add("show");
-    setTimeout(() => fb.classList.remove("show"), 1500);
+    // Feedback (no header)
+    const fbHdr = document.getElementById("save-feedback-header");
+    if (fbHdr) {
+      fbHdr.classList.add("show");
+      setTimeout(() => fbHdr.classList.remove("show"), 1500);
+    }
     document.getElementById("modal-titulo").textContent = p.identificacao + (novoM.apelido ? ` — ${novoM.apelido}` : "");
     renderTabela();
     renderHeaderStats();
     renderPainel();
+  }
+
+  // Botão Salvar no header do modal (sempre visível)
+  const btnSalvarHdr = document.getElementById("btn-salvar-marcacao-header");
+  if (btnSalvarHdr) {
+    btnSalvarHdr.onclick = salvarMarcacaoAtual;
+  }
+
+  // Atualiza contador de unidades em tempo real (checkboxes)
+  document.querySelectorAll("#m-unidades-checkboxes .unid-cb").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const n = document.querySelectorAll("#m-unidades-checkboxes .unid-cb:checked").length;
+      const c = document.getElementById("unidades-contador");
+      if (c) c.textContent = n;
+    });
   });
 
-  document.getElementById("btn-limpar-marcacao").addEventListener("click", async () => {
-    if (!confirm("Apagar todos os dados internos (objeto, temática, análise, tramitação, NUPs, etc.) deste requerimento? O requerimento em si NÃO será apagado.")) return;
-    const novoM = {
-      proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
-      tematica: "", palavrasChave: "", unidadesConsultadas: [],
-      resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
-      nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
-      prazoFinalCN: "", dataResposta: "", tipoResposta: "",
-      atualizadoEm: new Date().toISOString()
+  // Rodapé do modal: Ocultar | Excluir | Limpar (lixeira discreta)
+  const footer = document.getElementById("modal-footer-detalhe");
+  if (footer) {
+    const jaOculto = p.oculto;
+    footer.innerHTML = `
+      <button class="btn btn-sm btn-ghost" id="btn-ocultar-ric" title="${jaOculto ? "Reexibir este RIC nas listas" : "Ocultar este RIC das listas (não apaga)"}">
+        ${jaOculto ? "👁 Reexibir" : "👁‍🗨 Ocultar"}
+      </button>
+      <button class="btn btn-sm btn-danger" id="btn-excluir-ric" title="Excluir este RIC da base (com snapshot para recuperação)">
+        🗑 Excluir RIC
+      </button>
+      <div style="flex:1"></div>
+      <button class="btn btn-icon btn-ghost btn-limpar-discreto" id="btn-limpar-marcacao" title="Limpar análise (apaga só os dados internos, mantém o RIC)" aria-label="Limpar análise">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    `;
+    // Handler Ocultar
+    document.getElementById("btn-ocultar-ric").onclick = async () => {
+      try {
+        if (jaOculto) {
+          await reexibirRic(id);
+          alert("RIC reexibido nas listas.");
+        } else {
+          if (!confirm(`Ocultar o RIC ${p.identificacao} das listas?\n\nO RIC permanece na base, mas não aparece em estatísticas, gráficos ou listas. Você pode reexibi-lo a qualquer momento.`)) return;
+          await ocultarRic(id);
+          alert("RIC ocultado.");
+        }
+        dispararFecharModal("modal-detalhe");
+        renderTabela(); renderHeaderStats(); await renderDashboard(); await renderPainel();
+      } catch (e) {
+        alert("Falha: " + e.message);
+      }
     };
-    await DB.put("marcacoes", novoM);
-    listaEstado.marcacoes.set(id, novoM);
-    dispararFecharModal("modal-detalhe");
-    renderTabela(); renderHeaderStats(); renderPainel();
-  });
+    // Handler Excluir (com dupla confirmação)
+    document.getElementById("btn-excluir-ric").onclick = async () => {
+      if (!confirm(`⚠ EXCLUIR o RIC ${p.identificacao} da base?\n\nUm snapshot será salvo automaticamente, permitindo recuperação posterior em Configurações.\n\nEsta ação remove o RIC de todas as listas, estatísticas e marcações.`)) return;
+      if (!confirm(`Confirmar exclusão de ${p.identificacao}?\n\nÚltima chance.`)) return;
+      try {
+        await excluirRic(id);
+        alert(`RIC ${p.identificacao} excluído. Snapshot guardado em Configurações > Histórico de exclusões.`);
+        dispararFecharModal("modal-detalhe");
+        renderTabela(); renderHeaderStats(); await renderDashboard(); await renderPainel();
+      } catch (e) {
+        alert("Falha ao excluir: " + e.message);
+      }
+    };
+    // Handler Limpar análise (lixeira discreta, requer confirmação)
+    document.getElementById("btn-limpar-marcacao").onclick = async () => {
+      if (!confirm("Apagar todos os dados internos (objeto, temática, análise, tramitação, NUPs, unidades, etc.) deste requerimento?\n\nO requerimento em si NÃO será apagado, apenas a análise interna.")) return;
+      const novoM = {
+        proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
+        tematica: "", palavrasChave: "", unidadesConsultadas: [],
+        resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
+        nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
+        prazoFinalCN: "", dataResposta: "", tipoResposta: "",
+        atualizadoEm: new Date().toISOString()
+      };
+      await DB.put("marcacoes", novoM);
+      listaEstado.marcacoes.set(id, novoM);
+      dispararFecharModal("modal-detalhe");
+      renderTabela(); renderHeaderStats(); renderPainel();
+    };
+  }
 
-  // Toggle das seções colapsáveis (clique no header alterna)
+  // Toggle das seções colapsáveis em modo ACCORDION (um aberto por vez)
   document.querySelectorAll("#modal-detalhe .modal-section.collapsible > .section-header").forEach(h => {
     h.addEventListener("click", () => {
       const sec = h.parentElement;
-      sec.classList.toggle("collapsed");
+      const estavaAberto = !sec.classList.contains("collapsed");
+      // Fecha todos os outros
+      document.querySelectorAll("#modal-detalhe .modal-section.collapsible").forEach(s => s.classList.add("collapsed"));
+      // Abre só o atual (se estava fechado)
+      if (!estavaAberto) sec.classList.remove("collapsed");
     });
   });
 
@@ -3021,7 +3270,8 @@ function renderHistorico(p) {
 // ===== PAINEL =====
 async function renderPainel() {
   await carregarLista();
-  const all = listaEstado.itens;
+  // Excluir RICs ocultos do painel gerencial
+  const all = listaEstado.itens.filter(p => !p.oculto);
   const marcMap = listaEstado.marcacoes;
   const hoje = isoHoje();
 
@@ -3111,8 +3361,12 @@ async function renderPainel() {
 // ===== DASHBOARD (aba Painel — cards + 4 gráficos) =====
 // Renderiza cards de estatísticas e os 4 gráficos da aba Painel.
 async function renderDashboard() {
-  const props = await DB.getAll("proposicoes");
-  const marcs = await DB.getAll("marcacoes");
+  const propsTodas = await DB.getAll("proposicoes");
+  const marcsTodas = await DB.getAll("marcacoes");
+  // Para o Painel ignoramos RICs ocultos (excluídos lógicos)
+  const ocultosIds = new Set(propsTodas.filter(p => p.oculto).map(p => p.id));
+  const props = propsTodas.filter(p => !p.oculto);
+  const marcs = marcsTodas.filter(m => !ocultosIds.has(m.proposicaoId));
   renderStatsCards(props, marcs);
   renderChartEtapas(marcs);
   renderChartSituacao(props);
@@ -3143,10 +3397,11 @@ function renderStatsCards(props, marcs) {
   const elApr = document.getElementById("stat-card-aprovados");
   if (elApr) elApr.textContent = aprov;
 
-  // Novos: marcacoes criadas/proposicoes coletadas nos últimos 7 dias
+  // Novos (7 dias): MESMO critério do pill "novos (últimos 7 dias)" da aba Gerencial
+  // → RICs apresentados (dataApresentacao) nos últimos 7 dias
   const hoje = new Date();
   const lim = new Date(hoje.getTime() - 7 * 86400 * 1000).toISOString().substring(0, 10);
-  const novos = props.filter(p => (p.coletadoEm || "").substring(0, 10) >= lim).length;
+  const novos = props.filter(p => p.dataApresentacao && p.dataApresentacao >= lim).length;
   const elNov = document.getElementById("stat-card-novos");
   if (elNov) elNov.textContent = novos;
 
@@ -3458,6 +3713,8 @@ function aplicarFiltrosViaPaineis(filtros) {
   if (filtros.prazo) document.getElementById("filter-prazo").value = filtros.prazo;
   if (filtros.leg) document.getElementById("filter-leg").value = filtros.leg;
   if (filtros.statusInterno) document.getElementById("filter-status-int").value = filtros.statusInterno;
+  // Novos (últimos 7 dias) — mesma regra do pill: dataApresentacao >= hoje-7
+  listaEstado.filtroNovos7d = !!filtros.novos7d;
   setTimeout(() => { aplicarFiltros(); ordenar(); renderTabela(); }, 50);
 }
 
@@ -3472,7 +3729,7 @@ function renderPainelLista(arr, campoData) {
         <b>${escapeHtml(p.identificacao)}</b>
         ${m.relevante ? `<span class="relevante-tag">★ Relevante</span>` : ""}
       </div>
-      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((p.autor || "—").substring(0, 50))}${prazoCN ? ` · Prazo CN: ${renderBadgePrazo(prazoCN)}` : ""}</div>
+      <div class="painel-item-meta">${formatarData(p[campoData])} · ${escapeHtml((formatarAutor(p) || "—").substring(0, 50))}${prazoCN ? ` · Prazo CN: ${renderBadgePrazo(prazoCN)}` : ""}</div>
       ${m.apelido ? `<div class="painel-item-ementa"><b>${escapeHtml(m.apelido)}</b></div>` : ""}
     </div>`;
   }).join("");
@@ -3578,6 +3835,8 @@ function linhaExport(p) {
     Identificacao: p.identificacao,
     Apresentacao: isoParaBr(p.dataApresentacao),
     Autor: p.autor || "",
+    Partido: p.autorPartido || "",
+    UF: p.autorUF || "",
     Objeto_Resumido: m.apelido || "",
     Relevante: m.relevante ? "Sim" : "Não",
     Tematica: m.tematica || "",
@@ -3628,6 +3887,94 @@ document.getElementById("btn-export-xlsx").addEventListener("click", () => {
 });
 
 // ===== BACKUP =====
+// ===== Gerenciamento de RICs ocultos / excluídos (v4.6) =====
+document.getElementById("btn-listar-ocultos").addEventListener("click", async () => {
+  const cont = document.getElementById("gerenciar-ocultos-resultado");
+  const props = await DB.getAll("proposicoes");
+  const ocultos = props.filter(p => p.oculto);
+  if (ocultos.length === 0) {
+    cont.innerHTML = `<div class="text-small text-muted" style="padding:12px;text-align:center">Nenhum RIC oculto no momento.</div>`;
+    return;
+  }
+  const marcs = new Map((await DB.getAll("marcacoes")).map(m => [m.proposicaoId, m]));
+  cont.innerHTML = `
+    <div class="text-small text-muted" style="margin-bottom:8px">${ocultos.length} RIC(s) ocultos. Clique em "Reexibir" para devolvê-los às listas.</div>
+    <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+      ${ocultos.map(p => {
+        const m = marcs.get(p.id) || {};
+        const obj = m.apelido || (p.ementa || "").substring(0, 140) + ((p.ementa || "").length > 140 ? "…" : "");
+        return `<div class="painel-item" style="display:block">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-${p.origem}">${p.origem === "camara" ? "Câmara" : (p.origem === "senado" ? "Senado" : p.origem)}</span>
+            <b>${escapeHtml(p.identificacao)}</b>
+            <span class="text-small text-muted" style="margin-left:auto">${formatarData(p.dataApresentacao) || "—"}</span>
+          </div>
+          <div class="painel-item-ementa" style="margin-top:4px">${escapeHtml(obj)}</div>
+          <div class="toolbar" style="margin-top:6px">
+            <button class="btn btn-sm" data-reexibir="${escapeAttr(p.id)}">👁 Reexibir</button>
+            <button class="btn btn-sm btn-danger" data-excluir-oculto="${escapeAttr(p.id)}">🗑 Excluir definitivamente</button>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+  // Handlers
+  cont.querySelectorAll("[data-reexibir]").forEach(b => b.addEventListener("click", async () => {
+    try {
+      await reexibirRic(b.dataset.reexibir);
+      await renderHeaderStats(); await renderDashboard(); await renderPainel();
+      document.getElementById("btn-listar-ocultos").click(); // refresca
+    } catch (e) { alert("Falha: " + e.message); }
+  }));
+  cont.querySelectorAll("[data-excluir-oculto]").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("Excluir definitivamente este RIC (com snapshot para recuperação)?")) return;
+    try {
+      await excluirRic(b.dataset.excluirOculto);
+      await renderHeaderStats(); await renderDashboard(); await renderPainel();
+      document.getElementById("btn-listar-ocultos").click();
+    } catch (e) { alert("Falha: " + e.message); }
+  }));
+});
+
+document.getElementById("btn-listar-excluidos").addEventListener("click", () => {
+  const cont = document.getElementById("gerenciar-ocultos-resultado");
+  const snaps = lerSnapshotsExclusao();
+  if (snaps.length === 0) {
+    cont.innerHTML = `<div class="text-small text-muted" style="padding:12px;text-align:center">Nenhum RIC excluído no histórico.</div>`;
+    return;
+  }
+  cont.innerHTML = `
+    <div class="text-small text-muted" style="margin-bottom:8px">${snaps.length} snapshot(s) de exclusões. Cada RIC excluído pode ser restaurado individualmente. Limite: 20 snapshots mais recentes.</div>
+    <div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+      ${snaps.map(s => {
+        const p = s.proposicao || {};
+        const m = s.marcacao || {};
+        const obj = m.apelido || (p.ementa || "").substring(0, 140) + ((p.ementa || "").length > 140 ? "…" : "");
+        return `<div class="painel-item" style="display:block">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-${p.origem || ""}">${p.origem === "camara" ? "Câmara" : (p.origem === "senado" ? "Senado" : (p.origem || "—"))}</span>
+            <b>${escapeHtml(s.identificacao || p.identificacao || "—")}</b>
+            <span class="text-small text-muted" style="margin-left:auto">excluído em ${new Date(s.timestamp).toLocaleString("pt-BR")}</span>
+          </div>
+          <div class="painel-item-ementa" style="margin-top:4px">${escapeHtml(obj || "—")}</div>
+          <div class="toolbar" style="margin-top:6px">
+            <button class="btn btn-sm" data-restaurar="${escapeAttr(s.id)}">↺ Restaurar</button>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+  cont.querySelectorAll("[data-restaurar]").forEach(b => b.addEventListener("click", async () => {
+    if (!confirm("Restaurar este RIC para a base?")) return;
+    try {
+      await reverterExclusao(b.dataset.restaurar);
+      alert("RIC restaurado.");
+      await renderHeaderStats(); await renderDashboard(); await renderPainel();
+      document.getElementById("btn-listar-excluidos").click();
+    } catch (e) { alert("Falha: " + e.message); }
+  }));
+});
+
 document.getElementById("btn-export-backup").addEventListener("click", async () => {
   const data = {
     schema: SCHEMA_VERSAO_DADOS,
@@ -4167,6 +4514,15 @@ const XLSX_MERGE = (() => {
       // Unidades
       const unidades = splitUnidades(gets("Unidades"));
 
+      // Sigla "normalizada" para fins de mesclagem com APIs:
+      // REQ-CPI e REQ-CPMI no XLSX correspondem a REQ no Monitor (vindos das APIs).
+      // Guardamos a sigla original (para histórico) e a normalizada (para busca de match).
+      const siglaOrig = sigla;
+      let siglaNorm = sigla;
+      if (sigla === "REQ-CPI" || sigla === "REQ-CPMI") {
+        siglaNorm = "REQ";
+      }
+
       // Montar id da proposição
       let id;
       if (origem === "congresso" || origem === "cldf") {
@@ -4175,12 +4531,15 @@ const XLSX_MERGE = (() => {
         // Para câmara/senado, sem código da API ainda — usar formato sintético até enriquecer
         id = `${origem}-${ri.numero}-${ri.ano}`;
       }
-      const identificacao = `${sigla} ${ri.numero}/${ri.ano}`;
+      const identificacao = `${siglaNorm} ${ri.numero}/${ri.ano}`;
+      const identificacaoOriginal = `${siglaOrig} ${ri.numero}/${ri.ano}`;
 
       // Proposição (campos do XLSX)
       const propXlsx = {
-        id, identificacao, origem, sigla, numero: ri.numero, ano: ri.ano,
+        id, identificacao, origem, sigla: siglaNorm, numero: ri.numero, ano: ri.ano,
         autor: gets("Autor"),
+        autorPartido: gets("Partido"),
+        autorUF: gets("UF"),
         urlPortal: gets("Link Congresso"),
         urlInteiroTeor: gets("Link Inteiro teor"),
       };
@@ -4210,7 +4569,7 @@ const XLSX_MERGE = (() => {
         linkInteiroTeor: gets("Link Inteiro teor"),
       };
 
-      result.linhasValidas.push({ linha: i + 1, propXlsx, marcXlsx, identificacao });
+      result.linhasValidas.push({ linha: i + 1, propXlsx, marcXlsx, identificacao, identificacaoOriginal });
     }
     return result;
   }
@@ -4221,8 +4580,14 @@ const XLSX_MERGE = (() => {
   function calcularDiff(linhas, propsAtuais, marcsAtuais) {
     const propsPorId = new Map(propsAtuais.map(p => [p.id, p]));
     const propsPorIdentificacao = new Map();
+    // Lookup auxiliar para mesclagem REQ-CPI/CPMI → REQ:
+    // chave = "REQ-numero-ano-origem" (origem in cn/cldf/congresso)
+    const propsPorReqNumAnoOrigem = new Map();
     for (const p of propsAtuais) {
       if (p.identificacao) propsPorIdentificacao.set(p.identificacao, p);
+      if (p.sigla === "REQ" && (p.origem === "cn" || p.origem === "cldf" || p.origem === "congresso") && p.numero && p.ano) {
+        propsPorReqNumAnoOrigem.set(`${p.numero}-${p.ano}-${p.origem}`, p);
+      }
     }
     const marcsPorId = new Map(marcsAtuais.map(m => [m.proposicaoId, m]));
 
@@ -4230,12 +4595,29 @@ const XLSX_MERGE = (() => {
       propsParaCriar: [],
       marcsParaCriar: [],
       marcsParaAtualizar: [],
-      propsAtualizadasParaUrl: [], // só atualizamos urlPortal/urlInteiroTeor quando faltam
-      ricsAfetados: [], // {id, identificacao, tipo: 'novo'|'atualizado', mudancas: [{campo, antigo, novo}]}
+      propsAtualizadasParaUrl: [],
+      ricsAfetados: [],
+      mesclagens: [], // novo: registros de REQ-CPI/CPMI do XLSX mesclados com REQ do banco
     };
 
     for (const l of linhas) {
-      const propExistente = propsPorIdentificacao.get(l.identificacao) || propsPorId.get(l.propXlsx.id);
+      // Tenta primeiro pelo identificador (já normalizado: REQ-CPI/CPMI viraram REQ)
+      let propExistente = propsPorIdentificacao.get(l.identificacao) || propsPorId.get(l.propXlsx.id);
+      // Se não achou e a identificação original era REQ-CPI/CPMI, tenta busca por num+ano+origem em cn/cldf
+      if (!propExistente && l.identificacaoOriginal && l.identificacaoOriginal !== l.identificacao) {
+        const cands = [
+          `${l.propXlsx.numero}-${l.propXlsx.ano}-cn`,
+          `${l.propXlsx.numero}-${l.propXlsx.ano}-congresso`,
+          `${l.propXlsx.numero}-${l.propXlsx.ano}-cldf`,
+        ];
+        for (const k of cands) {
+          if (propsPorReqNumAnoOrigem.has(k)) {
+            propExistente = propsPorReqNumAnoOrigem.get(k);
+            diff.mesclagens.push({ original: l.identificacaoOriginal, mesclou_em: propExistente.identificacao, id: propExistente.id });
+            break;
+          }
+        }
+      }
       let propId, isNovo;
 
       if (propExistente) {
@@ -4245,6 +4627,9 @@ const XLSX_MERGE = (() => {
         const propAtualizado = {};
         if (!propExistente.urlPortal && l.propXlsx.urlPortal) propAtualizado.urlPortal = l.propXlsx.urlPortal;
         if (!propExistente.urlInteiroTeor && l.propXlsx.urlInteiroTeor) propAtualizado.urlInteiroTeor = l.propXlsx.urlInteiroTeor;
+        // Também atualizar autorPartido/autorUF se vazios e XLSX trouxe
+        if (!propExistente.autorPartido && l.propXlsx.autorPartido) propAtualizado.autorPartido = l.propXlsx.autorPartido;
+        if (!propExistente.autorUF && l.propXlsx.autorUF) propAtualizado.autorUF = l.propXlsx.autorUF;
         if (Object.keys(propAtualizado).length) {
           diff.propsAtualizadasParaUrl.push({ id: propId, fields: propAtualizado });
         }
@@ -4271,6 +4656,7 @@ const XLSX_MERGE = (() => {
           prazoFinalCNSugerido: "",
           dataAprovacao: "",
           despachoAprovacao: "",
+          oculto: false,
           origemDado: "xlsx-import",
           precisaEnriquecer: (l.propXlsx.origem === "camara" || l.propXlsx.origem === "senado"),
         });
