@@ -593,6 +593,9 @@ html.dark .log { background: #020617; }
 @media (min-width: 900px) { #modal-relatorio .rel-grupo-filhos { grid-template-columns: 1fr 1fr 1fr; } }
 #modal-relatorio .rel-grupo-filhos .rel-campo { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; padding: 3px 0; }
 #modal-relatorio .rel-grupo-filhos .rel-campo input { width: auto; margin: 0; }
+#modal-relatorio .rel-grupo-filhos .rel-campo-fixo { opacity: 0.85; }
+#modal-relatorio .rel-grupo-filhos .rel-campo-fixo input { cursor: not-allowed; }
+#modal-relatorio .rel-grupo-filhos .rel-campo-fixo-marca { font-size: 10px; color: var(--accent); font-weight: 600; padding: 1px 5px; background: var(--accent-light, rgba(31,95,99,0.1)); border-radius: 8px; }
 #modal-relatorio .rel-sumario { padding: 10px 12px; background: var(--surface-2); border-radius: 6px; font-size: 13px; color: var(--text); }
 #modal-relatorio .rel-bloco-preview { margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--surface); }
 #modal-relatorio .rel-bloco-preview-vazio { display: none; }
@@ -1572,7 +1575,7 @@ async function _enviarPdfBase64AoGemini(pdfBase64, apiKey, model) {
 {"apelido":"...","resumo":"...","palavrasChave":"..."}
 
 Regras obrigatórias:
-- "apelido": campo OBJETO RESUMIDO de ATÉ 300 CARACTERES no total. DEVE começar com o TEMA do RIC sintetizado em ATÉ 3 OU 4 PALAVRAS em CAIXA ALTA, seguido de " - " (espaço, hífen, espaço) e da síntese da demanda. NÃO mencione o destinatário (ministério, órgão, ministro ou cargo). Foco exclusivo na demanda.
+- "apelido": campo OBJETO RESUMIDO de ATÉ 500 CARACTERES no total. DEVE começar com o TEMA do RIC sintetizado em ATÉ 3 OU 4 PALAVRAS em CAIXA ALTA, seguido de " - " (espaço, hífen, espaço) e da síntese da demanda. NÃO mencione o destinatário (ministério, órgão, ministro ou cargo). Foco exclusivo na demanda.
   Exemplos do formato exato esperado:
     "NOVO PAC - Investimentos do PAC em obras de infraestrutura em São Gonçalo/RJ"
     "BANCO MASTER - Reuniões entre o Presidente da República com representantes do Banco Master"
@@ -1650,7 +1653,7 @@ Responda APENAS o JSON, sem texto adicional, sem markdown, sem backticks.`;
     }
   }
   return {
-    apelido: (parsed.apelido || parsed.objeto || "").substring(0, 300),
+    apelido: (parsed.apelido || parsed.objeto || "").substring(0, 500),
     resumo: parsed.resumo || "",
     palavrasChave: parsed.palavrasChave || parsed["palavras-chave"] || ""
   };
@@ -2886,7 +2889,7 @@ async function abrirDetalhe(id) {
       <div class="section-header"><h3>OBJETO</h3></div>
       <div class="section-content">
       <div class="field-row-3">
-        <div style="grid-column:span 2"><label>Objeto <span class="text-small text-muted">(máx. 300 caracteres — formato: TEMA - síntese)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: NOVO PAC - Custos das obras de infraestrutura no Nordeste" maxlength="300"></div>
+        <div style="grid-column:span 2"><label>Objeto <span class="text-small text-muted">(máx. 500 caracteres — formato: TEMA - síntese)</span></label><input type="text" id="m-apelido" value="${escapeAttr(m.apelido || "")}" placeholder="ex.: NOVO PAC - Custos das obras de infraestrutura no Nordeste" maxlength="500"></div>
         <div><label>Temática</label><select id="m-tematica">${tematicaOpts}</select></div>
       </div>
       <div class="field-row-2">
@@ -3164,7 +3167,7 @@ async function abrirDetalhe(id) {
       [...document.querySelectorAll(".gemini-campo:checked")].map(c => c.dataset.campo)
     );
     if (r.apelido && camposAtivos.has("apelido")) {
-      const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 300);
+      const el = document.getElementById("m-apelido"); if (el) el.value = r.apelido.substring(0, 500);
     }
     if (r.resumo && camposAtivos.has("resumo")) {
       const el = document.getElementById("m-resumo"); if (el) el.value = r.resumo;
@@ -5383,7 +5386,9 @@ const RELATORIO_CAMPOS = {
   analise: {
     nome: "Análise da SSGP",
     campos: [
-      { id: "apelido", label: "Objeto resumido" }, { id: "tematica", label: "Temática" },
+      { id: "apelido", label: "Objeto resumido" },
+      { id: "objetoTema", label: "Objeto — só o TEMA (CAIXA ALTA)" },
+      { id: "tematica", label: "Temática" },
       { id: "relevante", label: "Relevante (Sim/Não)" }, { id: "palavrasChave", label: "Palavras-chave (SSGP)" },
       { id: "resumo", label: "Resumo" }, { id: "comentarios", label: "Comentários" },
     ],
@@ -5415,6 +5420,21 @@ const RELATORIO_CAMPOS = {
 
 let relatorioEstado = null;
 
+// v4.6: 6 campos sempre presentes no relatório, independentemente do que o usuário marca
+// Spec: Numero/ano, Autor, Objeto, Resumo, Comentários, Prazo CN final
+const RELATORIO_CAMPOS_FIXOS = [
+  { grupo: "identificacao", id: "identificacao" }, // Número/ano
+  { grupo: "identificacao", id: "autor" },         // Autor (com partido/UF)
+  { grupo: "analise",       id: "apelido" },       // Objeto
+  { grupo: "analise",       id: "resumo" },        // Resumo
+  { grupo: "analise",       id: "comentarios" },   // Comentários
+  { grupo: "tramitacaoInterna", id: "prazoFinalCN" } // Prazo final CN
+];
+
+function relatorioCampoEhFixo(grupo, id) {
+  return RELATORIO_CAMPOS_FIXOS.some(f => f.grupo === grupo && f.id === id);
+}
+
 function relatorioEstadoPadrao() {
   const campos = {};
   for (const [grupo, def] of Object.entries(RELATORIO_CAMPOS)) {
@@ -5425,12 +5445,17 @@ function relatorioEstadoPadrao() {
       else campos[grupo][c.id] = false;
     }
   }
+  // Garante que campos fixos venham sempre marcados
+  for (const f of RELATORIO_CAMPOS_FIXOS) {
+    if (campos[f.grupo]) campos[f.grupo][f.id] = true;
+  }
   return {
     preset: "personalizado", presetParam: { periodo: 30 },
     filtros: {}, campos,
     organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
-    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false },
+    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato" },
     escopo: { rics: [], total: 0 },
+    presetUsuarioAtual: "",
   };
 }
 
@@ -5493,6 +5518,11 @@ async function relatorioCalcularEscopo(estado) {
     let va, vb;
     if (ord === "identificacao") { va = a.identificacao || ""; vb = b.identificacao || ""; }
     else if (ord === "autor") { va = a.autor || ""; vb = b.autor || ""; }
+    else if (ord === "objeto") {
+      const ma = mMap.get(a.id) || {}, mb = mMap.get(b.id) || {};
+      va = (ma.apelido || "").toLowerCase();
+      vb = (mb.apelido || "").toLowerCase();
+    }
     else if (ord === "prazoFinalCN") {
       const ma = mMap.get(a.id) || {}, mb = mMap.get(b.id) || {};
       va = ma.prazoFinalCN || a.prazoFinalCNSugerido || "";
@@ -5566,6 +5596,13 @@ function relatorioValorCampo(p, m, campoId) {
     case "despachoAprovacao": return esc(p.despachoAprovacao || "—");
     case "ultimaMovimentacao": return (formatarData(p.ultimaMovimentacaoData) || "—") + (p.descricaoTramitacao ? ` — ${esc(p.descricaoTramitacao)}` : "");
     case "apelido": return esc(m.apelido || "—");
+    case "objetoTema": {
+      // Extrai TEMA do apelido (formato "TEMA - síntese")
+      const ap = (m.apelido || "").trim();
+      if (!ap) return "—";
+      const mTema = ap.match(/^([A-ZÀ-Ÿ0-9][A-ZÀ-Ÿ0-9\s\-/]*[A-ZÀ-Ÿ0-9])\s+-\s+/);
+      return esc(mTema ? mTema[1].trim() : ap.substring(0, 60));
+    }
     case "tematica": return esc(m.tematica || "—");
     case "relevante": return m.relevante ? "Sim" : "Não";
     case "palavrasChave": return esc(m.palavrasChave || "—");
@@ -5646,12 +5683,15 @@ function relatorioGerarHtml(estado, ehPrint) {
   const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
   const cabecalho = relatorioCabecalhoHtml(estado);
   const corpo = grupos.map(g => estado.organizacao.modo === "lista" ? relatorioBlocoLista(g, estado) : relatorioBlocoCompleto(g, estado)).join("");
-  const css = relatorioCss(ehPrint);
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(estado.formatacao.titulo || "Relatório Monitor RIC")}</title><style>${css}</style></head><body>${estado.formatacao.marcaDagua ? '<div class="rel-marca-dagua">USO INTERNO</div>' : ''}<div class="rel-pagina">${cabecalho}${corpo}<footer class="rel-rodape">Gerado pelo Monitor RIC · ${new Date().toLocaleString("pt-BR")}</footer></div></body></html>`;
+  const orientacao = estado.formatacao.orientacao === "paisagem" ? "landscape" : "portrait";
+  const css = relatorioCss(ehPrint, orientacao);
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(estado.formatacao.titulo || "Relatório Monitor RIC")}</title><style>${css}</style></head><body class="rel-orient-${orientacao}">${estado.formatacao.marcaDagua ? '<div class="rel-marca-dagua">USO INTERNO</div>' : ''}<div class="rel-pagina">${cabecalho}${corpo}<footer class="rel-rodape">Gerado pelo Monitor RIC · ${new Date().toLocaleString("pt-BR")}</footer></div></body></html>`;
 }
 
-function relatorioCss(ehPrint) {
-  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:21cm;margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Cambria","Source Serif Pro",Georgia,serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-grupo{font-family:"Cambria",Georgia,serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Cambria",Georgia,serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Cambria",Georgia,serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 portrait;margin:2cm}body{font-size:10px}.rel-pagina{padding:0}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
+function relatorioCss(ehPrint, orientacao) {
+  const isLandscape = orientacao === "landscape";
+  const maxW = isLandscape ? "29.7cm" : "21cm";
+  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Cambria","Source Serif Pro",Georgia,serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-grupo{font-family:"Cambria",Georgia,serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Cambria",Georgia,serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Cambria",Georgia,serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
 }
 
 async function relatorioGerarPdf(estado) {
@@ -5703,40 +5743,354 @@ async function relatorioGerarWord(estado) {
     }
   }
   const D = window.docx;
-  const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
-  const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
-  const children = [];
-  children.push(new D.Paragraph({ children: [new D.TextRun({ text: titulo, bold: true, size: 36, color: "1E3A6F" })], spacing: { after: 200 } }));
-  children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${new Date().toLocaleDateString("pt-BR")} · ${estado.escopo.total} requerimentos`, size: 18, color: "94A3B8" })], spacing: { after: 400 } }));
-  for (const g of grupos) {
-    if (g.nome) {
-      children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${g.nome} (${g.rics.length})`, bold: true, size: 28, color: "1E3A6F" })], spacing: { before: 300, after: 200 } }));
-    }
-    for (const p of g.rics) {
-      const m = (estado.escopo.marcacoes.get(p.id)) || {};
-      children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${p.identificacao} — ${({camara:"Câmara dos Deputados",senado:"Senado Federal",cn:"Congresso Nacional",cldf:"CLDF"}[p.origem]||p.origem||"")}`, bold: true, size: 24, color: "1E3A6F" })], spacing: { before: 200, after: 80 } }));
-      children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${formatarAutor(p) || "—"} · Apresentado em ${formatarData(p.dataApresentacao) || "—"}`, size: 18, color: "64748B" })], spacing: { after: 100 } }));
-      for (const [grupoKey, def] of Object.entries(RELATORIO_CAMPOS)) {
-        if (grupoKey === "historico") continue;
-        const camposAtivos = def.campos.filter(c => estado.campos[grupoKey][c.id] && !["identificacao","casa","autor","dataApresentacao"].includes(c.id));
-        if (!camposAtivos.length) continue;
-        let temConteudo = false;
-        const subBuf = [];
-        for (const c of camposAtivos) {
-          const vRaw = relatorioValorCampo(p, m, c.id);
-          if (vRaw === "—" || !vRaw) continue;
-          temConteudo = true;
-          const vLimpa = vRaw.replace(/<[^>]+>/g, "").substring(0, 1000);
-          subBuf.push(new D.Paragraph({ children: [new D.TextRun({ text: `${c.label}: `, bold: true, size: 18, color: "475569" }), new D.TextRun({ text: vLimpa, size: 18, color: "1F2937" })], spacing: { after: 60 } }));
-        }
-        if (temConteudo) {
-          children.push(new D.Paragraph({ children: [new D.TextRun({ text: def.nome.toUpperCase(), bold: true, size: 16, color: "1E3A6F" })], spacing: { before: 140, after: 60 } }));
-          for (const sb of subBuf) children.push(sb);
+
+  // Paleta institucional (mesma da pré-visualização)
+  const CORES = {
+    AZUL: "1E3A6F", DOURADO: "C9A14A", DOURADO_CLARO: "F5E9CC",
+    CINZA_ESCURO: "1F2937", CINZA_MEDIO: "475569", CINZA: "64748B",
+    CINZA_CLARO: "94A3B8", FUNDO_BLOCO: "FAFBFC", FUNDO_HEADER: "F8FAFC",
+    BRANCO: "FFFFFF", VERDE: "047857", VERDE_FUNDO: "ECFDF5",
+  };
+
+  // Helper para limpar HTML
+  const limparHtml = (s) => String(s ?? "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+
+  // ====== CABEÇALHO institucional (Selo + Manchete) ======
+  // Reproduz a banda do header: tabela de 1 linha × 2 colunas
+  function cabecalhoTable() {
+    const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
+    const data = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+    return new D.Table({
+      width: { size: 100, type: D.WidthType.PERCENTAGE },
+      borders: {
+        top: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        bottom: { style: D.BorderStyle.SINGLE, size: 16, color: CORES.DOURADO },
+        left: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        right: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideHorizontal: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideVertical: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      },
+      rows: [
+        new D.TableRow({
+          height: { value: 1400, rule: D.HeightRule.ATLEAST },
+          children: [
+            new D.TableCell({
+              width: { size: 28, type: D.WidthType.PERCENTAGE },
+              shading: { fill: CORES.AZUL },
+              verticalAlign: D.VerticalAlign.CENTER,
+              children: [
+                new D.Paragraph({
+                  alignment: D.AlignmentType.CENTER,
+                  children: [new D.TextRun({ text: "R", bold: true, size: 96, color: CORES.BRANCO, font: "Cambria" })],
+                  spacing: { before: 0, after: 80 },
+                }),
+                new D.Paragraph({
+                  alignment: D.AlignmentType.CENTER,
+                  children: [new D.TextRun({ text: "MONITOR RIC", bold: true, size: 14, color: CORES.BRANCO, characterSpacing: 24 })],
+                  spacing: { before: 0, after: 0 },
+                }),
+              ],
+            }),
+            new D.TableCell({
+              width: { size: 72, type: D.WidthType.PERCENTAGE },
+              verticalAlign: D.VerticalAlign.CENTER,
+              margins: { top: 200, bottom: 200, left: 280, right: 280 },
+              children: [
+                new D.Paragraph({
+                  children: [new D.TextRun({ text: titulo, size: 44, color: CORES.AZUL, font: "Cambria" })],
+                  spacing: { after: 120 },
+                }),
+                new D.Paragraph({
+                  children: [new D.TextRun({ text: `${data} · ${estado.escopo.total} requerimento${estado.escopo.total!==1?"s":""}`, size: 16, color: CORES.CINZA_CLARO })],
+                  spacing: { after: 0 },
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    });
+  }
+
+  // ====== Faixa de grupo ======
+  function paragrafoGrupo(nome, qtd) {
+    return new D.Paragraph({
+      children: [
+        new D.TextRun({ text: nome, bold: true, size: 28, color: CORES.AZUL, font: "Cambria" }),
+        new D.TextRun({ text: `  (${qtd})`, size: 22, color: CORES.CINZA }),
+      ],
+      spacing: { before: 360, after: 200 },
+      border: {
+        top: { color: CORES.AZUL, space: 1, value: "single", size: 8 },
+        bottom: { color: CORES.AZUL, space: 1, value: "single", size: 8 },
+      },
+    });
+  }
+
+  // ====== MODO LISTA — gera tabela com campos ligados ======
+  function tabelaLista(rics, marcsMap, camposLigados) {
+    const headerRow = new D.TableRow({
+      tableHeader: true,
+      children: camposLigados.map(c => new D.TableCell({
+        shading: { fill: CORES.AZUL },
+        margins: { top: 80, bottom: 80, left: 100, right: 100 },
+        children: [new D.Paragraph({
+          children: [new D.TextRun({ text: c.label.toUpperCase(), bold: true, size: 14, color: CORES.BRANCO, characterSpacing: 12 })],
+        })],
+      })),
+    });
+    const dataRows = rics.map((p, idx) => {
+      const m = marcsMap.get(p.id) || {};
+      const zebra = idx % 2 === 1;
+      return new D.TableRow({
+        children: camposLigados.map(c => {
+          const v = limparHtml(relatorioValorCampo(p, m, c.id));
+          return new D.TableCell({
+            shading: zebra ? { fill: CORES.FUNDO_HEADER } : undefined,
+            margins: { top: 80, bottom: 80, left: 100, right: 100 },
+            children: [new D.Paragraph({
+              children: [new D.TextRun({ text: v, size: 16, color: CORES.CINZA_ESCURO })],
+            })],
+          });
+        }),
+      });
+    });
+    return new D.Table({
+      width: { size: 100, type: D.WidthType.PERCENTAGE },
+      rows: [headerRow, ...dataRows],
+      borders: {
+        top: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        bottom: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        left: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        right: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideHorizontal: { style: D.BorderStyle.SINGLE, size: 4, color: "E2E8F0" },
+        insideVertical: { style: D.BorderStyle.SINGLE, size: 2, color: "F1F5F9" },
+      },
+    });
+  }
+
+  function camposLigadosArr(estado) {
+    const out = [];
+    for (const [g, mapa] of Object.entries(estado.campos)) {
+      if (RELATORIO_CAMPOS[g].apenasCompleto) continue;
+      for (const cid of Object.keys(mapa)) {
+        if (mapa[cid]) {
+          const def = RELATORIO_CAMPOS[g].campos.find(x => x.id === cid);
+          if (def) out.push({ id: cid, label: def.label });
         }
       }
     }
+    return out;
   }
-  const doc = new D.Document({ creator: "Monitor RIC", title: titulo, description: "Relatório gerado pelo Monitor RIC", sections: [{ properties: { page: { margin: { top: 1400, right: 1135, bottom: 1400, left: 1135 } } }, children }] });
+
+  // ====== MODO COMPLETO — bloco por RIC com borda lateral dourada ======
+  function blocoCompletoCells(p, m) {
+    const elems = [];
+    // Cabeçalho do bloco: identificação + casa
+    elems.push(new D.Paragraph({
+      children: [
+        new D.TextRun({ text: p.identificacao || "—", bold: true, size: 24, color: CORES.AZUL, font: "Cambria" }),
+        new D.TextRun({ text: ` — ${({camara:"Câmara dos Deputados",senado:"Senado Federal",cn:"Congresso Nacional",cldf:"CLDF"}[p.origem]||p.origem||"")}`, size: 22, color: CORES.AZUL, font: "Cambria" }),
+      ],
+      spacing: { after: 60 },
+    }));
+    // Subtítulo: autor + data
+    elems.push(new D.Paragraph({
+      children: [new D.TextRun({ text: `${formatarAutor(p) || "—"} · Apresentado em ${formatarData(p.dataApresentacao) || "—"}`, size: 18, color: CORES.CINZA })],
+      spacing: { after: 100 },
+      border: { bottom: { color: CORES.DOURADO, space: 2, value: "single", size: 4 } },
+    }));
+    // Sub-seções por grupo
+    for (const [grupoKey, def] of Object.entries(RELATORIO_CAMPOS)) {
+      if (grupoKey === "historico") continue;
+      const camposAtivos = def.campos.filter(c => estado.campos[grupoKey][c.id] && !["identificacao","casa","autor","dataApresentacao"].includes(c.id));
+      if (!camposAtivos.length) continue;
+      const subBuf = [];
+      let temConteudo = false;
+      for (const c of camposAtivos) {
+        const vRaw = relatorioValorCampo(p, m, c.id);
+        if (vRaw === "—" || !vRaw) continue;
+        temConteudo = true;
+        subBuf.push(new D.Paragraph({
+          children: [
+            new D.TextRun({ text: `${c.label}: `, bold: true, size: 18, color: CORES.CINZA_MEDIO }),
+            new D.TextRun({ text: limparHtml(vRaw), size: 18, color: CORES.CINZA_ESCURO }),
+          ],
+          spacing: { after: 80 },
+        }));
+      }
+      if (temConteudo) {
+        elems.push(new D.Paragraph({
+          children: [new D.TextRun({ text: def.nome.toUpperCase(), bold: true, size: 16, color: CORES.AZUL, characterSpacing: 16 })],
+          spacing: { before: 160, after: 80 },
+        }));
+        for (const sb of subBuf) elems.push(sb);
+      }
+    }
+    // Histórico (sub-tabela)
+    if (estado.campos.historico && estado.campos.historico.historicoTramitacao && p.historico && p.historico.length) {
+      const eventos = p.historico.slice(-10).reverse();
+      elems.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "HISTÓRICO DE TRAMITAÇÃO (ÚLTIMOS 10)", bold: true, size: 16, color: CORES.AZUL, characterSpacing: 16 })],
+        spacing: { before: 160, after: 80 },
+      }));
+      elems.push(new D.Table({
+        width: { size: 100, type: D.WidthType.PERCENTAGE },
+        rows: [
+          new D.TableRow({
+            tableHeader: true,
+            children: ["Data", "Órgão", "Descrição"].map(t => new D.TableCell({
+              shading: { fill: "F1F5F9" },
+              margins: { top: 60, bottom: 60, left: 80, right: 80 },
+              children: [new D.Paragraph({ children: [new D.TextRun({ text: t, bold: true, size: 14, color: CORES.CINZA_MEDIO })] })],
+            })),
+          }),
+          ...eventos.map(ev => {
+            const aprov = (ev.descricao || "").toLowerCase().includes("aprovado");
+            return new D.TableRow({
+              children: [formatarData(ev.data) || "", limparHtml(ev.siglaOrgao || ""), limparHtml((ev.descricao || "").substring(0, 200))].map(t => new D.TableCell({
+                shading: aprov ? { fill: CORES.VERDE_FUNDO } : undefined,
+                margins: { top: 50, bottom: 50, left: 80, right: 80 },
+                children: [new D.Paragraph({ children: [new D.TextRun({ text: t, size: 14, color: aprov ? CORES.VERDE : CORES.CINZA_ESCURO })] })],
+              })),
+            });
+          }),
+        ],
+        borders: {
+          top: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          bottom: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          left: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          right: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          insideHorizontal: { style: D.BorderStyle.SINGLE, size: 2, color: "E2E8F0" },
+          insideVertical: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        },
+      }));
+    }
+    // Análogos
+    if (estado.campos.historico && estado.campos.historico.analogos && m.analogos && m.analogos.length) {
+      const top = m.analogos.slice(0, 5);
+      elems.push(new D.Paragraph({
+        children: [new D.TextRun({ text: "REQUERIMENTOS ANÁLOGOS", bold: true, size: 16, color: CORES.AZUL, characterSpacing: 16 })],
+        spacing: { before: 160, after: 80 },
+      }));
+      for (const a of top) {
+        elems.push(new D.Paragraph({
+          bullet: { level: 0 },
+          children: [
+            new D.TextRun({ text: a.identificacao || "—", bold: true, size: 16, color: CORES.CINZA_ESCURO }),
+            new D.TextRun({ text: a.apelido ? ` — ${limparHtml(a.apelido)}` : "", size: 16, color: CORES.CINZA_ESCURO }),
+            a.score != null ? new D.TextRun({ text: ` (${(a.score*100).toFixed(0)}%)`, size: 14, color: CORES.CINZA }) : new D.TextRun({ text: "" }),
+          ],
+          spacing: { after: 40 },
+        }));
+      }
+    }
+    return elems;
+  }
+
+  // Envolve cada bloco completo em uma célula-tabela com borda lateral dourada
+  function blocoCompletoTabela(p, m) {
+    const cellChildren = blocoCompletoCells(p, m);
+    return new D.Table({
+      width: { size: 100, type: D.WidthType.PERCENTAGE },
+      borders: {
+        top: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        bottom: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        left: { style: D.BorderStyle.SINGLE, size: 24, color: CORES.DOURADO },
+        right: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideHorizontal: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        insideVertical: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      },
+      rows: [new D.TableRow({
+        children: [new D.TableCell({
+          shading: { fill: CORES.FUNDO_BLOCO },
+          margins: { top: 240, bottom: 240, left: 280, right: 240 },
+          children: cellChildren,
+        })],
+      })],
+    });
+  }
+
+  // ===== Constrói o documento =====
+  const children = [];
+  children.push(cabecalhoTable());
+  children.push(new D.Paragraph({ children: [], spacing: { after: 240 } })); // espaçador
+
+  const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
+  const camposLigados = camposLigadosArr(estado);
+  const mMap = estado.escopo.marcacoes;
+
+  for (const g of grupos) {
+    if (g.nome) children.push(paragrafoGrupo(g.nome, g.rics.length));
+    if (estado.organizacao.modo === "lista") {
+      children.push(tabelaLista(g.rics, mMap, camposLigados));
+      children.push(new D.Paragraph({ children: [], spacing: { after: 200 } }));
+    } else {
+      for (const p of g.rics) {
+        const m = mMap.get(p.id) || {};
+        children.push(blocoCompletoTabela(p, m));
+        children.push(new D.Paragraph({ children: [], spacing: { after: 240 } }));
+      }
+    }
+  }
+
+  // Rodapé final
+  children.push(new D.Paragraph({
+    children: [new D.TextRun({ text: `Gerado pelo Monitor RIC · ${new Date().toLocaleString("pt-BR")}`, size: 14, color: CORES.CINZA_CLARO, italics: true })],
+    alignment: D.AlignmentType.CENTER,
+    spacing: { before: 480 },
+    border: { top: { color: "E2E8F0", space: 1, value: "single", size: 4 } },
+  }));
+
+  // ===== Page setup com orientação =====
+  const isLandscape = estado.formatacao.orientacao === "paisagem";
+  // Tamanhos A4 em twentieths of a point (Word usa 1/20 pt; 1 pt = 1/72 polegada)
+  // A4 retrato: 11906 × 16838 twips. A4 paisagem: 16838 × 11906.
+  const pageSize = isLandscape
+    ? { width: 16838, height: 11906, orientation: D.PageOrientation.LANDSCAPE }
+    : { width: 11906, height: 16838, orientation: D.PageOrientation.PORTRAIT };
+
+  // Watermark "USO INTERNO" via header (se ligado)
+  const headers = {};
+  if (estado.formatacao.marcaDagua) {
+    headers.default = new D.Header({
+      children: [new D.Paragraph({
+        children: [new D.TextRun({ text: "USO INTERNO", size: 16, color: CORES.AZUL, bold: true, characterSpacing: 24 })],
+        alignment: D.AlignmentType.RIGHT,
+      })],
+    });
+  }
+
+  // Numeração de páginas no rodapé
+  const footers = {};
+  if (estado.formatacao.numeracao) {
+    footers.default = new D.Footer({
+      children: [new D.Paragraph({
+        alignment: D.AlignmentType.CENTER,
+        children: [
+          new D.TextRun({ text: "Página ", size: 14, color: CORES.CINZA }),
+          new D.TextRun({ children: [D.PageNumber.CURRENT], size: 14, color: CORES.CINZA }),
+          new D.TextRun({ text: " de ", size: 14, color: CORES.CINZA }),
+          new D.TextRun({ children: [D.PageNumber.TOTAL_PAGES], size: 14, color: CORES.CINZA }),
+        ],
+      })],
+    });
+  }
+
+  const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
+  const doc = new D.Document({
+    creator: "Monitor RIC", title: titulo, description: "Relatório gerado pelo Monitor RIC",
+    sections: [{
+      properties: {
+        page: {
+          size: pageSize,
+          margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 },
+        },
+      },
+      headers, footers,
+      children,
+    }],
+  });
   try {
     const blob = await D.Packer.toBlob(doc);
     const ts = new Date().toISOString().substring(0, 16).replace(/[:T]/g, "-");
@@ -5747,7 +6101,53 @@ async function relatorioGerarWord(estado) {
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   } catch (e) {
     alert("Erro ao gerar Word: " + e.message);
+    console.error(e);
   }
+}
+
+// ===== Presets de usuário (localStorage) =====
+const RELATORIO_PRESETS_USUARIO_KEY = "monitor-ric-relatorio-presets";
+const RELATORIO_PRESETS_USUARIO_MAX = 30;
+
+async function relatorioListarPresetsUsuario() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(RELATORIO_PRESETS_USUARIO_KEY) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+async function relatorioSalvarPresetUsuario(nome, estadoSnapshot) {
+  if (!nome || !nome.trim()) throw new Error("Informe um nome para o preset.");
+  const arr = await relatorioListarPresetsUsuario();
+  const id = `pu-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  // Não persistimos o escopo calculado nem a Map de marcações
+  const snapshot = {
+    preset: "personalizado",
+    filtros: { ...estadoSnapshot.filtros },
+    campos: JSON.parse(JSON.stringify(estadoSnapshot.campos)),
+    organizacao: { ...estadoSnapshot.organizacao },
+    formatacao: { ...estadoSnapshot.formatacao },
+  };
+  // Limpa o filtro _ricUnico (não faz sentido em preset reutilizável)
+  delete snapshot.filtros._ricUnico;
+  arr.unshift({ id, nome: nome.trim(), criadoEm: new Date().toISOString(), snapshot });
+  // Limite
+  const cortado = arr.slice(0, RELATORIO_PRESETS_USUARIO_MAX);
+  localStorage.setItem(RELATORIO_PRESETS_USUARIO_KEY, JSON.stringify(cortado));
+  return id;
+}
+
+async function relatorioCarregarPresetUsuario(id) {
+  const arr = await relatorioListarPresetsUsuario();
+  const p = arr.find(x => x.id === id);
+  if (!p) throw new Error("Preset não encontrado.");
+  return p.snapshot;
+}
+
+async function relatorioExcluirPresetUsuario(id) {
+  const arr = await relatorioListarPresetsUsuario();
+  const novo = arr.filter(x => x.id !== id);
+  localStorage.setItem(RELATORIO_PRESETS_USUARIO_KEY, JSON.stringify(novo));
 }
 
 async function relatorioAbrirModal(preset = null, ricEspecifico = null) {
@@ -5777,14 +6177,23 @@ async function relatorioRenderModal() {
   if (!relatorioEstado) return;
   await relatorioCalcularEscopo(relatorioEstado);
   const body = document.getElementById("modal-relatorio-body");
+  // Captura estado dos <details> antes de recriar o HTML (acordeon não deve fechar automaticamente)
+  const estadoOpen = {};
+  body.querySelectorAll("details.rel-bloco[data-bloco-id]").forEach(d => {
+    estadoOpen[d.dataset.blocoId] = d.open;
+  });
   const e = relatorioEstado;
   const ricUnico = e.filtros._ricUnico;
   const presetOpts = RELATORIO_PRESETS_NATIVOS.map(p => `<option value="${p.id}"${e.preset===p.id?" selected":""}>${escapeHtml(p.nome)}</option>`).join("");
   const blocoB = Object.entries(RELATORIO_CAMPOS).map(([grupoKey, def]) => {
     const todosLigados = def.campos.every(c => e.campos[grupoKey][c.id]);
-    const algumLigado = def.campos.some(c => e.campos[grupoKey][c.id]);
     const desabilitar = def.apenasCompleto && e.organizacao.modo !== "completo";
-    return `<div class="rel-grupo-campos${desabilitar?' rel-grupo-campos-disabled':''}"><label class="rel-grupo-pai"><input type="checkbox" data-rel-grupo="${grupoKey}" ${todosLigados?"checked":""}${desabilitar?" disabled":""}> <b>${escapeHtml(def.nome)}</b>${desabilitar?' <span class="text-small text-muted">(apenas modo Completo)</span>':''}</label><div class="rel-grupo-filhos">${def.campos.map(c => `<label class="rel-campo"><input type="checkbox" data-rel-campo="${grupoKey}.${c.id}"${e.campos[grupoKey][c.id]?" checked":""}${desabilitar?" disabled":""}> ${escapeHtml(c.label)}</label>`).join("")}</div></div>`;
+    return `<div class="rel-grupo-campos${desabilitar?' rel-grupo-campos-disabled':''}"><label class="rel-grupo-pai"><input type="checkbox" data-rel-grupo="${grupoKey}" ${todosLigados?"checked":""}${desabilitar?" disabled":""}> <b>${escapeHtml(def.nome)}</b>${desabilitar?' <span class="text-small text-muted">(apenas modo Completo)</span>':''}</label><div class="rel-grupo-filhos">${def.campos.map(c => {
+      const ehFixo = relatorioCampoEhFixo(grupoKey, c.id);
+      const checked = e.campos[grupoKey][c.id] || ehFixo;
+      const disabled = desabilitar || ehFixo;
+      return `<label class="rel-campo${ehFixo?' rel-campo-fixo':''}"><input type="checkbox" data-rel-campo="${grupoKey}.${c.id}"${checked?" checked":""}${disabled?" disabled":""}> ${escapeHtml(c.label)}${ehFixo?' <span class="rel-campo-fixo-marca" title="Campo sempre incluído no relatório">🔒 fixo</span>':''}</label>`;
+    }).join("")}</div></div>`;
   }).join("");
   const grupoOpts = [
     {v:"sem", t:"Sem agrupamento"}, {v:"casa", t:"Casa"},
@@ -5795,10 +6204,121 @@ async function relatorioRenderModal() {
   ];
   const ordenarOpts = [
     {v:"dataApresentacao", t:"Data de apresentação"}, {v:"identificacao", t:"Identificação"},
-    {v:"autor", t:"Autor"}, {v:"prazoFinalCN", t:"Prazo final CN"},
+    {v:"autor", t:"Autor"}, {v:"objeto", t:"Objeto (Apelido)"},
+    {v:"prazoFinalCN", t:"Prazo final CN"},
     {v:"ultimaMovimentacao", t:"Última movimentação"}, {v:"dataAprovacao", t:"Data de aprovação"},
   ];
-  body.innerHTML = `${ricUnico ? `<div class="rel-aviso-info">📌 Escopo fixo: RIC <b>${escapeHtml(e.escopo.rics[0] ? e.escopo.rics[0].identificacao : ricUnico)}</b></div>` : ""}<details class="rel-bloco" ${ricUnico ? "" : "open"}><summary class="rel-bloco-summary"><b>A. Escopo (filtros)</b> · <span class="rel-bloco-resumo">${e.escopo.total} requerimento${e.escopo.total!==1?"s":""}</span></summary><div class="rel-bloco-conteudo">${ricUnico ? "" : `<label>Preset</label><select id="rel-preset">${presetOpts}</select><div class="rel-filtros-livres" style="margin-top:12px"><div class="form-row"><div><label>Casa</label><select id="rel-f-casa"><option value="">Todas</option><option value="camara"${e.filtros.casa==="camara"?" selected":""}>Câmara</option><option value="senado"${e.filtros.casa==="senado"?" selected":""}>Senado</option><option value="cn"${e.filtros.casa==="cn"?" selected":""}>Congresso Nacional</option><option value="cldf"${e.filtros.casa==="cldf"?" selected":""}>CLDF</option></select></div><div><label>Sigla</label><select id="rel-f-sigla"><option value="">Todas</option><option value="RIC"${e.filtros.sigla==="RIC"?" selected":""}>RIC</option><option value="RQS"${e.filtros.sigla==="RQS"?" selected":""}>RQS</option><option value="REQ"${e.filtros.sigla==="REQ"?" selected":""}>REQ</option></select></div><div><label>Situação legislativa</label><select id="rel-f-leg"><option value="">Todas</option><option value="aprovado"${e.filtros.leg==="aprovado"?" selected":""}>Aprovado</option><option value="aguardando_resposta"${e.filtros.leg==="aguardando_resposta"?" selected":""}>Aguardando resposta</option><option value="aguardando_aprovacao"${e.filtros.leg==="aguardando_aprovacao"?" selected":""}>Aguardando aprovação</option><option value="tramitacao_inicial"${e.filtros.leg==="tramitacao_inicial"?" selected":""}>Tramitação inicial</option></select></div></div><div class="form-row"><div><label>Status interno</label><select id="rel-f-statusint"><option value="">Todos</option>${STATUS_INTERNO.map(s=>`<option value="${s.v}"${e.filtros.statusInterno===s.v?" selected":""}>${escapeHtml(s.t)}</option>`).join("")}</select></div><div><label>Relevante</label><select id="rel-f-rel"><option value="">Indiferente</option><option value="sim"${e.filtros.rel==="sim"?" selected":""}>Sim</option><option value="nao"${e.filtros.rel==="nao"?" selected":""}>Não</option></select></div><div><label>Busca livre</label><input type="text" id="rel-f-livre" value="${escapeAttr(e.filtros.livre||"")}" placeholder="palavras-chave, autor, n° etc."></div></div><div class="form-row"><div><label>Apresentação de</label><input type="date" id="rel-f-apres-de" value="${escapeAttr(e.filtros.apresDe||"")}"></div><div><label>Apresentação até</label><input type="date" id="rel-f-apres-ate" value="${escapeAttr(e.filtros.apresAte||"")}"></div><div><label>Aprovação de</label><input type="date" id="rel-f-aprov-de" value="${escapeAttr(e.filtros.aprovDe||"")}"></div><div><label>Aprovação até</label><input type="date" id="rel-f-aprov-ate" value="${escapeAttr(e.filtros.aprovAte||"")}"></div></div></div>`}<div class="rel-contador">Escopo atual: <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}</div></div></details><details class="rel-bloco"><summary class="rel-bloco-summary"><b>B. Campos a incluir</b></summary><div class="rel-bloco-conteudo">${blocoB}</div></details><details class="rel-bloco"><summary class="rel-bloco-summary"><b>C. Organização</b></summary><div class="rel-bloco-conteudo"><div class="form-row"><div><label>Modo de saída</label><select id="rel-modo"><option value="lista"${e.organizacao.modo==="lista"?" selected":""}>Lista compacta</option><option value="completo"${e.organizacao.modo==="completo"?" selected":""}>Completo (com blocos)</option></select></div><div><label>Agrupar por</label><select id="rel-agrupar">${grupoOpts.map(o=>`<option value="${o.v}"${e.organizacao.agruparPor===o.v?" selected":""}>${escapeHtml(o.t)}</option>`).join("")}</select></div><div><label>Ordenar por</label><select id="rel-ordenar">${ordenarOpts.map(o=>`<option value="${o.v}"${e.organizacao.ordenarPor===o.v?" selected":""}>${escapeHtml(o.t)}</option>`).join("")}</select></div><div><label>Direção</label><select id="rel-direcao"><option value="desc"${e.organizacao.direcao==="desc"?" selected":""}>Decrescente</option><option value="asc"${e.organizacao.direcao==="asc"?" selected":""}>Crescente</option></select></div></div></div></details><details class="rel-bloco" open><summary class="rel-bloco-summary"><b>D. Formatação</b></summary><div class="rel-bloco-conteudo"><label>Título do relatório</label><input type="text" id="rel-titulo" value="${escapeAttr(e.formatacao.titulo)}" placeholder="ex.: Relatório de requerimentos aprovados — maio/2026"><div class="form-row" style="margin-top:8px"><div><label><input type="checkbox" id="rel-fmt-numeracao"${e.formatacao.numeracao?" checked":""}> Numeração de páginas</label></div><div><label><input type="checkbox" id="rel-fmt-marcadagua"${e.formatacao.marcaDagua?" checked":""}> Marca d'água "USO INTERNO"</label></div></div><p class="text-small text-muted">Cabeçalho: Selo + Manchete (variante institucional padrão).</p></div></details><details class="rel-bloco" open><summary class="rel-bloco-summary"><b>E. Saída</b></summary><div class="rel-bloco-conteudo"><div class="rel-sumario">Modo <b>${e.organizacao.modo === "lista" ? "Lista compacta" : "Completo"}</b> · <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}${e.organizacao.agruparPor!=="sem"?` · agrupado por <b>${escapeHtml(grupoOpts.find(o=>o.v===e.organizacao.agruparPor).t)}</b>`:""}</div><div class="toolbar" style="margin-top:10px;flex-wrap:wrap"><button class="btn" id="rel-btn-preview" ${e.escopo.total===0?"disabled":""}>👁 Pré-visualizar</button><button class="btn btn-primary" id="rel-btn-pdf" ${e.escopo.total===0?"disabled":""}>🖨 Gerar PDF</button><button class="btn btn-primary" id="rel-btn-word" ${e.escopo.total===0?"disabled":""}>📝 Baixar Word</button></div></div></details><div class="rel-bloco-preview rel-bloco-preview-vazio" id="rel-bloco-preview"><div id="rel-preview-conteudo"></div></div>`;
+  // Helper: decide se um <details> deve abrir
+  // Regra: se há estado capturado (interação anterior do usuário), respeita; caso contrário usa default.
+  function shouldOpen(id, dft) {
+    if (Object.prototype.hasOwnProperty.call(estadoOpen, id)) return estadoOpen[id];
+    return dft;
+  }
+  function openAttr(id, dft) { return shouldOpen(id, dft) ? " open" : ""; }
+
+  // Lista de presets de usuário (lazy-load do storage; carregado fora da função render, mas referência abaixo)
+  const presetsUsuario = await relatorioListarPresetsUsuario();
+  const presetUsuarioAtual = e.presetUsuarioAtual || "";
+  const presetUsuarioOpts = `<option value="">— Nenhum preset salvo selecionado —</option>` +
+    presetsUsuario.map(pu => `<option value="${escapeAttr(pu.id)}"${pu.id === presetUsuarioAtual ? " selected" : ""}>${escapeHtml(pu.nome)}</option>`).join("");
+
+  body.innerHTML = `${ricUnico ? `<div class="rel-aviso-info">📌 Escopo fixo: RIC <b>${escapeHtml(e.escopo.rics[0] ? e.escopo.rics[0].identificacao : ricUnico)}</b></div>` : ""}
+
+<details class="rel-bloco" data-bloco-id="A"${openAttr("A", !ricUnico)}>
+  <summary class="rel-bloco-summary"><b>A. Escopo (filtros)</b> · <span class="rel-bloco-resumo">${e.escopo.total} requerimento${e.escopo.total!==1?"s":""}</span></summary>
+  <div class="rel-bloco-conteudo">
+    ${ricUnico ? "" : `
+      <label>Preset</label>
+      <select id="rel-preset">${presetOpts}</select>
+      <div class="rel-filtros-livres" style="margin-top:12px">
+        <div class="form-row">
+          <div><label>Casa</label><select id="rel-f-casa"><option value="">Todas</option><option value="camara"${e.filtros.casa==="camara"?" selected":""}>Câmara</option><option value="senado"${e.filtros.casa==="senado"?" selected":""}>Senado</option><option value="cn"${e.filtros.casa==="cn"?" selected":""}>Congresso Nacional</option><option value="cldf"${e.filtros.casa==="cldf"?" selected":""}>CLDF</option></select></div>
+          <div><label>Sigla</label><select id="rel-f-sigla"><option value="">Todas</option><option value="RIC"${e.filtros.sigla==="RIC"?" selected":""}>RIC</option><option value="RQS"${e.filtros.sigla==="RQS"?" selected":""}>RQS</option><option value="REQ"${e.filtros.sigla==="REQ"?" selected":""}>REQ</option></select></div>
+          <div><label>Situação legislativa</label><select id="rel-f-leg"><option value="">Todas</option><option value="aprovado"${e.filtros.leg==="aprovado"?" selected":""}>Aprovado</option><option value="aguardando_resposta"${e.filtros.leg==="aguardando_resposta"?" selected":""}>Aguardando resposta</option><option value="aguardando_aprovacao"${e.filtros.leg==="aguardando_aprovacao"?" selected":""}>Aguardando aprovação</option><option value="tramitacao_inicial"${e.filtros.leg==="tramitacao_inicial"?" selected":""}>Tramitação inicial</option></select></div>
+        </div>
+        <div class="form-row">
+          <div><label>Status interno</label><select id="rel-f-statusint"><option value="">Todos</option>${STATUS_INTERNO.map(s=>`<option value="${s.v}"${e.filtros.statusInterno===s.v?" selected":""}>${escapeHtml(s.t)}</option>`).join("")}</select></div>
+          <div><label>Relevante</label><select id="rel-f-rel"><option value="">Indiferente</option><option value="sim"${e.filtros.rel==="sim"?" selected":""}>Sim</option><option value="nao"${e.filtros.rel==="nao"?" selected":""}>Não</option></select></div>
+          <div><label>Busca livre</label><input type="text" id="rel-f-livre" value="${escapeAttr(e.filtros.livre||"")}" placeholder="palavras-chave, autor, n° etc."></div>
+        </div>
+        <div class="form-row">
+          <div><label>Apresentação de</label><input type="date" id="rel-f-apres-de" value="${escapeAttr(e.filtros.apresDe||"")}"></div>
+          <div><label>Apresentação até</label><input type="date" id="rel-f-apres-ate" value="${escapeAttr(e.filtros.apresAte||"")}"></div>
+          <div><label>Aprovação de</label><input type="date" id="rel-f-aprov-de" value="${escapeAttr(e.filtros.aprovDe||"")}"></div>
+          <div><label>Aprovação até</label><input type="date" id="rel-f-aprov-ate" value="${escapeAttr(e.filtros.aprovAte||"")}"></div>
+        </div>
+      </div>
+    `}
+    <div class="rel-contador">Escopo atual: <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}</div>
+  </div>
+</details>
+
+<details class="rel-bloco" data-bloco-id="B"${openAttr("B", false)}>
+  <summary class="rel-bloco-summary"><b>B. Campos a incluir</b></summary>
+  <div class="rel-bloco-conteudo">
+    <p class="text-small text-muted" style="margin-bottom:8px">Campos <b>fixos</b> (sempre presentes): Número/ano, Autor, Objeto, Resumo, Comentários e Prazo CN final. Os demais campos abaixo são opcionais.</p>
+    ${blocoB}
+  </div>
+</details>
+
+<details class="rel-bloco" data-bloco-id="C"${openAttr("C", false)}>
+  <summary class="rel-bloco-summary"><b>C. Organização</b></summary>
+  <div class="rel-bloco-conteudo">
+    <div class="form-row">
+      <div><label>Modo de saída</label><select id="rel-modo"><option value="lista"${e.organizacao.modo==="lista"?" selected":""}>Lista compacta</option><option value="completo"${e.organizacao.modo==="completo"?" selected":""}>Completo (com blocos)</option></select></div>
+      <div><label>Agrupar por</label><select id="rel-agrupar">${grupoOpts.map(o=>`<option value="${o.v}"${e.organizacao.agruparPor===o.v?" selected":""}>${escapeHtml(o.t)}</option>`).join("")}</select></div>
+      <div><label>Ordenar por</label><select id="rel-ordenar">${ordenarOpts.map(o=>`<option value="${o.v}"${e.organizacao.ordenarPor===o.v?" selected":""}>${escapeHtml(o.t)}</option>`).join("")}</select></div>
+      <div><label>Direção</label><select id="rel-direcao"><option value="desc"${e.organizacao.direcao==="desc"?" selected":""}>Decrescente</option><option value="asc"${e.organizacao.direcao==="asc"?" selected":""}>Crescente</option></select></div>
+    </div>
+  </div>
+</details>
+
+<details class="rel-bloco" data-bloco-id="D"${openAttr("D", true)}>
+  <summary class="rel-bloco-summary"><b>D. Formatação</b></summary>
+  <div class="rel-bloco-conteudo">
+    <label>Título do relatório</label>
+    <input type="text" id="rel-titulo" value="${escapeAttr(e.formatacao.titulo)}" placeholder="ex.: Relatório de requerimentos aprovados — maio/2026">
+    <div class="form-row" style="margin-top:8px">
+      <div><label>Orientação da página</label><select id="rel-fmt-orientacao"><option value="retrato"${e.formatacao.orientacao!=="paisagem"?" selected":""}>Retrato</option><option value="paisagem"${e.formatacao.orientacao==="paisagem"?" selected":""}>Paisagem</option></select></div>
+      <div style="display:flex;align-items:center;gap:14px;padding-top:24px">
+        <label><input type="checkbox" id="rel-fmt-numeracao"${e.formatacao.numeracao?" checked":""}> Numeração de páginas</label>
+        <label><input type="checkbox" id="rel-fmt-marcadagua"${e.formatacao.marcaDagua?" checked":""}> Marca d'água "USO INTERNO"</label>
+      </div>
+    </div>
+    <p class="text-small text-muted">Cabeçalho: Selo + Manchete (variante institucional padrão).</p>
+  </div>
+</details>
+
+<details class="rel-bloco" data-bloco-id="F"${openAttr("F", false)}>
+  <summary class="rel-bloco-summary"><b>F. Presets do usuário</b> · <span class="rel-bloco-resumo">${presetsUsuario.length} salvo${presetsUsuario.length!==1?"s":""}</span></summary>
+  <div class="rel-bloco-conteudo">
+    <p class="text-small text-muted" style="margin-bottom:8px">Salve a configuração atual (escopo + campos + organização + formatação) para reutilizar mais tarde.</p>
+    <div class="form-row">
+      <div style="grid-column: span 2"><label>Carregar preset salvo</label><select id="rel-preset-usuario">${presetUsuarioOpts}</select></div>
+      <div style="display:flex;align-items:flex-end;gap:6px"><button class="btn btn-sm" id="rel-preset-carregar" ${!presetUsuarioAtual?"disabled":""}>Carregar</button><button class="btn btn-sm btn-danger" id="rel-preset-excluir" ${!presetUsuarioAtual?"disabled":""}>Excluir</button></div>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div style="grid-column: span 2"><label>Nome do novo preset</label><input type="text" id="rel-preset-nome" placeholder="ex.: Relatório semanal SSGP" value=""></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn btn-sm btn-primary" id="rel-preset-salvar">💾 Salvar atual como preset</button></div>
+    </div>
+  </div>
+</details>
+
+<details class="rel-bloco" data-bloco-id="E"${openAttr("E", true)}>
+  <summary class="rel-bloco-summary"><b>E. Saída</b></summary>
+  <div class="rel-bloco-conteudo">
+    <div class="rel-sumario">
+      Modo <b>${e.organizacao.modo === "lista" ? "Lista compacta" : "Completo"}</b> · <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}${e.organizacao.agruparPor!=="sem"?` · agrupado por <b>${escapeHtml(grupoOpts.find(o=>o.v===e.organizacao.agruparPor).t)}</b>`:""} · ${e.formatacao.orientacao === "paisagem" ? "paisagem" : "retrato"}
+    </div>
+    <div class="toolbar" style="margin-top:10px;flex-wrap:wrap">
+      <button class="btn" id="rel-btn-preview" ${e.escopo.total===0?"disabled":""}>👁 Pré-visualizar</button>
+      <button class="btn btn-primary" id="rel-btn-pdf" ${e.escopo.total===0?"disabled":""}>🖨 Gerar PDF</button>
+      <button class="btn btn-primary" id="rel-btn-word" ${e.escopo.total===0?"disabled":""}>📝 Baixar Word</button>
+    </div>
+  </div>
+</details>
+
+<div class="rel-bloco-preview rel-bloco-preview-vazio" id="rel-bloco-preview"><div id="rel-preview-conteudo"></div></div>`;
   function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
   const renderDebounced = debounce(() => relatorioRenderModal(), 200);
   const elPreset = document.getElementById("rel-preset");
@@ -5831,12 +6351,24 @@ async function relatorioRenderModal() {
   document.querySelectorAll("[data-rel-grupo]").forEach(cb => cb.addEventListener("change", () => {
     const grupo = cb.dataset.relGrupo;
     const def = RELATORIO_CAMPOS[grupo];
-    for (const c of def.campos) relatorioEstado.campos[grupo][c.id] = cb.checked;
+    // Campos fixos não podem ser desmarcados pelo pai
+    for (const c of def.campos) {
+      if (cb.checked || !relatorioCampoEhFixo(grupo, c.id)) {
+        relatorioEstado.campos[grupo][c.id] = cb.checked;
+      } else {
+        relatorioEstado.campos[grupo][c.id] = true; // mantém fixo ligado
+      }
+    }
     relatorioRenderModal();
   }));
   document.querySelectorAll("[data-rel-campo]").forEach(cb => cb.addEventListener("change", () => {
     const [grupo, campoId] = cb.dataset.relCampo.split(".");
-    relatorioEstado.campos[grupo][campoId] = cb.checked;
+    if (relatorioCampoEhFixo(grupo, campoId)) {
+      // Campo fixo — sempre true, ignora desmarcação
+      relatorioEstado.campos[grupo][campoId] = true;
+    } else {
+      relatorioEstado.campos[grupo][campoId] = cb.checked;
+    }
     if (grupo === "tramitacaoInterna") {
       const algum = Object.values(relatorioEstado.campos.tramitacaoInterna).some(Boolean);
       if (algum) relatorioEstado.formatacao.marcaDagua = true;
@@ -5856,6 +6388,56 @@ async function relatorioRenderModal() {
   if (elNum) elNum.addEventListener("change", () => { relatorioEstado.formatacao.numeracao = elNum.checked; });
   const elMarca = document.getElementById("rel-fmt-marcadagua");
   if (elMarca) elMarca.addEventListener("change", () => { relatorioEstado.formatacao.marcaDagua = elMarca.checked; });
+  const elOrient = document.getElementById("rel-fmt-orientacao");
+  if (elOrient) elOrient.addEventListener("change", () => { relatorioEstado.formatacao.orientacao = elOrient.value; relatorioRenderModal(); });
+
+  // Handlers de presets de usuário
+  const elPresetUsu = document.getElementById("rel-preset-usuario");
+  if (elPresetUsu) elPresetUsu.addEventListener("change", () => {
+    relatorioEstado.presetUsuarioAtual = elPresetUsu.value;
+    relatorioRenderModal();
+  });
+  document.getElementById("rel-preset-carregar")?.addEventListener("click", async () => {
+    const id = relatorioEstado.presetUsuarioAtual;
+    if (!id) return;
+    try {
+      const snap = await relatorioCarregarPresetUsuario(id);
+      // Aplica o snapshot ao estado, preservando o escopo recalculado em seguida
+      relatorioEstado.filtros = { ...snap.filtros };
+      relatorioEstado.campos = JSON.parse(JSON.stringify(snap.campos));
+      // Garante que os campos fixos continuem ligados
+      for (const f of RELATORIO_CAMPOS_FIXOS) {
+        if (relatorioEstado.campos[f.grupo]) relatorioEstado.campos[f.grupo][f.id] = true;
+      }
+      relatorioEstado.organizacao = { ...snap.organizacao };
+      relatorioEstado.formatacao = { ...snap.formatacao };
+      relatorioEstado.preset = "personalizado";
+      await relatorioRenderModal();
+    } catch (e) { alert("Falha ao carregar preset: " + e.message); }
+  });
+  document.getElementById("rel-preset-excluir")?.addEventListener("click", async () => {
+    const id = relatorioEstado.presetUsuarioAtual;
+    if (!id) return;
+    if (!confirm("Excluir definitivamente este preset salvo?")) return;
+    try {
+      await relatorioExcluirPresetUsuario(id);
+      relatorioEstado.presetUsuarioAtual = "";
+      await relatorioRenderModal();
+    } catch (e) { alert("Falha: " + e.message); }
+  });
+  document.getElementById("rel-preset-salvar")?.addEventListener("click", async () => {
+    const elNome = document.getElementById("rel-preset-nome");
+    const nome = (elNome?.value || "").trim();
+    if (!nome) { alert("Informe um nome para o preset."); elNome?.focus(); return; }
+    try {
+      const id = await relatorioSalvarPresetUsuario(nome, relatorioEstado);
+      relatorioEstado.presetUsuarioAtual = id;
+      if (elNome) elNome.value = "";
+      await relatorioRenderModal();
+      alert(`Preset "${nome}" salvo.`);
+    } catch (e) { alert("Falha ao salvar preset: " + e.message); }
+  });
+
   document.getElementById("rel-btn-preview")?.addEventListener("click", () => relatorioPreview(relatorioEstado));
   document.getElementById("rel-btn-pdf")?.addEventListener("click", () => relatorioGerarPdf(relatorioEstado));
   document.getElementById("rel-btn-word")?.addEventListener("click", () => relatorioGerarWord(relatorioEstado));
