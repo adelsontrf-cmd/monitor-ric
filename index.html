@@ -593,9 +593,6 @@ html.dark .log { background: #020617; }
 @media (min-width: 900px) { #modal-relatorio .rel-grupo-filhos { grid-template-columns: 1fr 1fr 1fr; } }
 #modal-relatorio .rel-grupo-filhos .rel-campo { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; padding: 3px 0; }
 #modal-relatorio .rel-grupo-filhos .rel-campo input { width: auto; margin: 0; }
-#modal-relatorio .rel-grupo-filhos .rel-campo-fixo { opacity: 0.85; }
-#modal-relatorio .rel-grupo-filhos .rel-campo-fixo input { cursor: not-allowed; }
-#modal-relatorio .rel-grupo-filhos .rel-campo-fixo-marca { font-size: 10px; color: var(--accent); font-weight: 600; padding: 1px 5px; background: var(--accent-light, rgba(31,95,99,0.1)); border-radius: 8px; }
 #modal-relatorio .rel-sumario { padding: 10px 12px; background: var(--surface-2); border-radius: 6px; font-size: 13px; color: var(--text); }
 #modal-relatorio .rel-bloco-preview { margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--surface); }
 #modal-relatorio .rel-bloco-preview-vazio { display: none; }
@@ -1196,6 +1193,7 @@ const ETAPAS = [
   { v: "admissibilidade", t: "Análise de competência / Admissibilidade" },
   { v: "subsidios", t: "Coleta de subsídios à resposta" },
   { v: "validacao_ssgp", t: "Validação SSGP" },
+  { v: "validacao_se", t: "Validação SE" },
   { v: "conformidade", t: "Análise de conformidade da resposta" },
   { v: "validacao_gm", t: "Validação GM / Expedição" }
 ];
@@ -3546,6 +3544,7 @@ function renderChartEtapas(marcs) {
     "admissibilidade": "Admissibilidade",
     "subsidios": "Subsídios",
     "validacao_ssgp": "SSGP",
+    "validacao_se": "SE",
     "conformidade": "Conformidade",
     "validacao_gm": "GM"
   };
@@ -3706,8 +3705,24 @@ function renderChartEvolucao(marcs) {
   if (!marcs) { DB.getAll("marcacoes").then(renderChartEvolucao); return; }
   const cont = document.getElementById("chart-evolucao");
   if (!cont) return;
-  const datas = marcs.map(m => m.dataRecebimentoSEI).filter(d => d && /^\d{4}-\d{2}/.test(d));
-  if (datas.length === 0) return emptyChart("chart-evolucao", "Nenhum RIC com data de recebimento na CC ainda.");
+  // Normaliza qualquer formato comum de data (ISO yyyy-mm-dd, ISO com hora, BR dd/mm/yyyy)
+  // para "yyyy-mm" (chave de bucket). Retorna null se não conseguir interpretar.
+  function dataParaYM(raw) {
+    if (!raw) return null;
+    const s = String(raw).trim();
+    // ISO: yyyy-mm-dd ou yyyy-mm-ddThh:mm[:ss[.sss]]
+    let m = s.match(/^(\d{4})-(\d{2})-\d{2}/);
+    if (m) return `${m[1]}-${m[2]}`;
+    // BR: dd/mm/yyyy
+    m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) return `${m[3]}-${m[2]}`;
+    // BR curta: dd/mm/yy (assume 20yy)
+    m = s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);
+    if (m) return `20${m[3]}-${m[2]}`;
+    return null;
+  }
+  const ymList = marcs.map(m => dataParaYM(m.dataRecebimentoSEI)).filter(Boolean);
+  if (ymList.length === 0) return emptyChart("chart-evolucao", "Nenhum RIC com data de recebimento na CC ainda.");
 
   const hoje = new Date();
   let limite = null;
@@ -3717,8 +3732,7 @@ function renderChartEvolucao(marcs) {
     limite = `${lim.getFullYear()}-${String(lim.getMonth() + 1).padStart(2, "0")}`;
   }
   const buckets = new Map();
-  for (const d of datas) {
-    const ym = d.substring(0, 7);
+  for (const ym of ymList) {
     if (limite && ym < limite) continue;
     buckets.set(ym, (buckets.get(ym) || 0) + 1);
   }
@@ -5420,9 +5434,9 @@ const RELATORIO_CAMPOS = {
 
 let relatorioEstado = null;
 
-// v4.6: 6 campos sempre presentes no relatório, independentemente do que o usuário marca
+// v4.6: 6 campos PRÉ-SELECIONADOS por padrão (usuário pode desmarcar)
 // Spec: Numero/ano, Autor, Objeto, Resumo, Comentários, Prazo CN final
-const RELATORIO_CAMPOS_FIXOS = [
+const RELATORIO_CAMPOS_PRESELECIONADOS = [
   { grupo: "identificacao", id: "identificacao" }, // Número/ano
   { grupo: "identificacao", id: "autor" },         // Autor (com partido/UF)
   { grupo: "analise",       id: "apelido" },       // Objeto
@@ -5430,10 +5444,6 @@ const RELATORIO_CAMPOS_FIXOS = [
   { grupo: "analise",       id: "comentarios" },   // Comentários
   { grupo: "tramitacaoInterna", id: "prazoFinalCN" } // Prazo final CN
 ];
-
-function relatorioCampoEhFixo(grupo, id) {
-  return RELATORIO_CAMPOS_FIXOS.some(f => f.grupo === grupo && f.id === id);
-}
 
 function relatorioEstadoPadrao() {
   const campos = {};
@@ -5445,15 +5455,15 @@ function relatorioEstadoPadrao() {
       else campos[grupo][c.id] = false;
     }
   }
-  // Garante que campos fixos venham sempre marcados
-  for (const f of RELATORIO_CAMPOS_FIXOS) {
+  // Pré-seleciona os 6 campos do escopo mínimo
+  for (const f of RELATORIO_CAMPOS_PRESELECIONADOS) {
     if (campos[f.grupo]) campos[f.grupo][f.id] = true;
   }
   return {
     preset: "personalizado", presetParam: { periodo: 30 },
     filtros: {}, campos,
     organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
-    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato" },
+    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "selo" },
     escopo: { rics: [], total: 0 },
     presetUsuarioAtual: "",
   };
@@ -5628,6 +5638,12 @@ function relatorioCabecalhoHtml(estado) {
   const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
   const total = estado.escopo.total;
   const data = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  const variante = estado.formatacao.cabecalho || "selo";
+  if (variante === "nenhum") return "";
+  if (variante === "simples") {
+    return `<div class="rel-cabecalho-simples"><h1 class="rel-titulo-simples">${escapeHtml(titulo)}</h1><div class="rel-meta-simples">${data} · ${total} requerimento${total !== 1 ? "s" : ""}</div></div><div class="rel-regua-dourada"></div>`;
+  }
+  // Default: "selo" (Selo + Manchete com ícone R)
   return `<div class="rel-cabecalho"><div class="rel-cabecalho-selo"><div class="rel-cabecalho-r">R</div><div class="rel-cabecalho-marca">MONITOR RIC</div></div><div class="rel-cabecalho-conteudo"><h1 class="rel-titulo">${escapeHtml(titulo)}</h1><div class="rel-meta">${data} · ${total} requerimento${total !== 1 ? "s" : ""}</div></div></div><div class="rel-regua-dourada"></div>`;
 }
 
@@ -5691,7 +5707,7 @@ function relatorioGerarHtml(estado, ehPrint) {
 function relatorioCss(ehPrint, orientacao) {
   const isLandscape = orientacao === "landscape";
   const maxW = isLandscape ? "29.7cm" : "21cm";
-  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Cambria","Source Serif Pro",Georgia,serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-grupo{font-family:"Cambria",Georgia,serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Cambria",Georgia,serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Cambria",Georgia,serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
+  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Cambria","Source Serif Pro",Georgia,serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-cabecalho-simples{padding:14px 0 8px;margin-bottom:4px}.rel-titulo-simples{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta-simples{font-size:8px;color:#94A3B8}.rel-grupo{font-family:"Cambria",Georgia,serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Cambria",Georgia,serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Cambria",Georgia,serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
 }
 
 async function relatorioGerarPdf(estado) {
@@ -5757,6 +5773,30 @@ async function relatorioGerarWord(estado) {
 
   // ====== CABEÇALHO institucional (Selo + Manchete) ======
   // Reproduz a banda do header: tabela de 1 linha × 2 colunas
+  // Retorna array de blocos para o início do documento conforme a variante de cabeçalho
+  function blocoCabecalho() {
+    const variante = estado.formatacao.cabecalho || "selo";
+    if (variante === "nenhum") return [];
+    const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
+    const data = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+    const metaTxt = `${data} · ${estado.escopo.total} requerimento${estado.escopo.total!==1?"s":""}`;
+    if (variante === "simples") {
+      return [
+        new D.Paragraph({
+          children: [new D.TextRun({ text: titulo, size: 44, color: CORES.AZUL, font: "Cambria" })],
+          spacing: { before: 80, after: 80 },
+        }),
+        new D.Paragraph({
+          children: [new D.TextRun({ text: metaTxt, size: 16, color: CORES.CINZA_CLARO })],
+          spacing: { after: 100 },
+          border: { bottom: { color: CORES.DOURADO, space: 4, value: "single", size: 8 } },
+        }),
+      ];
+    }
+    // selo (default) — tabela com selo azul + manchete
+    return [cabecalhoTable()];
+  }
+
   function cabecalhoTable() {
     const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
     const data = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
@@ -6013,8 +6053,10 @@ async function relatorioGerarWord(estado) {
 
   // ===== Constrói o documento =====
   const children = [];
-  children.push(cabecalhoTable());
-  children.push(new D.Paragraph({ children: [], spacing: { after: 240 } })); // espaçador
+  for (const item of blocoCabecalho()) children.push(item);
+  if (estado.formatacao.cabecalho !== "nenhum") {
+    children.push(new D.Paragraph({ children: [], spacing: { after: 240 } })); // espaçador após cabeçalho
+  }
 
   const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
   const camposLigados = camposLigadosArr(estado);
@@ -6044,11 +6086,14 @@ async function relatorioGerarWord(estado) {
 
   // ===== Page setup com orientação =====
   const isLandscape = estado.formatacao.orientacao === "paisagem";
-  // Tamanhos A4 em twentieths of a point (Word usa 1/20 pt; 1 pt = 1/72 polegada)
-  // A4 retrato: 11906 × 16838 twips. A4 paisagem: 16838 × 11906.
-  const pageSize = isLandscape
-    ? { width: 16838, height: 11906, orientation: D.PageOrientation.LANDSCAPE }
-    : { width: 11906, height: 16838, orientation: D.PageOrientation.PORTRAIT };
+  // A lib docx@8.5 espera SEMPRE as dimensões em retrato (width=11906, height=16838)
+  // e usa orientation: LANDSCAPE para inverter automaticamente. Passar landscape dims
+  // explicitamente faz a lib inverter de novo, gerando portrait com flag errada.
+  const pageSize = {
+    width: 11906,
+    height: 16838,
+    orientation: isLandscape ? D.PageOrientation.LANDSCAPE : D.PageOrientation.PORTRAIT,
+  };
 
   // Watermark "USO INTERNO" via header (se ligado)
   const headers = {};
@@ -6189,10 +6234,8 @@ async function relatorioRenderModal() {
     const todosLigados = def.campos.every(c => e.campos[grupoKey][c.id]);
     const desabilitar = def.apenasCompleto && e.organizacao.modo !== "completo";
     return `<div class="rel-grupo-campos${desabilitar?' rel-grupo-campos-disabled':''}"><label class="rel-grupo-pai"><input type="checkbox" data-rel-grupo="${grupoKey}" ${todosLigados?"checked":""}${desabilitar?" disabled":""}> <b>${escapeHtml(def.nome)}</b>${desabilitar?' <span class="text-small text-muted">(apenas modo Completo)</span>':''}</label><div class="rel-grupo-filhos">${def.campos.map(c => {
-      const ehFixo = relatorioCampoEhFixo(grupoKey, c.id);
-      const checked = e.campos[grupoKey][c.id] || ehFixo;
-      const disabled = desabilitar || ehFixo;
-      return `<label class="rel-campo${ehFixo?' rel-campo-fixo':''}"><input type="checkbox" data-rel-campo="${grupoKey}.${c.id}"${checked?" checked":""}${disabled?" disabled":""}> ${escapeHtml(c.label)}${ehFixo?' <span class="rel-campo-fixo-marca" title="Campo sempre incluído no relatório">🔒 fixo</span>':''}</label>`;
+      const checked = e.campos[grupoKey][c.id];
+      return `<label class="rel-campo"><input type="checkbox" data-rel-campo="${grupoKey}.${c.id}"${checked?" checked":""}${desabilitar?" disabled":""}> ${escapeHtml(c.label)}</label>`;
     }).join("")}</div></div>`;
   }).join("");
   const grupoOpts = [
@@ -6256,7 +6299,7 @@ async function relatorioRenderModal() {
 <details class="rel-bloco" data-bloco-id="B"${openAttr("B", false)}>
   <summary class="rel-bloco-summary"><b>B. Campos a incluir</b></summary>
   <div class="rel-bloco-conteudo">
-    <p class="text-small text-muted" style="margin-bottom:8px">Campos <b>fixos</b> (sempre presentes): Número/ano, Autor, Objeto, Resumo, Comentários e Prazo CN final. Os demais campos abaixo são opcionais.</p>
+    <p class="text-small text-muted" style="margin-bottom:8px">Campos <b>pré-selecionados</b> por padrão: Número/ano, Autor, Objeto, Resumo, Comentários e Prazo CN final. Você pode desmarcar ou adicionar outros conforme a necessidade.</p>
     ${blocoB}
   </div>
 </details>
@@ -6279,13 +6322,19 @@ async function relatorioRenderModal() {
     <label>Título do relatório</label>
     <input type="text" id="rel-titulo" value="${escapeAttr(e.formatacao.titulo)}" placeholder="ex.: Relatório de requerimentos aprovados — maio/2026">
     <div class="form-row" style="margin-top:8px">
+      <div><label>Cabeçalho</label><select id="rel-fmt-cabecalho">
+        <option value="selo"${(e.formatacao.cabecalho||"selo")==="selo"?" selected":""}>Selo + Manchete (com ícone R)</option>
+        <option value="simples"${e.formatacao.cabecalho==="simples"?" selected":""}>Simplificado (só título e data)</option>
+        <option value="nenhum"${e.formatacao.cabecalho==="nenhum"?" selected":""}>Sem cabeçalho</option>
+      </select></div>
       <div><label>Orientação da página</label><select id="rel-fmt-orientacao"><option value="retrato"${e.formatacao.orientacao!=="paisagem"?" selected":""}>Retrato</option><option value="paisagem"${e.formatacao.orientacao==="paisagem"?" selected":""}>Paisagem</option></select></div>
-      <div style="display:flex;align-items:center;gap:14px;padding-top:24px">
+    </div>
+    <div class="form-row" style="margin-top:8px">
+      <div style="display:flex;align-items:center;gap:14px;padding-top:6px">
         <label><input type="checkbox" id="rel-fmt-numeracao"${e.formatacao.numeracao?" checked":""}> Numeração de páginas</label>
         <label><input type="checkbox" id="rel-fmt-marcadagua"${e.formatacao.marcaDagua?" checked":""}> Marca d'água "USO INTERNO"</label>
       </div>
     </div>
-    <p class="text-small text-muted">Cabeçalho: Selo + Manchete (variante institucional padrão).</p>
   </div>
 </details>
 
@@ -6351,24 +6400,14 @@ async function relatorioRenderModal() {
   document.querySelectorAll("[data-rel-grupo]").forEach(cb => cb.addEventListener("change", () => {
     const grupo = cb.dataset.relGrupo;
     const def = RELATORIO_CAMPOS[grupo];
-    // Campos fixos não podem ser desmarcados pelo pai
     for (const c of def.campos) {
-      if (cb.checked || !relatorioCampoEhFixo(grupo, c.id)) {
-        relatorioEstado.campos[grupo][c.id] = cb.checked;
-      } else {
-        relatorioEstado.campos[grupo][c.id] = true; // mantém fixo ligado
-      }
+      relatorioEstado.campos[grupo][c.id] = cb.checked;
     }
     relatorioRenderModal();
   }));
   document.querySelectorAll("[data-rel-campo]").forEach(cb => cb.addEventListener("change", () => {
     const [grupo, campoId] = cb.dataset.relCampo.split(".");
-    if (relatorioCampoEhFixo(grupo, campoId)) {
-      // Campo fixo — sempre true, ignora desmarcação
-      relatorioEstado.campos[grupo][campoId] = true;
-    } else {
-      relatorioEstado.campos[grupo][campoId] = cb.checked;
-    }
+    relatorioEstado.campos[grupo][campoId] = cb.checked;
     if (grupo === "tramitacaoInterna") {
       const algum = Object.values(relatorioEstado.campos.tramitacaoInterna).some(Boolean);
       if (algum) relatorioEstado.formatacao.marcaDagua = true;
@@ -6390,6 +6429,8 @@ async function relatorioRenderModal() {
   if (elMarca) elMarca.addEventListener("change", () => { relatorioEstado.formatacao.marcaDagua = elMarca.checked; });
   const elOrient = document.getElementById("rel-fmt-orientacao");
   if (elOrient) elOrient.addEventListener("change", () => { relatorioEstado.formatacao.orientacao = elOrient.value; relatorioRenderModal(); });
+  const elCab = document.getElementById("rel-fmt-cabecalho");
+  if (elCab) elCab.addEventListener("change", () => { relatorioEstado.formatacao.cabecalho = elCab.value; relatorioRenderModal(); });
 
   // Handlers de presets de usuário
   const elPresetUsu = document.getElementById("rel-preset-usuario");
@@ -6405,10 +6446,7 @@ async function relatorioRenderModal() {
       // Aplica o snapshot ao estado, preservando o escopo recalculado em seguida
       relatorioEstado.filtros = { ...snap.filtros };
       relatorioEstado.campos = JSON.parse(JSON.stringify(snap.campos));
-      // Garante que os campos fixos continuem ligados
-      for (const f of RELATORIO_CAMPOS_FIXOS) {
-        if (relatorioEstado.campos[f.grupo]) relatorioEstado.campos[f.grupo][f.id] = true;
-      }
+      // Preset salva exatamente como o usuário configurou — não força nenhum campo
       relatorioEstado.organizacao = { ...snap.organizacao };
       relatorioEstado.formatacao = { ...snap.formatacao };
       relatorioEstado.preset = "personalizado";
