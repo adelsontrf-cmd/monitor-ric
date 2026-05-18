@@ -564,7 +564,7 @@ html.dark .log { background: #020617; }
    - Botão Salvar 50% menor, posicionado ABAIXO do X (também no canto direito)
    - Título estende-se por TODA a largura do header (quebra de linha conforme necessário)
    - Em telas estreitas, o título naturalmente cai abaixo dos botões */
-.modal-header-detalhe { position: relative; display: block; padding: 12px 60px 12px 18px; min-height: 64px; }
+.modal-header-detalhe { position: sticky; top: -24px; z-index: 10; background: var(--surface); display: block; padding: 12px 60px 12px 18px; min-height: 64px; margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 60px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
 .modal-header-detalhe .modal-close { position: absolute; top: 8px; right: 12px; margin: 0; }
 .modal-header-detalhe .btn-salvar-mini { position: absolute; top: 38px; right: 12px; padding: 2px 8px; font-size: 10px; min-height: 18px; height: 18px; line-height: 1; border-radius: 4px; }
 .modal-header-detalhe .save-feedback-mini { position: absolute; top: 40px; right: 60px; font-size: 9px; color: var(--success, #10b981); opacity: 0; transition: opacity 0.3s; }
@@ -573,6 +573,33 @@ html.dark .log { background: #020617; }
 
 /* Modal footer (v4.6: Ocultar/Limpar/Excluir) */
 .modal-footer-detalhe { display: flex; align-items: center; gap: 10px; padding: 12px 0 4px; margin-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+/* Modal Relatório (v4.6) */
+#modal-relatorio .rel-bloco { margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+#modal-relatorio .rel-bloco-summary { padding: 10px 14px; cursor: pointer; user-select: none; font-size: 13px; color: var(--text); border-radius: var(--radius); }
+#modal-relatorio .rel-bloco-summary:hover { background: var(--surface-2); }
+#modal-relatorio .rel-bloco[open] .rel-bloco-summary { border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; }
+#modal-relatorio .rel-bloco-conteudo { padding: 12px 14px 14px; }
+#modal-relatorio .rel-bloco-resumo { font-size: 11px; color: var(--muted); font-weight: 400; }
+#modal-relatorio .rel-contador { margin-top: 12px; padding: 8px 10px; background: var(--surface-2); border-radius: 6px; font-size: 12px; color: var(--text); border-left: 3px solid var(--accent); }
+#modal-relatorio .rel-aviso-info { padding: 10px 12px; background: rgba(31,95,99,0.08); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 12px; font-size: 13px; }
+#modal-relatorio .rel-aviso-preview { padding: 8px 12px; background: var(--warn-light, #FEF3C7); color: var(--warn-strong, #92400E); border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
+#modal-relatorio .rel-grupo-campos { padding: 8px 0; border-bottom: 1px dashed var(--border); }
+#modal-relatorio .rel-grupo-campos:last-child { border-bottom: none; }
+#modal-relatorio .rel-grupo-campos-disabled { opacity: 0.55; pointer-events: none; }
+#modal-relatorio .rel-grupo-pai { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; }
+#modal-relatorio .rel-grupo-filhos { display: grid; grid-template-columns: 1fr; gap: 4px 12px; padding-left: 22px; }
+@media (min-width: 600px) { #modal-relatorio .rel-grupo-filhos { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { #modal-relatorio .rel-grupo-filhos { grid-template-columns: 1fr 1fr 1fr; } }
+#modal-relatorio .rel-grupo-filhos .rel-campo { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; padding: 3px 0; }
+#modal-relatorio .rel-grupo-filhos .rel-campo input { width: auto; margin: 0; }
+#modal-relatorio .rel-sumario { padding: 10px 12px; background: var(--surface-2); border-radius: 6px; font-size: 13px; color: var(--text); }
+#modal-relatorio .rel-bloco-preview { margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--surface); }
+#modal-relatorio .rel-bloco-preview-vazio { display: none; }
+#modal-relatorio .rel-preview-iframe { width: 100%; height: 600px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; }
+
+/* Botão de relatório nos painéis */
+.btn-painel-relatorio { font-size: 14px; padding: 4px 8px; min-height: 28px; line-height: 1; }
 
 /* IDENTIFICAÇÃO API (v4.6): rótulo em cima, valor embaixo */
 .ident-api-grid { display: grid; grid-template-columns: 1fr; gap: 10px 16px; }
@@ -802,6 +829,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <button data-d="30">30d</button>
           <button data-d="todos">Todos</button>
         </div>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="apresentados">📄</button>
       </div>
       <div class="painel-coluna-body" id="lst-apresentados"></div>
     </div>
@@ -814,6 +842,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <button data-d="30">30d</button>
           <button data-d="todos">Todos</button>
         </div>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="movimentados">📄</button>
       </div>
       <div class="painel-coluna-body" id="lst-movimentados"></div>
     </div>
@@ -826,6 +855,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <button data-d="30">30d</button>
           <button data-d="todos">Todos</button>
         </div>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="aprovados">📄</button>
       </div>
       <div class="painel-coluna-body" id="lst-aprovados"></div>
     </div>
@@ -850,6 +880,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <span class="spacer"></span>
       <button class="btn btn-sm" id="btn-export-csv">Exportar CSV</button>
       <button class="btn btn-sm" id="btn-export-xlsx">Exportar XLSX</button>
+      <button class="btn btn-sm btn-primary" id="btn-gerar-relatorio" title="Gerar relatório Word/PDF dos requerimentos atualmente filtrados">📄 Relatório</button>
     </div>
     <div id="filtros-container" style="margin-top:12px">
       <div class="form-row">
@@ -1051,6 +1082,17 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 </div>
 
 <!-- MODAL CONFIG -->
+<!-- MODAL RELATÓRIO (v4.6) -->
+<div class="modal-bg" id="modal-relatorio">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📄 Gerar Relatório</h2>
+      <button class="modal-close" data-close-modal="modal-relatorio">&times;</button>
+    </div>
+    <div id="modal-relatorio-body"></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-config">
   <div class="modal modal-wide">
     <div class="modal-header">
@@ -1440,10 +1482,22 @@ function formatarData(s) {
 // Formata autor + (PARTIDO/UF) — usa campos separados se existirem; senão devolve o autor cru.
 function formatarAutor(p) {
   if (!p) return "";
-  const nome = (p.autor || "").trim();
+  let nome = (p.autor || "").trim();
   if (!nome) return "";
   const part = (p.autorPartido || "").trim();
   const uf = (p.autorUF || "").trim();
+  // v4.6: prefixo de tratamento conforme a casa de origem do autor.
+  //   Câmara → "Dep. " (se o nome ainda não tem essa cortesia)
+  //   Senado → "Sen. " (se o nome ainda não tem)
+  //   CN/CLDF → sem prefixo (autores são deputados/senadores misturados; nem sempre dá pra inferir)
+  function jaTemPrefixoTratamento(n) {
+    return /^(dep(\.|utad[oa])?|sen(\.|ador[a]?)?|vereador[a]?|presidente|comiss[aã]o)\b/i.test(n);
+  }
+  if (p.origem === "camara" && !jaTemPrefixoTratamento(nome)) {
+    nome = `Dep. ${nome}`;
+  } else if (p.origem === "senado" && !jaTemPrefixoTratamento(nome)) {
+    nome = `Sen. ${nome}`;
+  }
   if (part || uf) return `${nome} (${part}${part && uf ? "/" : ""}${uf})`;
   return nome;
 }
@@ -1939,8 +1993,26 @@ async function senadoBuscarInteiroTeor(prop) {
     const node = data?.TextoMateria?.Materia?.Textos?.Texto;
     if (!node) return;
     const lista = Array.isArray(node) ? node : [node];
-    const principal = lista.find(t => /inicial|principal|avulso/i.test((t.DescricaoTipoTexto || t.TipoTexto || t.SiglaTipoTexto || "").toString())) || lista[0];
-    if (principal) prop.urlInteiroTeor = principal.UrlTexto || principal.UrlDocumento || principal.Url || "";
+    // O Senado expõe vários tipos de texto. Priorizamos sempre o "Texto inicial" (TI / "Texto Inicial"),
+    // que é o que aparece como link clicável na página da matéria. Se não houver, caímos para
+    // "Avulso inicial" → "Texto principal" → primeiro texto qualquer (fallback).
+    function tipoStr(t) {
+      return (t.DescricaoTipoTexto || t.TipoTexto || t.SiglaTipoTexto || t.NomeTexto || "").toString();
+    }
+    function urlDe(t) {
+      return t.UrlTexto || t.UrlDocumento || t.Url || "";
+    }
+    // 1) "Texto inicial" exato (case-insensitive)
+    let principal = lista.find(t => /\btexto\s+inicial\b/i.test(tipoStr(t)) && urlDe(t));
+    // 2) Sigla "TI"
+    if (!principal) principal = lista.find(t => /^TI$/i.test((t.SiglaTipoTexto || "").trim()) && urlDe(t));
+    // 3) "Avulso inicial" / "inicial" genérico
+    if (!principal) principal = lista.find(t => /inicial/i.test(tipoStr(t)) && urlDe(t));
+    // 4) "Avulso" ou "principal" como último recurso
+    if (!principal) principal = lista.find(t => /(avulso|principal)/i.test(tipoStr(t)) && urlDe(t));
+    // 5) Primeiro com URL
+    if (!principal) principal = lista.find(urlDe);
+    if (principal) prop.urlInteiroTeor = urlDe(principal);
   } catch (e) {}
 }
 
@@ -2786,7 +2858,7 @@ async function abrirDetalhe(id) {
   }
 
   document.getElementById("modal-body").innerHTML = `
-    <div class="modal-section collapsible" data-sec="ident">
+    <div class="modal-section collapsible collapsed" data-sec="ident">
       <div class="section-header"><h3>IDENTIFICAÇÃO API</h3></div>
       <div class="section-content">
       <div class="ident-api-grid">
@@ -2828,9 +2900,9 @@ async function abrirDetalhe(id) {
       <div class="section-header"><h3>Análise da SSGP</h3></div>
       <div class="section-content">
       <label>Resumo</label>
-      <textarea id="m-resumo" rows="3" placeholder="Resumo do conteúdo dos quesitos formulados...">${escapeHtml(m.resumo || "")}</textarea>
+      <textarea id="m-resumo" rows="6" placeholder="Resumo do conteúdo dos quesitos formulados...">${escapeHtml(m.resumo || "")}</textarea>
       <label style="margin-top:10px">Comentários / Observações</label>
-      <textarea id="m-comentarios" rows="4" placeholder="Anotações da triagem (precedentes, observações de admissibilidade etc.)">${escapeHtml(m.comentarios || "")}</textarea>
+      <textarea id="m-comentarios" rows="8" placeholder="Anotações da triagem (precedentes, observações de admissibilidade etc.)">${escapeHtml(m.comentarios || "")}</textarea>
 
       <!-- Buscar análogos integrado à Análise da SSGP -->
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
@@ -3194,6 +3266,7 @@ async function abrirDetalhe(id) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L21 10C21.5 10.5 21.5 11.5 21 12L11 22"/><line x1="18" y1="13" x2="9" y2="4"/></svg>
         Limpar
       </button>
+      <button class="btn btn-sm btn-ghost" id="btn-relatorio-ric" title="Gerar relatório deste RIC">📄 Relatório</button>
       <div style="flex:1"></div>
       <button class="btn btn-sm btn-danger" id="btn-excluir-ric" title="Excluir este RIC da base (com snapshot para recuperação)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -3246,17 +3319,19 @@ async function abrirDetalhe(id) {
       dispararFecharModal("modal-detalhe");
       renderTabela(); renderHeaderStats(); renderPainel();
     };
+    // Handler Relatório deste RIC (abre o modal de relatório com escopo fixo no RIC corrente)
+    const btnRel = document.getElementById("btn-relatorio-ric");
+    if (btnRel) btnRel.onclick = () => {
+      if (typeof relatorioAbrirModal === "function") {
+        relatorioAbrirModal(null, p.id);
+      }
+    };
   }
 
-  // Toggle das seções colapsáveis em modo ACCORDION (um aberto por vez)
+  // Toggle das seções colapsáveis (v4.6: independente — vários podem ficar abertos)
   document.querySelectorAll("#modal-detalhe .modal-section.collapsible > .section-header").forEach(h => {
     h.addEventListener("click", () => {
-      const sec = h.parentElement;
-      const estavaAberto = !sec.classList.contains("collapsed");
-      // Fecha todos os outros
-      document.querySelectorAll("#modal-detalhe .modal-section.collapsible").forEach(s => s.classList.add("collapsed"));
-      // Abre só o atual (se estava fechado)
-      if (!estavaAberto) sec.classList.remove("collapsed");
+      h.parentElement.classList.toggle("collapsed");
     });
   });
 
@@ -3374,7 +3449,7 @@ async function renderPainel() {
   const alertas = [
     { cls: "warning", num: ccAguardando.length, label: "em andamento / aguardando resposta", filtro: { leg: "aguardando_resposta" } },
     { cls: "purple-pill", num: totalAprovados, label: "aprovados", filtro: { leg: "aprovado" } },
-    { cls: "info", num: novos7d, label: "novos (últimos 7 dias)", filtro: {} }
+    { cls: "info", num: novos7d, label: "novos (últimos 7 dias)", filtro: { novos7d: true } }
   ];
   document.getElementById("alertas-bar").innerHTML = alertas.map(a => `
     <div class="alerta-pill ${a.cls} ${a.num === 0 ? 'zero' : ''}" data-alerta='${escapeAttr(JSON.stringify(a.filtro))}'>
@@ -5263,6 +5338,539 @@ async function reverterImportacao(snapId) {
     alert("Falha ao reverter: " + e.message);
   }
 }
+
+// ===== MÓDULO RELATÓRIO (v4.6) =====
+// Geração de relatórios em PDF (via window.print) e Word (.docx via lib docx lazy-load)
+// Spec: prompt-relatorio-word-pdf.md (sections 1-16)
+// Esta entrega traz: 9 presets nativos, escopo (filtros), campos (5 grupos),
+//                    modo Lista/Completo, agrupamento 1 nível, preview, PDF print, Word básico.
+// Refinamentos para versões futuras: 3 variantes de cabeçalho institucional Word,
+//                                    agrupamento 2 níveis, sub-tabela de histórico no Completo,
+//                                    persistência avançada de perfis completos.
+
+const RELATORIO_PRESETS_NATIVOS = [
+  { id: "personalizado", nome: "Personalizado", aplicar: () => ({}) },
+  { id: "aprovados-30d", nome: "Aprovados nos últimos 30 dias", aplicar: () => ({ leg: "aprovado", aprovDe: addDiasIso(isoHoje(), -30), aprovAte: isoHoje() }) },
+  { id: "apresentados-7d", nome: "Apresentados nos últimos 7 dias", aplicar: () => ({ novos7d: true }) },
+  { id: "movimentacao-7d", nome: "Sofreram movimentação nos últimos 7 dias", aplicar: () => ({ movDias: 7 }) },
+  { id: "andamento-cc", nome: "Em andamento na Casa Civil", aplicar: () => ({ statusInterno: "andamento_cc" }) },
+  { id: "tramitacao-cn", nome: "Em tramitação no Congresso", aplicar: () => ({ statusInterno: "tramitacao_cn" }) },
+  { id: "respondidos-30d", nome: "Respondidos nos últimos 30 dias", aplicar: () => ({ statusInterno: "respondido", respDe: addDiasIso(isoHoje(), -30), respAte: isoHoje() }) },
+  { id: "relevantes-sem-resposta", nome: "Relevantes sem resposta", aplicar: () => ({ rel: "sim", statusInternoExcl: "respondido" }) },
+];
+
+const RELATORIO_CAMPOS = {
+  identificacao: {
+    nome: "Identificação da proposição",
+    campos: [
+      { id: "casa", label: "Casa" }, { id: "sigla", label: "Sigla" },
+      { id: "identificacao", label: "Número/Ano" }, { id: "autor", label: "Autor (com partido/UF)" },
+      { id: "dataApresentacao", label: "Data de apresentação" },
+      { id: "urlPortal", label: "Link do portal oficial" }, { id: "urlInteiroTeor", label: "Link do inteiro teor" },
+    ],
+    defaultOn: true,
+  },
+  conteudo: {
+    nome: "Conteúdo legislativo",
+    campos: [
+      { id: "ementa", label: "Ementa" }, { id: "ementaDetalhada", label: "Ementa detalhada" },
+      { id: "keywords", label: "Palavras-chave (API)" }, { id: "situacaoLegislativa", label: "Situação legislativa" },
+      { id: "dataAprovacao", label: "Data de aprovação" }, { id: "despachoAprovacao", label: "Despacho de aprovação" },
+      { id: "ultimaMovimentacao", label: "Última movimentação" },
+    ],
+    defaultOn: true,
+  },
+  analise: {
+    nome: "Análise da SSGP",
+    campos: [
+      { id: "apelido", label: "Objeto resumido" }, { id: "tematica", label: "Temática" },
+      { id: "relevante", label: "Relevante (Sim/Não)" }, { id: "palavrasChave", label: "Palavras-chave (SSGP)" },
+      { id: "resumo", label: "Resumo" }, { id: "comentarios", label: "Comentários" },
+    ],
+    defaultOn: false,
+    defaultParcial: ["apelido", "tematica"],
+  },
+  tramitacaoInterna: {
+    nome: "Tramitação interna",
+    campos: [
+      { id: "statusInterno", label: "Status interno" }, { id: "etapa", label: "Etapa" },
+      { id: "prazoEtapa", label: "Prazo da etapa" }, { id: "prazoFinalCN", label: "Prazo final CN" },
+      { id: "dataRecebimentoSEI", label: "Data de recebimento SEI" }, { id: "nupRecebimento", label: "NUP recebimento" },
+      { id: "nupResposta", label: "NUP resposta" }, { id: "dataResposta", label: "Data da resposta" },
+      { id: "tipoResposta", label: "Tipo de resposta" }, { id: "oficio", label: "Ofício" },
+      { id: "atribuicao", label: "Atribuição" }, { id: "unidadesConsultadas", label: "Unidades consultadas" },
+    ],
+    defaultOn: false,
+  },
+  historico: {
+    nome: "Histórico e análogos (apenas modo Completo)",
+    campos: [
+      { id: "historicoTramitacao", label: "Histórico de tramitação" },
+      { id: "analogos", label: "Requerimentos análogos" },
+    ],
+    defaultOn: false,
+    apenasCompleto: true,
+  },
+};
+
+let relatorioEstado = null;
+
+function relatorioEstadoPadrao() {
+  const campos = {};
+  for (const [grupo, def] of Object.entries(RELATORIO_CAMPOS)) {
+    campos[grupo] = {};
+    for (const c of def.campos) {
+      if (def.defaultOn) campos[grupo][c.id] = true;
+      else if (def.defaultParcial && def.defaultParcial.includes(c.id)) campos[grupo][c.id] = true;
+      else campos[grupo][c.id] = false;
+    }
+  }
+  return {
+    preset: "personalizado", presetParam: { periodo: 30 },
+    filtros: {}, campos,
+    organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
+    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false },
+    escopo: { rics: [], total: 0 },
+  };
+}
+
+function relatorioPreSelecionado(preset) {
+  const estado = relatorioEstadoPadrao();
+  if (preset) {
+    estado.preset = preset;
+    const p = RELATORIO_PRESETS_NATIVOS.find(x => x.id === preset);
+    if (p) estado.filtros = p.aplicar();
+  }
+  return estado;
+}
+
+async function relatorioCalcularEscopo(estado) {
+  const todos = await DB.getAll("proposicoes");
+  const marcs = await DB.getAll("marcacoes");
+  const mMap = new Map(marcs.map(m => [m.proposicaoId, m]));
+  const f = estado.filtros;
+  const hoje = isoHoje();
+  let lista = todos.filter(p => !p.oculto);
+  if (f._ricUnico) {
+    lista = lista.filter(p => p.id === f._ricUnico || p.identificacao === f._ricUnico);
+  } else {
+    if (f.casa) lista = lista.filter(p => p.origem === f.casa);
+    if (f.sigla) lista = lista.filter(p => p.sigla === f.sigla);
+    if (f.ano) lista = lista.filter(p => String(p.ano) === String(f.ano));
+    if (f.leg) lista = lista.filter(p => p.situacaoLegislativa === f.leg);
+    if (f.statusInterno) lista = lista.filter(p => (mMap.get(p.id) || {}).statusInterno === f.statusInterno);
+    if (f.statusInternoExcl) lista = lista.filter(p => (mMap.get(p.id) || {}).statusInterno !== f.statusInternoExcl);
+    if (f.etapa) lista = lista.filter(p => (mMap.get(p.id) || {}).etapa === f.etapa);
+    if (f.tematica) lista = lista.filter(p => (mMap.get(p.id) || {}).tematica === f.tematica);
+    if (f.rel === "sim") lista = lista.filter(p => (mMap.get(p.id) || {}).relevante);
+    if (f.rel === "nao") lista = lista.filter(p => !(mMap.get(p.id) || {}).relevante);
+    if (f.novos7d) {
+      const lim = addDiasIso(hoje, -7);
+      lista = lista.filter(p => p.dataApresentacao && p.dataApresentacao >= lim);
+    }
+    if (f.apresDe) lista = lista.filter(p => p.dataApresentacao && p.dataApresentacao >= f.apresDe);
+    if (f.apresAte) lista = lista.filter(p => p.dataApresentacao && p.dataApresentacao <= f.apresAte);
+    if (f.aprovDe) lista = lista.filter(p => p.dataAprovacao && p.dataAprovacao >= f.aprovDe);
+    if (f.aprovAte) lista = lista.filter(p => p.dataAprovacao && p.dataAprovacao <= f.aprovAte);
+    if (f.respDe) lista = lista.filter(p => { const m = mMap.get(p.id) || {}; return m.dataResposta && m.dataResposta >= f.respDe; });
+    if (f.respAte) lista = lista.filter(p => { const m = mMap.get(p.id) || {}; return m.dataResposta && m.dataResposta <= f.respAte; });
+    if (f.movDias) {
+      const lim = addDiasIso(hoje, -parseInt(f.movDias, 10));
+      lista = lista.filter(p => p.ultimaMovimentacaoData && p.ultimaMovimentacaoData >= lim);
+    }
+    if (f.livre) {
+      const q = f.livre.toLowerCase();
+      lista = lista.filter(p => {
+        const m = mMap.get(p.id) || {};
+        const blob = [p.identificacao, p.ementa, p.autor, p.autorPartido, p.autorUF, m.apelido, m.resumo, m.comentarios].join(" ").toLowerCase();
+        return blob.includes(q);
+      });
+    }
+  }
+  const ord = estado.organizacao.ordenarPor;
+  const dir = estado.organizacao.direcao === "asc" ? 1 : -1;
+  lista.sort((a, b) => {
+    let va, vb;
+    if (ord === "identificacao") { va = a.identificacao || ""; vb = b.identificacao || ""; }
+    else if (ord === "autor") { va = a.autor || ""; vb = b.autor || ""; }
+    else if (ord === "prazoFinalCN") {
+      const ma = mMap.get(a.id) || {}, mb = mMap.get(b.id) || {};
+      va = ma.prazoFinalCN || a.prazoFinalCNSugerido || "";
+      vb = mb.prazoFinalCN || b.prazoFinalCNSugerido || "";
+    } else if (ord === "ultimaMovimentacao") { va = a.ultimaMovimentacaoData || ""; vb = b.ultimaMovimentacaoData || ""; }
+    else if (ord === "dataAprovacao") { va = a.dataAprovacao || ""; vb = b.dataAprovacao || ""; }
+    else { va = a.dataApresentacao || ""; vb = b.dataApresentacao || ""; }
+    return va < vb ? -dir : va > vb ? dir : 0;
+  });
+  estado.escopo = { rics: lista, total: lista.length, marcacoes: mMap };
+  return estado.escopo;
+}
+
+function relatorioAgrupar(lista, agruparPor, marcsMap) {
+  if (!agruparPor || agruparPor === "sem") return [{ nome: null, rics: lista }];
+  function chave(p) {
+    const m = marcsMap.get(p.id) || {};
+    switch (agruparPor) {
+      case "casa": return ({ camara: "Câmara dos Deputados", senado: "Senado Federal", cn: "Congresso Nacional", cldf: "Câmara Legislativa do DF" }[p.origem] || p.origem || "(sem casa)");
+      case "situacaoLegislativa": return ({ aprovado: "Aprovado", aguardando_resposta: "Aguardando resposta", aguardando_aprovacao: "Aguardando aprovação", tramitacao_inicial: "Tramitação inicial", respondido: "Respondido", retirado: "Retirado", pendente: "Pendente" }[p.situacaoLegislativa] || p.situacaoLegislativa || "(sem situação)");
+      case "statusInterno": return (STATUS_INTERNO.find(s => s.v === m.statusInterno) || { t: "(sem status)" }).t;
+      case "etapa": return (ETAPAS.find(e => e.v === m.etapa) || { t: "(sem etapa)" }).t;
+      case "tematica": return m.tematica || "(sem temática)";
+      case "objeto": {
+        // Extrai o TEMA do objeto resumido (formato esperado: "TEMA - síntese")
+        // Se o apelido começar com texto em CAIXA ALTA seguido de " - ", agrupa por esse TEMA.
+        // Caso contrário, agrupa pelo apelido completo (ou "(sem objeto)" se vazio).
+        const ap = (m.apelido || "").trim();
+        if (!ap) return "(sem objeto)";
+        const matchTema = ap.match(/^([A-ZÀ-Ÿ0-9][A-ZÀ-Ÿ0-9\s\-/]*[A-ZÀ-Ÿ0-9])\s+-\s+/);
+        if (matchTema) return matchTema[1].trim();
+        return ap.substring(0, 60); // fallback: primeiros chars do apelido
+      }
+      case "ano": return String(p.ano || "(sem ano)");
+      default: return "(?)";
+    }
+  }
+  const grupos = new Map();
+  for (const p of lista) {
+    const k = chave(p);
+    if (!grupos.has(k)) grupos.set(k, []);
+    grupos.get(k).push(p);
+  }
+  const arr = [...grupos.entries()].map(([nome, rics]) => ({ nome, rics }));
+  arr.sort((a, b) => {
+    const aSem = a.nome && a.nome.startsWith("(sem ");
+    const bSem = b.nome && b.nome.startsWith("(sem ");
+    if (aSem && !bSem) return 1;
+    if (!aSem && bSem) return -1;
+    return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
+  });
+  return arr;
+}
+
+function relatorioValorCampo(p, m, campoId) {
+  if (!m) m = {};
+  const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  switch (campoId) {
+    case "casa": return ({ camara: "Câmara dos Deputados", senado: "Senado Federal", cn: "Congresso Nacional", cldf: "CLDF" }[p.origem] || p.origem || "—");
+    case "sigla": return esc(p.sigla || "—");
+    case "identificacao": return esc(p.identificacao || "—");
+    case "autor": return esc(formatarAutor(p) || "—");
+    case "dataApresentacao": return formatarData(p.dataApresentacao) || "—";
+    case "urlPortal": return p.urlPortal ? `<a href="${esc(p.urlPortal)}" target="_blank" rel="noopener">${esc(p.urlPortal)}</a>` : "—";
+    case "urlInteiroTeor": return p.urlInteiroTeor ? `<a href="${esc(p.urlInteiroTeor)}" target="_blank" rel="noopener">${esc(p.urlInteiroTeor)}</a>` : "—";
+    case "ementa": return esc(p.ementa || "—");
+    case "ementaDetalhada": return esc(p.ementaDetalhada || "—");
+    case "keywords": return esc(p.keywords || "—");
+    case "situacaoLegislativa": return ({ aprovado: "Aprovado", aguardando_resposta: "Aguardando resposta", aguardando_aprovacao: "Aguardando aprovação", tramitacao_inicial: "Tramitação inicial", respondido: "Respondido", retirado: "Retirado", pendente: "Pendente" }[p.situacaoLegislativa] || p.situacaoLegislativa || "—");
+    case "dataAprovacao": return formatarData(p.dataAprovacao) || "—";
+    case "despachoAprovacao": return esc(p.despachoAprovacao || "—");
+    case "ultimaMovimentacao": return (formatarData(p.ultimaMovimentacaoData) || "—") + (p.descricaoTramitacao ? ` — ${esc(p.descricaoTramitacao)}` : "");
+    case "apelido": return esc(m.apelido || "—");
+    case "tematica": return esc(m.tematica || "—");
+    case "relevante": return m.relevante ? "Sim" : "Não";
+    case "palavrasChave": return esc(m.palavrasChave || "—");
+    case "resumo": return esc(m.resumo || "—");
+    case "comentarios": return esc(m.comentarios || "—");
+    case "statusInterno": { const s = STATUS_INTERNO.find(x => x.v === m.statusInterno); return esc(s ? s.t : (m.statusInterno || "—")); }
+    case "etapa": { const e = ETAPAS.find(x => x.v === m.etapa); return esc(e ? e.t : (m.etapa || "—")); }
+    case "prazoEtapa": return formatarData(m.prazoEtapa) || "—";
+    case "prazoFinalCN": return formatarData(m.prazoFinalCN || p.prazoFinalCNSugerido) || "—";
+    case "dataRecebimentoSEI": return formatarData(m.dataRecebimentoSEI) || "—";
+    case "nupRecebimento": return esc(m.nupRecebimento || "—");
+    case "nupResposta": return esc(m.nupResposta || "—");
+    case "dataResposta": return formatarData(m.dataResposta) || "—";
+    case "tipoResposta": { const t = TIPOS_RESPOSTA.find(x => x.v === m.tipoResposta); return esc(t ? t.t : (m.tipoResposta || "—")); }
+    case "oficio": return esc(m.oficio || "—");
+    case "atribuicao": return esc(m.atribuicao || "—");
+    case "unidadesConsultadas": return esc((m.unidadesConsultadas || []).join(", ") || "—");
+    default: return "—";
+  }
+}
+
+function relatorioCabecalhoHtml(estado) {
+  const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
+  const total = estado.escopo.total;
+  const data = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  return `<div class="rel-cabecalho"><div class="rel-cabecalho-selo"><div class="rel-cabecalho-r">R</div><div class="rel-cabecalho-marca">MONITOR RIC</div></div><div class="rel-cabecalho-conteudo"><h1 class="rel-titulo">${escapeHtml(titulo)}</h1><div class="rel-meta">${data} · ${total} requerimento${total !== 1 ? "s" : ""}</div></div></div><div class="rel-regua-dourada"></div>`;
+}
+
+function relatorioBlocoLista(grupo, estado) {
+  const camposLigados = [];
+  for (const [g, mapa] of Object.entries(estado.campos)) {
+    if (RELATORIO_CAMPOS[g].apenasCompleto) continue;
+    for (const cid of Object.keys(mapa)) {
+      if (mapa[cid]) {
+        const def = RELATORIO_CAMPOS[g].campos.find(x => x.id === cid);
+        if (def) camposLigados.push({ id: cid, label: def.label });
+      }
+    }
+  }
+  if (camposLigados.length === 0) return "<p class='rel-aviso'>Nenhum campo selecionado.</p>";
+  const mMap = estado.escopo.marcacoes;
+  return `${grupo.nome ? `<h2 class="rel-grupo">${escapeHtml(grupo.nome)} <span class="rel-grupo-cnt">(${grupo.rics.length})</span></h2>` : ""}<table class="rel-tabela"><thead><tr>${camposLigados.map(c => `<th>${escapeHtml(c.label)}</th>`).join("")}</tr></thead><tbody>${grupo.rics.map(p => {
+    const m = mMap.get(p.id) || {};
+    return `<tr>${camposLigados.map(c => `<td>${relatorioValorCampo(p, m, c.id)}</td>`).join("")}</tr>`;
+  }).join("")}</tbody></table>`;
+}
+
+function relatorioBlocoCompleto(grupo, estado) {
+  const mMap = estado.escopo.marcacoes;
+  return `${grupo.nome ? `<h2 class="rel-grupo">${escapeHtml(grupo.nome)} <span class="rel-grupo-cnt">(${grupo.rics.length})</span></h2>` : ""}${grupo.rics.map(p => {
+    const m = mMap.get(p.id) || {};
+    const blocos = [];
+    const idHtml = `<h3 class="rel-bloco-id">${escapeHtml(p.identificacao)} — ${escapeHtml({camara:"Câmara dos Deputados",senado:"Senado Federal",cn:"Congresso Nacional",cldf:"CLDF"}[p.origem]||p.origem||"")}</h3><div class="rel-bloco-sub">${escapeHtml(formatarAutor(p) || "")} · Apresentado em ${formatarData(p.dataApresentacao) || "—"}</div><div class="rel-bloco-divisor"></div>`;
+    for (const [grupoKey, def] of Object.entries(RELATORIO_CAMPOS)) {
+      if (grupoKey === "historico") continue;
+      const camposAtivos = def.campos.filter(c => estado.campos[grupoKey][c.id] && !["identificacao","casa","autor","dataApresentacao"].includes(c.id));
+      if (camposAtivos.length === 0) continue;
+      const linhas = camposAtivos.map(c => {
+        const v = relatorioValorCampo(p, m, c.id);
+        if (v === "—" || v === "") return "";
+        return `<div class="rel-kv"><div class="rel-kv-k">${escapeHtml(c.label)}</div><div class="rel-kv-v">${v}</div></div>`;
+      }).filter(Boolean).join("");
+      if (linhas) blocos.push(`<div class="rel-sub-secao"><div class="rel-sub-titulo">${escapeHtml(def.nome)}</div>${linhas}</div>`);
+    }
+    if (estado.campos.historico && estado.campos.historico.historicoTramitacao && p.historico && p.historico.length) {
+      const eventos = p.historico.slice(-10).reverse();
+      blocos.push(`<div class="rel-sub-secao"><div class="rel-sub-titulo">Histórico de tramitação (últimos 10)</div><table class="rel-hist-tabela"><thead><tr><th>Data</th><th>Órgão</th><th>Descrição</th></tr></thead><tbody>${eventos.map(e => `<tr${(e.descricao||"").toLowerCase().includes("aprovado") ? ' class="rel-hist-aprov"' : ""}><td>${formatarData(e.data)}</td><td>${escapeHtml(e.siglaOrgao||"")}</td><td>${escapeHtml((e.descricao||"").substring(0,200))}</td></tr>`).join("")}</tbody></table></div>`);
+    }
+    if (estado.campos.historico && estado.campos.historico.analogos && m.analogos && m.analogos.length) {
+      const top = m.analogos.slice(0, 5);
+      blocos.push(`<div class="rel-sub-secao"><div class="rel-sub-titulo">Requerimentos análogos</div><ul class="rel-analogos">${top.map(a => `<li><b>${escapeHtml(a.identificacao||"")}</b>${a.apelido ? " — " + escapeHtml(a.apelido) : ""}${a.score!=null?` <span class="text-small text-muted">(${(a.score*100).toFixed(0)}%)</span>`:""}</li>`).join("")}</ul></div>`);
+    }
+    return `<article class="rel-bloco">${idHtml}${blocos.join("")}</article>`;
+  }).join("<hr class='rel-separador'>")}`;
+}
+
+function relatorioGerarHtml(estado, ehPrint) {
+  const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
+  const cabecalho = relatorioCabecalhoHtml(estado);
+  const corpo = grupos.map(g => estado.organizacao.modo === "lista" ? relatorioBlocoLista(g, estado) : relatorioBlocoCompleto(g, estado)).join("");
+  const css = relatorioCss(ehPrint);
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(estado.formatacao.titulo || "Relatório Monitor RIC")}</title><style>${css}</style></head><body>${estado.formatacao.marcaDagua ? '<div class="rel-marca-dagua">USO INTERNO</div>' : ''}<div class="rel-pagina">${cabecalho}${corpo}<footer class="rel-rodape">Gerado pelo Monitor RIC · ${new Date().toLocaleString("pt-BR")}</footer></div></body></html>`;
+}
+
+function relatorioCss(ehPrint) {
+  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:21cm;margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Cambria","Source Serif Pro",Georgia,serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-grupo{font-family:"Cambria",Georgia,serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Cambria",Georgia,serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Cambria",Georgia,serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 portrait;margin:2cm}body{font-size:10px}.rel-pagina{padding:0}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
+}
+
+async function relatorioGerarPdf(estado) {
+  if (!estado.escopo.total) { alert("Nenhum requerimento no escopo. Ajuste os filtros."); return; }
+  const html = relatorioGerarHtml(estado, true);
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;left:-9999px;top:0;width:21cm;height:29.7cm;visibility:hidden";
+  document.body.appendChild(iframe);
+  iframe.contentDocument.open(); iframe.contentDocument.write(html); iframe.contentDocument.close();
+  await new Promise(resolve => {
+    if (iframe.contentDocument.readyState === "complete") resolve();
+    else iframe.addEventListener("load", resolve, { once: true });
+    setTimeout(resolve, 1500);
+  });
+  iframe.contentWindow.focus(); iframe.contentWindow.print();
+  setTimeout(() => { try { document.body.removeChild(iframe); } catch(e) {} }, 2000);
+}
+
+async function relatorioPreview(estado) {
+  if (!estado.escopo.total) { alert("Nenhum requerimento no escopo. Ajuste os filtros."); return; }
+  let estadoPreview = estado;
+  if (estado.escopo.total > 50) {
+    estadoPreview = JSON.parse(JSON.stringify(estado));
+    estadoPreview.escopo = { ...estado.escopo, rics: estado.escopo.rics.slice(0, 50), total: 50 };
+  }
+  estadoPreview.escopo.marcacoes = estado.escopo.marcacoes;
+  const html = relatorioGerarHtml(estadoPreview, false);
+  const cont = document.getElementById("rel-preview-conteudo");
+  if (!cont) return;
+  cont.innerHTML = `${estado.escopo.total > 50 ? `<div class="rel-aviso-preview">⚠ Pré-visualização limitada aos primeiros 50 itens (escopo total: ${estado.escopo.total}). A geração de PDF/Word processa todos.</div>` : ""}<iframe class="rel-preview-iframe" srcdoc="${escapeAttr(html)}"></iframe>`;
+  document.getElementById("rel-bloco-preview").classList.remove("rel-bloco-preview-vazio");
+  cont.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function relatorioGerarWord(estado) {
+  if (!estado.escopo.total) { alert("Nenhum requerimento no escopo. Ajuste os filtros."); return; }
+  if (typeof window.docx === "undefined") {
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("Falha ao carregar lib docx. Verifique a conexão."));
+        document.head.appendChild(s);
+      });
+    } catch (e) {
+      alert("Não foi possível carregar a biblioteca de geração de Word. Verifique sua conexão ou tente o PDF.\n\nDetalhes: " + e.message);
+      return;
+    }
+  }
+  const D = window.docx;
+  const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
+  const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
+  const children = [];
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: titulo, bold: true, size: 36, color: "1E3A6F" })], spacing: { after: 200 } }));
+  children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${new Date().toLocaleDateString("pt-BR")} · ${estado.escopo.total} requerimentos`, size: 18, color: "94A3B8" })], spacing: { after: 400 } }));
+  for (const g of grupos) {
+    if (g.nome) {
+      children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${g.nome} (${g.rics.length})`, bold: true, size: 28, color: "1E3A6F" })], spacing: { before: 300, after: 200 } }));
+    }
+    for (const p of g.rics) {
+      const m = (estado.escopo.marcacoes.get(p.id)) || {};
+      children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${p.identificacao} — ${({camara:"Câmara dos Deputados",senado:"Senado Federal",cn:"Congresso Nacional",cldf:"CLDF"}[p.origem]||p.origem||"")}`, bold: true, size: 24, color: "1E3A6F" })], spacing: { before: 200, after: 80 } }));
+      children.push(new D.Paragraph({ children: [new D.TextRun({ text: `${formatarAutor(p) || "—"} · Apresentado em ${formatarData(p.dataApresentacao) || "—"}`, size: 18, color: "64748B" })], spacing: { after: 100 } }));
+      for (const [grupoKey, def] of Object.entries(RELATORIO_CAMPOS)) {
+        if (grupoKey === "historico") continue;
+        const camposAtivos = def.campos.filter(c => estado.campos[grupoKey][c.id] && !["identificacao","casa","autor","dataApresentacao"].includes(c.id));
+        if (!camposAtivos.length) continue;
+        let temConteudo = false;
+        const subBuf = [];
+        for (const c of camposAtivos) {
+          const vRaw = relatorioValorCampo(p, m, c.id);
+          if (vRaw === "—" || !vRaw) continue;
+          temConteudo = true;
+          const vLimpa = vRaw.replace(/<[^>]+>/g, "").substring(0, 1000);
+          subBuf.push(new D.Paragraph({ children: [new D.TextRun({ text: `${c.label}: `, bold: true, size: 18, color: "475569" }), new D.TextRun({ text: vLimpa, size: 18, color: "1F2937" })], spacing: { after: 60 } }));
+        }
+        if (temConteudo) {
+          children.push(new D.Paragraph({ children: [new D.TextRun({ text: def.nome.toUpperCase(), bold: true, size: 16, color: "1E3A6F" })], spacing: { before: 140, after: 60 } }));
+          for (const sb of subBuf) children.push(sb);
+        }
+      }
+    }
+  }
+  const doc = new D.Document({ creator: "Monitor RIC", title: titulo, description: "Relatório gerado pelo Monitor RIC", sections: [{ properties: { page: { margin: { top: 1400, right: 1135, bottom: 1400, left: 1135 } } }, children }] });
+  try {
+    const blob = await D.Packer.toBlob(doc);
+    const ts = new Date().toISOString().substring(0, 16).replace(/[:T]/g, "-");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `monitor-ric-relatorio-${ts}.docx`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  } catch (e) {
+    alert("Erro ao gerar Word: " + e.message);
+  }
+}
+
+async function relatorioAbrirModal(preset = null, ricEspecifico = null) {
+  relatorioEstado = relatorioPreSelecionado(preset === "atual-lista" ? "personalizado" : preset);
+  if (ricEspecifico) relatorioEstado.filtros = { _ricUnico: ricEspecifico };
+  if (preset === "atual-lista") relatorioEstado.filtros = relatorioCapturarFiltrosListaAtual();
+  await relatorioRenderModal();
+  abrirModal("modal-relatorio");
+}
+
+function relatorioCapturarFiltrosListaAtual() {
+  const f = {};
+  const v = (id) => document.getElementById(id) ? document.getElementById(id).value : "";
+  if (v("filter-busca")) f.livre = v("filter-busca");
+  if (v("filter-casa")) f.casa = v("filter-casa");
+  if (v("filter-sigla")) f.sigla = v("filter-sigla");
+  if (v("filter-ano")) f.ano = v("filter-ano");
+  if (v("filter-relevante") === "sim") f.rel = "sim";
+  if (v("filter-relevante") === "nao") f.rel = "nao";
+  if (v("filter-leg")) f.leg = v("filter-leg");
+  if (v("filter-status-int")) f.statusInterno = v("filter-status-int");
+  if (typeof listaEstado !== "undefined" && listaEstado.filtroNovos7d) f.novos7d = true;
+  return f;
+}
+
+async function relatorioRenderModal() {
+  if (!relatorioEstado) return;
+  await relatorioCalcularEscopo(relatorioEstado);
+  const body = document.getElementById("modal-relatorio-body");
+  const e = relatorioEstado;
+  const ricUnico = e.filtros._ricUnico;
+  const presetOpts = RELATORIO_PRESETS_NATIVOS.map(p => `<option value="${p.id}"${e.preset===p.id?" selected":""}>${escapeHtml(p.nome)}</option>`).join("");
+  const blocoB = Object.entries(RELATORIO_CAMPOS).map(([grupoKey, def]) => {
+    const todosLigados = def.campos.every(c => e.campos[grupoKey][c.id]);
+    const algumLigado = def.campos.some(c => e.campos[grupoKey][c.id]);
+    const desabilitar = def.apenasCompleto && e.organizacao.modo !== "completo";
+    return `<div class="rel-grupo-campos${desabilitar?' rel-grupo-campos-disabled':''}"><label class="rel-grupo-pai"><input type="checkbox" data-rel-grupo="${grupoKey}" ${todosLigados?"checked":""}${desabilitar?" disabled":""}> <b>${escapeHtml(def.nome)}</b>${desabilitar?' <span class="text-small text-muted">(apenas modo Completo)</span>':''}</label><div class="rel-grupo-filhos">${def.campos.map(c => `<label class="rel-campo"><input type="checkbox" data-rel-campo="${grupoKey}.${c.id}"${e.campos[grupoKey][c.id]?" checked":""}${desabilitar?" disabled":""}> ${escapeHtml(c.label)}</label>`).join("")}</div></div>`;
+  }).join("");
+  const grupoOpts = [
+    {v:"sem", t:"Sem agrupamento"}, {v:"casa", t:"Casa"},
+    {v:"situacaoLegislativa", t:"Situação legislativa"}, {v:"statusInterno", t:"Status interno"},
+    {v:"etapa", t:"Etapa"}, {v:"tematica", t:"Temática"},
+    {v:"objeto", t:"Objeto (tema em CAIXA ALTA)"},
+    {v:"ano", t:"Ano de apresentação"},
+  ];
+  const ordenarOpts = [
+    {v:"dataApresentacao", t:"Data de apresentação"}, {v:"identificacao", t:"Identificação"},
+    {v:"autor", t:"Autor"}, {v:"prazoFinalCN", t:"Prazo final CN"},
+    {v:"ultimaMovimentacao", t:"Última movimentação"}, {v:"dataAprovacao", t:"Data de aprovação"},
+  ];
+  body.innerHTML = `${ricUnico ? `<div class="rel-aviso-info">📌 Escopo fixo: RIC <b>${escapeHtml(e.escopo.rics[0] ? e.escopo.rics[0].identificacao : ricUnico)}</b></div>` : ""}<details class="rel-bloco" ${ricUnico ? "" : "open"}><summary class="rel-bloco-summary"><b>A. Escopo (filtros)</b> · <span class="rel-bloco-resumo">${e.escopo.total} requerimento${e.escopo.total!==1?"s":""}</span></summary><div class="rel-bloco-conteudo">${ricUnico ? "" : `<label>Preset</label><select id="rel-preset">${presetOpts}</select><div class="rel-filtros-livres" style="margin-top:12px"><div class="form-row"><div><label>Casa</label><select id="rel-f-casa"><option value="">Todas</option><option value="camara"${e.filtros.casa==="camara"?" selected":""}>Câmara</option><option value="senado"${e.filtros.casa==="senado"?" selected":""}>Senado</option><option value="cn"${e.filtros.casa==="cn"?" selected":""}>Congresso Nacional</option><option value="cldf"${e.filtros.casa==="cldf"?" selected":""}>CLDF</option></select></div><div><label>Sigla</label><select id="rel-f-sigla"><option value="">Todas</option><option value="RIC"${e.filtros.sigla==="RIC"?" selected":""}>RIC</option><option value="RQS"${e.filtros.sigla==="RQS"?" selected":""}>RQS</option><option value="REQ"${e.filtros.sigla==="REQ"?" selected":""}>REQ</option></select></div><div><label>Situação legislativa</label><select id="rel-f-leg"><option value="">Todas</option><option value="aprovado"${e.filtros.leg==="aprovado"?" selected":""}>Aprovado</option><option value="aguardando_resposta"${e.filtros.leg==="aguardando_resposta"?" selected":""}>Aguardando resposta</option><option value="aguardando_aprovacao"${e.filtros.leg==="aguardando_aprovacao"?" selected":""}>Aguardando aprovação</option><option value="tramitacao_inicial"${e.filtros.leg==="tramitacao_inicial"?" selected":""}>Tramitação inicial</option></select></div></div><div class="form-row"><div><label>Status interno</label><select id="rel-f-statusint"><option value="">Todos</option>${STATUS_INTERNO.map(s=>`<option value="${s.v}"${e.filtros.statusInterno===s.v?" selected":""}>${escapeHtml(s.t)}</option>`).join("")}</select></div><div><label>Relevante</label><select id="rel-f-rel"><option value="">Indiferente</option><option value="sim"${e.filtros.rel==="sim"?" selected":""}>Sim</option><option value="nao"${e.filtros.rel==="nao"?" selected":""}>Não</option></select></div><div><label>Busca livre</label><input type="text" id="rel-f-livre" value="${escapeAttr(e.filtros.livre||"")}" placeholder="palavras-chave, autor, n° etc."></div></div><div class="form-row"><div><label>Apresentação de</label><input type="date" id="rel-f-apres-de" value="${escapeAttr(e.filtros.apresDe||"")}"></div><div><label>Apresentação até</label><input type="date" id="rel-f-apres-ate" value="${escapeAttr(e.filtros.apresAte||"")}"></div><div><label>Aprovação de</label><input type="date" id="rel-f-aprov-de" value="${escapeAttr(e.filtros.aprovDe||"")}"></div><div><label>Aprovação até</label><input type="date" id="rel-f-aprov-ate" value="${escapeAttr(e.filtros.aprovAte||"")}"></div></div></div>`}<div class="rel-contador">Escopo atual: <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}</div></div></details><details class="rel-bloco"><summary class="rel-bloco-summary"><b>B. Campos a incluir</b></summary><div class="rel-bloco-conteudo">${blocoB}</div></details><details class="rel-bloco"><summary class="rel-bloco-summary"><b>C. Organização</b></summary><div class="rel-bloco-conteudo"><div class="form-row"><div><label>Modo de saída</label><select id="rel-modo"><option value="lista"${e.organizacao.modo==="lista"?" selected":""}>Lista compacta</option><option value="completo"${e.organizacao.modo==="completo"?" selected":""}>Completo (com blocos)</option></select></div><div><label>Agrupar por</label><select id="rel-agrupar">${grupoOpts.map(o=>`<option value="${o.v}"${e.organizacao.agruparPor===o.v?" selected":""}>${escapeHtml(o.t)}</option>`).join("")}</select></div><div><label>Ordenar por</label><select id="rel-ordenar">${ordenarOpts.map(o=>`<option value="${o.v}"${e.organizacao.ordenarPor===o.v?" selected":""}>${escapeHtml(o.t)}</option>`).join("")}</select></div><div><label>Direção</label><select id="rel-direcao"><option value="desc"${e.organizacao.direcao==="desc"?" selected":""}>Decrescente</option><option value="asc"${e.organizacao.direcao==="asc"?" selected":""}>Crescente</option></select></div></div></div></details><details class="rel-bloco" open><summary class="rel-bloco-summary"><b>D. Formatação</b></summary><div class="rel-bloco-conteudo"><label>Título do relatório</label><input type="text" id="rel-titulo" value="${escapeAttr(e.formatacao.titulo)}" placeholder="ex.: Relatório de requerimentos aprovados — maio/2026"><div class="form-row" style="margin-top:8px"><div><label><input type="checkbox" id="rel-fmt-numeracao"${e.formatacao.numeracao?" checked":""}> Numeração de páginas</label></div><div><label><input type="checkbox" id="rel-fmt-marcadagua"${e.formatacao.marcaDagua?" checked":""}> Marca d'água "USO INTERNO"</label></div></div><p class="text-small text-muted">Cabeçalho: Selo + Manchete (variante institucional padrão).</p></div></details><details class="rel-bloco" open><summary class="rel-bloco-summary"><b>E. Saída</b></summary><div class="rel-bloco-conteudo"><div class="rel-sumario">Modo <b>${e.organizacao.modo === "lista" ? "Lista compacta" : "Completo"}</b> · <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}${e.organizacao.agruparPor!=="sem"?` · agrupado por <b>${escapeHtml(grupoOpts.find(o=>o.v===e.organizacao.agruparPor).t)}</b>`:""}</div><div class="toolbar" style="margin-top:10px;flex-wrap:wrap"><button class="btn" id="rel-btn-preview" ${e.escopo.total===0?"disabled":""}>👁 Pré-visualizar</button><button class="btn btn-primary" id="rel-btn-pdf" ${e.escopo.total===0?"disabled":""}>🖨 Gerar PDF</button><button class="btn btn-primary" id="rel-btn-word" ${e.escopo.total===0?"disabled":""}>📝 Baixar Word</button></div></div></details><div class="rel-bloco-preview rel-bloco-preview-vazio" id="rel-bloco-preview"><div id="rel-preview-conteudo"></div></div>`;
+  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+  const renderDebounced = debounce(() => relatorioRenderModal(), 200);
+  const elPreset = document.getElementById("rel-preset");
+  if (elPreset) elPreset.addEventListener("change", () => {
+    relatorioEstado.preset = elPreset.value;
+    const p = RELATORIO_PRESETS_NATIVOS.find(x => x.id === elPreset.value);
+    if (p) relatorioEstado.filtros = p.aplicar();
+    relatorioRenderModal();
+  });
+  const bindFiltro = (id, key) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", () => {
+      const v = el.value;
+      if (v === "" || v === null) delete relatorioEstado.filtros[key];
+      else relatorioEstado.filtros[key] = v;
+      relatorioEstado.preset = "personalizado";
+      renderDebounced();
+    });
+  };
+  bindFiltro("rel-f-casa", "casa"); bindFiltro("rel-f-sigla", "sigla"); bindFiltro("rel-f-leg", "leg");
+  bindFiltro("rel-f-statusint", "statusInterno"); bindFiltro("rel-f-rel", "rel");
+  bindFiltro("rel-f-apres-de", "apresDe"); bindFiltro("rel-f-apres-ate", "apresAte");
+  bindFiltro("rel-f-aprov-de", "aprovDe"); bindFiltro("rel-f-aprov-ate", "aprovAte");
+  const elLivre = document.getElementById("rel-f-livre");
+  if (elLivre) elLivre.addEventListener("input", () => {
+    if (elLivre.value) relatorioEstado.filtros.livre = elLivre.value;
+    else delete relatorioEstado.filtros.livre;
+    renderDebounced();
+  });
+  document.querySelectorAll("[data-rel-grupo]").forEach(cb => cb.addEventListener("change", () => {
+    const grupo = cb.dataset.relGrupo;
+    const def = RELATORIO_CAMPOS[grupo];
+    for (const c of def.campos) relatorioEstado.campos[grupo][c.id] = cb.checked;
+    relatorioRenderModal();
+  }));
+  document.querySelectorAll("[data-rel-campo]").forEach(cb => cb.addEventListener("change", () => {
+    const [grupo, campoId] = cb.dataset.relCampo.split(".");
+    relatorioEstado.campos[grupo][campoId] = cb.checked;
+    if (grupo === "tramitacaoInterna") {
+      const algum = Object.values(relatorioEstado.campos.tramitacaoInterna).some(Boolean);
+      if (algum) relatorioEstado.formatacao.marcaDagua = true;
+    }
+    relatorioRenderModal();
+  }));
+  const elModo = document.getElementById("rel-modo");
+  if (elModo) elModo.addEventListener("change", () => { relatorioEstado.organizacao.modo = elModo.value; relatorioRenderModal(); });
+  ["agrupar", "ordenar", "direcao"].forEach(k => {
+    const el = document.getElementById(`rel-${k}`);
+    const dict = { agrupar: "agruparPor", ordenar: "ordenarPor", direcao: "direcao" };
+    if (el) el.addEventListener("change", () => { relatorioEstado.organizacao[dict[k]] = el.value; renderDebounced(); });
+  });
+  const elTitulo = document.getElementById("rel-titulo");
+  if (elTitulo) elTitulo.addEventListener("input", () => { relatorioEstado.formatacao.titulo = elTitulo.value; });
+  const elNum = document.getElementById("rel-fmt-numeracao");
+  if (elNum) elNum.addEventListener("change", () => { relatorioEstado.formatacao.numeracao = elNum.checked; });
+  const elMarca = document.getElementById("rel-fmt-marcadagua");
+  if (elMarca) elMarca.addEventListener("change", () => { relatorioEstado.formatacao.marcaDagua = elMarca.checked; });
+  document.getElementById("rel-btn-preview")?.addEventListener("click", () => relatorioPreview(relatorioEstado));
+  document.getElementById("rel-btn-pdf")?.addEventListener("click", () => relatorioGerarPdf(relatorioEstado));
+  document.getElementById("rel-btn-word")?.addEventListener("click", () => relatorioGerarWord(relatorioEstado));
+}
+
+// Handlers das entradas do modal de relatório
+document.getElementById("btn-gerar-relatorio")?.addEventListener("click", () => relatorioAbrirModal("atual-lista"));
+document.querySelectorAll("[data-rel-painel]").forEach(b => b.addEventListener("click", () => {
+  const tipo = b.dataset.relPainel;
+  let preset = "personalizado";
+  if (tipo === "apresentados") preset = "apresentados-7d";
+  else if (tipo === "movimentados") preset = "movimentacao-7d";
+  else if (tipo === "aprovados") preset = "aprovados-30d";
+  relatorioAbrirModal(preset);
+}));
 
 
 (async () => {
