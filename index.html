@@ -612,6 +612,47 @@ html.dark .log { background: #020617; }
 
 /* Unidades consultadas (v4.6: checkboxes ao invés de select multiple) */
 .unidades-checkboxes { display: grid; grid-template-columns: 1fr; gap: 6px 12px; max-height: 260px; overflow-y: auto; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+
+/* Etapas do fluxo (v4.6) — lista vertical com checkbox + prazos */
+.etapas-fluxo-bloco { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.etapas-fluxo-titulo { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.etapas-fluxo-lista { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.etapa-linha { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 12px; border-radius: 6px; border-left: 3px solid var(--border); background: var(--surface-2); transition: all 0.2s; position: relative; }
+.etapa-linha-marker { display: flex; align-items: center; justify-content: center; padding-top: 2px; }
+.etapa-circulo { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); flex-shrink: 0; }
+/* Etapa concluída */
+.etapa-linha.etapa-concluida { border-left-color: var(--success, #10b981); opacity: 0.6; background: var(--surface-2); }
+.etapa-linha.etapa-concluida .etapa-circulo { background: var(--success, #10b981); border-color: var(--success, #10b981); }
+.etapa-linha.etapa-concluida .etapa-titulo { text-decoration: line-through; color: var(--muted); }
+.etapa-linha.etapa-concluida .etapa-prazo-real { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
+/* Etapa atual (próxima a ser feita) — destaque */
+.etapa-linha.etapa-atual { border-left-color: var(--accent); background: rgba(31,95,99,0.06); box-shadow: 0 1px 4px rgba(31,95,99,0.1); }
+.etapa-linha.etapa-atual .etapa-circulo { background: var(--accent); border-color: var(--accent); animation: etapa-pulse 2s ease-in-out infinite; }
+.etapa-linha.etapa-atual .etapa-titulo { font-weight: 700; color: var(--text); }
+@keyframes etapa-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31,95,99, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(31,95,99, 0); }
+}
+.etapa-linha-conteudo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.etapa-linha-cabecalho { display: flex; align-items: center; gap: 8px; }
+.etapa-checkbox-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; }
+.etapa-checkbox-wrap input[type="checkbox"] { width: 16px; height: 16px; margin: 0; cursor: pointer; flex-shrink: 0; }
+.etapa-titulo { font-size: 13px; color: var(--text); }
+.etapa-linha-prazos { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; padding-left: 24px; }
+.etapa-prazo-row { display: flex; align-items: center; gap: 6px; }
+.etapa-prazo-info { font-size: 12px; padding-left: 0; }
+.etapa-prazo-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.etapa-prazo-sugerido { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.etapa-prazo-sugerido[data-vazio="1"] { color: var(--muted); font-weight: 400; }
+.etapa-prazo-valor { color: var(--text); font-weight: 600; }
+.etapa-prazo-real { padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; max-width: 140px; }
+.etapa-linha.etapa-inicio { background: rgba(31,95,99,0.04); }
+.etapa-linha.etapa-fim { background: rgba(201,161,74,0.06); border-left-color: #C9A14A; }
+.etapa-linha.etapa-fim.etapa-concluida { border-left-color: var(--success, #10b981); }
+@media (max-width: 600px) {
+  .etapa-linha-prazos { padding-left: 0; gap: 8px; }
+  .etapa-prazo-real { max-width: 130px; }
+}
 @media (min-width: 600px) { .unidades-checkboxes { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 900px) { .unidades-checkboxes { grid-template-columns: 1fr 1fr 1fr; } }
 .unidades-checkboxes .unidade-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; padding: 4px 6px; border-radius: 4px; line-height: 1.3; }
@@ -1157,6 +1198,14 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div id="gerenciar-ocultos-resultado" style="margin-top:12px"></div>
     </div>
     <div class="card">
+      <h2>Feriados e dias não-úteis</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">O cálculo de prazos sugeridos das etapas leva em conta os feriados nacionais brasileiros (fixos e móveis: Carnaval, Sexta da Paixão, Corpus Christi). Adicione aqui feriados extras (ex.: pontos facultativos, recessos, feriados estaduais/distritais).</p>
+      <div class="toolbar">
+        <button class="btn" id="btn-gerenciar-feriados">Gerenciar feriados customizados</button>
+      </div>
+      <div id="feriados-resultado" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
       <h2>Sobre</h2>
       <p class="text-small text-muted">APIs públicas:<br>• <a href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank">Câmara — Dados Abertos v2</a><br>• <a href="https://legis.senado.leg.br/dadosabertos/docs/" target="_blank">Senado — Dados Abertos</a><br>Filtragem por menção a Casa Civil é feita localmente. Nenhum dado é enviado a servidores de terceiros.</p>
     </div>
@@ -1195,7 +1244,7 @@ const ETAPAS = [
   { v: "validacao_ssgp", t: "Validação SSGP" },
   { v: "validacao_se", t: "Validação SE" },
   { v: "conformidade", t: "Análise de conformidade da resposta" },
-  { v: "validacao_gm", t: "Validação GM / Expedição" }
+  { v: "validacao_gm_expedicao", t: "Validação GM / Expedição" }
 ];
 const TIPOS_RESPOSTA = [
   { v: "", t: "—" },
@@ -1217,7 +1266,7 @@ const URL_SENADO = "https://legis.senado.leg.br/dadosabertos";
 const DB_NAME = "monitor-ric";
 const DB_NAME_LEGADO = "monitor-sic";
 const DB_VERSION = 1;
-const SCHEMA_VERSAO_DADOS = 5;
+const SCHEMA_VERSAO_DADOS = 6;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
 
@@ -1412,6 +1461,33 @@ async function migrarDados() {
       ch = true;
     }
     if (m.etapa === undefined) { m.etapa = ""; ch = true; }
+    // v4.6: renomeada etapa validacao_gm → validacao_gm_expedicao
+    if (m.etapa === "validacao_gm") { m.etapa = "validacao_gm_expedicao"; ch = true; }
+    // v4.6: novo schema etapasFluxo (lista de etapas concluídas + prazos sugeridos e reais)
+    if (m.etapasFluxo === undefined) {
+      m.etapasFluxo = {};
+      // Para registros antigos: tenta marcar como concluídas todas as etapas ANTERIORES à etapa atual
+      const ordemMigracao = ["recebimento", "admissibilidade", "subsidios", "conformidade", "validacao_ssgp", "aprovacao_se", "validacao_gm_expedicao"];
+      const idxAtual = ordemMigracao.indexOf(m.etapa);
+      for (let i = 0; i < ordemMigracao.length; i++) {
+        const eid = ordemMigracao[i];
+        m.etapasFluxo[eid] = {
+          concluida: idxAtual >= 0 && i < idxAtual,
+          prazoSugerido: "",
+          prazoReal: ""
+        };
+      }
+      // Recebimento: se há dataRecebimentoSEI, marca como concluído com a data
+      if (m.dataRecebimentoSEI) {
+        m.etapasFluxo.recebimento.concluida = true;
+        m.etapasFluxo.recebimento.prazoReal = m.dataRecebimentoSEI;
+      }
+      // Última etapa: se há prazoFinalCN, copia para prazoReal
+      if (m.prazoFinalCN) {
+        m.etapasFluxo.validacao_gm_expedicao.prazoReal = m.prazoFinalCN;
+      }
+      ch = true;
+    }
     if (m.prazoEtapa === undefined) { m.prazoEtapa = ""; ch = true; }
     if (m.dataRecebimentoSEI === undefined) { m.dataRecebimentoSEI = ""; ch = true; }
     if (m.prazoFinalCN === undefined) { m.prazoFinalCN = ""; ch = true; }
@@ -2809,6 +2885,103 @@ async function reverterExclusao(snapId) {
   localStorage.setItem(RIC_EXCLUSAO_SNAPSHOTS_KEY, JSON.stringify(novo));
 }
 
+// ===== Etapas do fluxo (v4.6) — renderização vertical com checkboxes + prazos =====
+function renderEtapasFluxoHtml(m) {
+  const etapas = m.etapasFluxo || {};
+  // Determina a "atual": primeira etapa não concluída (na ordem do fluxo)
+  let atualId = null;
+  for (const e of ETAPAS_FLUXO_COMPLETO) {
+    if (!etapas[e.id] || !etapas[e.id].concluida) { atualId = e.id; break; }
+  }
+  const linhas = ETAPAS_FLUXO_COMPLETO.map(e => {
+    const dados = etapas[e.id] || { concluida: false, prazoSugerido: "", prazoReal: "" };
+    const classes = ["etapa-linha"];
+    if (dados.concluida) classes.push("etapa-concluida");
+    if (e.id === atualId) classes.push("etapa-atual");
+    if (e.ehInicio) classes.push("etapa-inicio");
+    if (e.ehFim) classes.push("etapa-fim");
+    // Recebimento é especial: prazo real espelha a m.dataRecebimentoSEI; sem prazo sugerido
+    // Última etapa (GM/Expedição): prazo real espelha o m.prazoFinalCN
+    const ehReceb = e.ehInicio;
+    const ehFim = e.ehFim;
+    const prazoSug = ehReceb ? "" : (dados.prazoSugerido || "");
+    const prazoReal = dados.prazoReal || "";
+    return `
+      <div class="${classes.join(" ")}" data-etapa-id="${e.id}">
+        <div class="etapa-linha-marker"><span class="etapa-circulo"></span></div>
+        <div class="etapa-linha-conteudo">
+          <div class="etapa-linha-cabecalho">
+            <label class="etapa-checkbox-wrap" title="Marcar como concluída">
+              <input type="checkbox" class="etapa-cb" data-etapa-cb="${e.id}"${dados.concluida ? " checked" : ""}>
+              <span class="etapa-titulo">${escapeHtml(e.label)}</span>
+            </label>
+          </div>
+          <div class="etapa-linha-prazos">
+            ${ehReceb ? `<div class="etapa-prazo-info"><span class="etapa-prazo-label">Data do recebimento:</span> <span class="etapa-prazo-valor">${formatarData(m.dataRecebimentoSEI) || "—"}</span> <span class="text-small text-muted">(use o campo "Data do recebimento (SEI)" acima)</span></div>` : `
+              <div class="etapa-prazo-row">
+                <span class="etapa-prazo-label">Sugerido:</span>
+                <span class="etapa-prazo-sugerido"${prazoSug ? "" : ' data-vazio="1"'}>${prazoSug ? formatarData(prazoSug) : "—"}</span>
+              </div>
+              <div class="etapa-prazo-row">
+                <label class="etapa-prazo-label" for="m-etapa-real-${e.id}">Real:</label>
+                <input type="date" class="etapa-prazo-real" id="m-etapa-real-${e.id}" data-etapa-real="${e.id}" value="${escapeAttr(prazoReal)}"${dados.concluida ? " readonly" : ""}>
+              </div>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+  return `
+    <div class="etapas-fluxo-titulo">
+      <b>Etapas do fluxo interno</b>
+      <span class="text-small text-muted">Marque a checkbox quando concluir cada etapa.</span>
+    </div>
+    <div class="etapas-fluxo-lista">${linhas}</div>
+  `;
+}
+
+// Bind dos handlers das etapas (checkboxes e prazos reais)
+function bindEtapasFluxoHandlers(ricId) {
+  // Checkboxes de concluído
+  document.querySelectorAll("[data-etapa-cb]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const etapaId = cb.dataset.etapaCb;
+      const marc = listaEstado.marcacoes.get(ricId) || {};
+      if (!marc.etapasFluxo) marc.etapasFluxo = {};
+      if (!marc.etapasFluxo[etapaId]) marc.etapasFluxo[etapaId] = { concluida: false, prazoSugerido: "", prazoReal: "" };
+      marc.etapasFluxo[etapaId].concluida = cb.checked;
+      // Se marca, e prazoReal vazio, sugere preencher com hoje (mas não força — só preenche se vazio)
+      if (cb.checked && !marc.etapasFluxo[etapaId].prazoReal) {
+        marc.etapasFluxo[etapaId].prazoReal = isoHoje();
+      }
+      listaEstado.marcacoes.set(ricId, marc);
+      // Re-renderiza para atualizar destaques visuais (etapa atual muda)
+      const elBloco = document.getElementById("m-etapas-fluxo");
+      if (elBloco) {
+        elBloco.innerHTML = renderEtapasFluxoHtml(marc);
+        bindEtapasFluxoHandlers(ricId);
+      }
+    });
+  });
+  // Inputs de prazo real
+  document.querySelectorAll("[data-etapa-real]").forEach(inp => {
+    inp.addEventListener("change", () => {
+      const etapaId = inp.dataset.etapaReal;
+      const marc = listaEstado.marcacoes.get(ricId) || {};
+      if (!marc.etapasFluxo) marc.etapasFluxo = {};
+      if (!marc.etapasFluxo[etapaId]) marc.etapasFluxo[etapaId] = { concluida: false, prazoSugerido: "", prazoReal: "" };
+      marc.etapasFluxo[etapaId].prazoReal = inp.value;
+      listaEstado.marcacoes.set(ricId, marc);
+      // Se for a última etapa, atualiza o campo prazoFinalCN também
+      if (etapaId === "validacao_gm_expedicao") {
+        const elPrazoFinal = document.getElementById("m-prazo-final-cn");
+        if (elPrazoFinal && inp.value) elPrazoFinal.value = inp.value;
+      }
+    });
+  });
+}
+
 async function abrirDetalhe(id) {
   await carregarLista();
   const p = listaEstado.itens.find(x => x.id === id);
@@ -2923,18 +3096,23 @@ async function abrirDetalhe(id) {
       <div class="section-content">
       <div class="field-row-3">
         <div><label>Status interno</label><select id="m-status-interno">${statusIntOpts}</select></div>
-        <div><label>Etapa do fluxo</label><select id="m-etapa">${etapaOpts}</select></div>
-        <div><label>Prazo da etapa</label><input type="date" id="m-prazo-etapa" value="${escapeAttr(m.prazoEtapa || "")}"></div>
-      </div>
-      <div class="field-row-3">
         <div><label>Data do recebimento (SEI)</label><input type="date" id="m-data-recebimento-sei" value="${escapeAttr(m.dataRecebimentoSEI || "")}"></div>
-        <div><label>Prazo final CN <span class="text-small text-muted">(sugerido do histórico — editável)</span></label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
-        <div><label>Data da resposta</label><input type="date" id="m-data-resposta" value="${escapeAttr(m.dataResposta || "")}"></div>
+        <div><label>Prazo final CN <span class="text-small text-muted">(auto da última etapa — editável)</span></label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
       </div>
       <div class="field-row-3">
+        <div><label>Data da resposta</label><input type="date" id="m-data-resposta" value="${escapeAttr(m.dataResposta || "")}"></div>
         <div><label>NUP de recebimento</label><input type="text" id="m-nup-receb" value="${escapeAttr(m.nupRecebimento || "")}" placeholder="00046.001234/2026-XX"></div>
         <div><label>NUP de resposta</label><input type="text" id="m-nup-resp" value="${escapeAttr(m.nupResposta || "")}" placeholder="00046.005678/2026-XX"></div>
+      </div>
+      <div class="field-row-3">
         <div><label>Tipo de resposta</label><select id="m-tipo-resposta">${tipoRespOpts}</select></div>
+        <div></div>
+        <div></div>
+      </div>
+
+      <!-- Lista vertical de etapas com checkbox + prazo sugerido + prazo real (v4.6) -->
+      <div class="etapas-fluxo-bloco" id="m-etapas-fluxo">
+        ${renderEtapasFluxoHtml(m)}
       </div>
 
       <!-- Unidades consultadas (checkboxes), no final da tramitação interna -->
@@ -3021,6 +3199,7 @@ async function abrirDetalhe(id) {
           proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
           tematica: "", palavrasChave: "", unidadesConsultadas: [],
           resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
+          etapasFluxo: {},
           nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
           prazoFinalCN: "", dataResposta: "", tipoResposta: ""
         };
@@ -3072,10 +3251,54 @@ async function abrirDetalhe(id) {
   }
 
   // Ao preencher data do recebimento SEI, apenas sugere mudança de status (sem calcular prazo)
+  // Handler do recebimento SEI: ajusta status interno automaticamente
+  // E (v4.6) RECALCULA os prazos SUGERIDOS de todas as etapas do fluxo.
+  // Os prazos REAIS são mantidos. Esta é a única coisa que dispara recálculo.
   document.getElementById("m-data-recebimento-sei").addEventListener("change", e => {
-    if (e.target.value) {
+    const dataReceb = e.target.value;
+    if (dataReceb) {
       const stEl = document.getElementById("m-status-interno");
       if (stEl.value === "novo" || stEl.value === "tramitacao_cn") stEl.value = "andamento_cc";
+    }
+    // Recalcula prazos sugeridos com base no novo recebimento
+    const marcAtual = listaEstado.marcacoes.get(id) || {};
+    if (!marcAtual.etapasFluxo) marcAtual.etapasFluxo = {};
+    // Garante estrutura completa
+    for (const ef of ETAPAS_FLUXO_COMPLETO) {
+      if (!marcAtual.etapasFluxo[ef.id]) marcAtual.etapasFluxo[ef.id] = { concluida: false, prazoSugerido: "", prazoReal: "" };
+    }
+    if (dataReceb) {
+      // Recebimento: prazoReal = dataReceb
+      marcAtual.etapasFluxo.recebimento.prazoReal = dataReceb;
+      marcAtual.etapasFluxo.recebimento.concluida = true;
+      // Recalcula sugeridos para as etapas do fluxo
+      const calc = calcularPrazosSugeridos(dataReceb);
+      if (calc) {
+        for (const etapa of ETAPAS_FLUXO_ORDEM) {
+          if (calc.prazos[etapa]) {
+            marcAtual.etapasFluxo[etapa].prazoSugerido = calc.prazos[etapa];
+          }
+        }
+        // O prazo final CN é o prazo sugerido da última etapa (GM/Expedição)
+        const elPrazoFinal = document.getElementById("m-prazo-final-cn");
+        if (elPrazoFinal && !elPrazoFinal.value) {
+          elPrazoFinal.value = calc.prazos.validacao_gm_expedicao;
+        }
+      }
+    } else {
+      // Limpa sugeridos se data foi apagada
+      for (const etapa of ETAPAS_FLUXO_ORDEM) {
+        marcAtual.etapasFluxo[etapa].prazoSugerido = "";
+      }
+      marcAtual.etapasFluxo.recebimento.prazoReal = "";
+      marcAtual.etapasFluxo.recebimento.concluida = false;
+    }
+    listaEstado.marcacoes.set(id, marcAtual);
+    // Re-renderiza apenas o bloco de etapas
+    const elBloco = document.getElementById("m-etapas-fluxo");
+    if (elBloco) {
+      elBloco.innerHTML = renderEtapasFluxoHtml(marcAtual);
+      bindEtapasFluxoHandlers(id);
     }
   });
   // Sugestão automática quando preenche dataResposta
@@ -3203,6 +3426,16 @@ async function abrirDetalhe(id) {
   async function salvarMarcacaoAtual() {
     const unidadesMarc = [...document.querySelectorAll("#m-unidades-checkboxes .unid-cb:checked")].map(o => o.value);
     const marcAnterior = listaEstado.marcacoes.get(id) || {};
+    // etapasFluxo já está atualizado em listaEstado.marcacoes (handlers das checkboxes/datas atualizam em tempo real)
+    const etapasFluxo = marcAnterior.etapasFluxo || {};
+    // Calcula a "etapa atual" (primeira não concluída) para retrocompatibilidade com campos legados
+    let etapaAtual = "";
+    for (const e of ETAPAS_FLUXO_COMPLETO) {
+      if (!etapasFluxo[e.id] || !etapasFluxo[e.id].concluida) {
+        etapaAtual = e.id === "recebimento" ? "" : e.id; // se nem o recebimento foi feito, etapa fica vazia
+        break;
+      }
+    }
     const novoM = {
       proposicaoId: id,
       apelido: document.getElementById("m-apelido").value.trim(),
@@ -3213,8 +3446,9 @@ async function abrirDetalhe(id) {
       comentarios: document.getElementById("m-comentarios").value.trim(),
       unidadesConsultadas: unidadesMarc,
       statusInterno: document.getElementById("m-status-interno").value,
-      etapa: document.getElementById("m-etapa").value,
-      prazoEtapa: document.getElementById("m-prazo-etapa").value,
+      etapa: etapaAtual, // derivado de etapasFluxo
+      prazoEtapa: "", // não usado mais (legado)
+      etapasFluxo: etapasFluxo, // novo schema v4.6
       dataRecebimentoSEI: document.getElementById("m-data-recebimento-sei").value,
       prazoFinalCN: document.getElementById("m-prazo-final-cn").value,
       dataResposta: document.getElementById("m-data-resposta").value,
@@ -3311,6 +3545,7 @@ async function abrirDetalhe(id) {
         proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
         tematica: "", palavrasChave: "", unidadesConsultadas: [],
         resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
+        etapasFluxo: {}, // v4.6: limpa lista de etapas
         nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
         prazoFinalCN: "", dataResposta: "", tipoResposta: "",
         atualizadoEm: new Date().toISOString()
@@ -3335,6 +3570,9 @@ async function abrirDetalhe(id) {
       h.parentElement.classList.toggle("collapsed");
     });
   });
+
+  // Bind das etapas do fluxo (v4.6)
+  bindEtapasFluxoHandlers(id);
 
   // Bind dos itens análogos pré-renderizados (caso existam dados salvos)
   document.querySelectorAll("#analogos-resultado [data-analogo-id]").forEach(el => {
@@ -3546,7 +3784,7 @@ function renderChartEtapas(marcs) {
     "validacao_ssgp": "SSGP",
     "validacao_se": "SE",
     "conformidade": "Conformidade",
-    "validacao_gm": "GM"
+    "validacao_gm_expedicao": "GM"
   };
   const buckets = {};
   for (const m of filtrados) {
@@ -3556,6 +3794,7 @@ function renderChartEtapas(marcs) {
   // Só etapas com ocorrências (ordenadas por contagem desc)
   const dados = Object.entries(buckets)
     .map(([k, v]) => ({
+      key: k,
       label: k === "(sem etapa)" ? "(sem etapa)" : (LBL_REDUZ[k] || (ETAPAS.find(et => et.v === k) || {}).t || k),
       labelFull: k === "(sem etapa)" ? "(sem etapa)" : ((ETAPAS.find(et => et.v === k) || {}).t || k),
       valor: v
@@ -3588,9 +3827,12 @@ function renderChartEtapas(marcs) {
     const len = (d.valor / max) * plotH;
     const y = padT + plotH - len;
     const pct = ((d.valor / total) * 100).toFixed(1);
+    const filtro = d.key && d.key !== "(sem etapa)" ? { etapa: d.key, statusInterno: "andamento_cc" } : null;
+    const filtroAttr = filtro ? ` data-chart-filtro='${escapeAttr(JSON.stringify(filtro))}'` : "";
+    const cursor = filtro ? 'style="cursor:pointer"' : "";
     return `
-      <rect x="${x}" y="${y}" width="${barW}" height="${len}" rx="3" fill="url(#chart-bar-gradient)" class="chart-bar">
-        <title>${escapeHtml(d.labelFull)}: ${d.valor} (${pct}%)</title>
+      <rect x="${x}" y="${y}" width="${barW}" height="${len}" rx="3" fill="url(#chart-bar-gradient)" class="chart-bar"${filtroAttr} ${cursor}>
+        <title>${escapeHtml(d.labelFull)}: ${d.valor} (${pct}%)${filtro ? " — clique para filtrar" : ""}</title>
       </rect>
       <text x="${x + barW/2}" y="${y - 4}" text-anchor="middle" class="chart-value-label">${d.valor}</text>
       <text x="${x + barW/2}" y="${padT + plotH + 16}" text-anchor="middle" class="chart-axis-label">${escapeHtml(d.label)}</text>
@@ -3613,6 +3855,15 @@ function renderChartEtapas(marcs) {
       ${bars}
     </svg>
   `;
+  // Bindar cliques nas barras filtráveis (mesmo padrão do donut)
+  cont.querySelectorAll("[data-chart-filtro]").forEach(el => {
+    el.addEventListener("click", () => {
+      try {
+        const f = JSON.parse(el.dataset.chartFiltro);
+        aplicarFiltrosViaPaineis(f);
+      } catch (e) { console.error("chart filtro etapas:", e); }
+    });
+  });
 }
 
 // ----- Helper: gráfico de rosca -----
@@ -3641,14 +3892,18 @@ function renderDonut(containerId, dados, opts) {
     const path = `M ${x1} ${y1} A ${rOut} ${rOut} 0 ${large} 1 ${x2} ${y2} L ${x3} ${y3} A ${rIn} ${rIn} 0 ${large} 0 ${x4} ${y4} Z`;
     const cor = d.cor || paleta[i % paleta.length];
     const pct = ((d.valor / total) * 100).toFixed(1);
-    return `<path d="${path}" fill="${cor}" class="chart-bar"><title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)</title></path>`;
+    const filtroData = d.filtro ? ` data-chart-filtro='${escapeAttr(JSON.stringify(d.filtro))}'` : "";
+    const cursor = d.filtro ? "cursor:pointer" : "";
+    return `<path d="${path}" fill="${cor}" class="chart-bar"${filtroData} style="${cursor}"><title>${escapeHtml(d.label)}: ${d.valor} (${pct}%)${d.filtro ? " — clique para filtrar" : ""}</title></path>`;
   }).join("");
 
   // Legenda
   const legend = dados.map((d, i) => {
     const cor = d.cor || paleta[i % paleta.length];
     const pct = ((d.valor / total) * 100).toFixed(0);
-    return `<span class="chart-legend-item"><span class="chart-legend-swatch" style="background:${cor}"></span>${escapeHtml(d.label)} <b>${d.valor}</b> (${pct}%)</span>`;
+    const filtroData = d.filtro ? ` data-chart-filtro='${escapeAttr(JSON.stringify(d.filtro))}'` : "";
+    const cursor = d.filtro ? 'style="cursor:pointer"' : "";
+    return `<span class="chart-legend-item"${filtroData} ${cursor}><span class="chart-legend-swatch" style="background:${cor}"></span>${escapeHtml(d.label)} <b>${d.valor}</b> (${pct}%)</span>`;
   }).join("");
 
   cont.innerHTML = `
@@ -3661,6 +3916,15 @@ function renderDonut(containerId, dados, opts) {
       <div class="chart-legend">${legend}</div>
     </div>
   `;
+  // Bindar cliques nos elementos filtráveis
+  cont.querySelectorAll("[data-chart-filtro]").forEach(el => {
+    el.addEventListener("click", () => {
+      try {
+        const f = JSON.parse(el.dataset.chartFiltro);
+        aplicarFiltrosViaPaineis(f);
+      } catch (e) { console.error("chart filtro:", e); }
+    });
+  });
 }
 
 // ----- Gráfico 2: ROSCA — Situação legislativa -----
@@ -3685,7 +3949,7 @@ function renderChartSituacao(props) {
     if (!ordem.includes(k)) continue; // descarta respondido/retirado/pendente
     buckets[k] = (buckets[k] || 0) + 1;
   }
-  const dados = ordem.filter(k => buckets[k]).map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k] }));
+  const dados = ordem.filter(k => buckets[k]).map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k], filtro: { leg: k } }));
   renderDonut("chart-situacao", dados, { empty: "Sem RICs em situação ativa." });
 }
 
@@ -3695,7 +3959,7 @@ function renderChartCasa(props) {
   const cores = { "camara": "#1F5F63", "senado": "#5DD9D2", "cn": "#2C7A7E", "congresso": "#2C7A7E", "cldf": "#C5D9E6" };
   const buckets = {};
   for (const p of props) buckets[p.origem || "(?)"] = (buckets[p.origem || "(?)"] || 0) + 1;
-  const dados = Object.entries(buckets).map(([k, v]) => ({ label: labels[k] || k, valor: v, cor: cores[k] })).sort((a, b) => b.valor - a.valor);
+  const dados = Object.entries(buckets).map(([k, v]) => ({ label: labels[k] || k, valor: v, cor: cores[k], filtro: { casa: k } })).sort((a, b) => b.valor - a.valor);
   renderDonut("chart-casa", dados, { empty: "Sem dados de origem." });
 }
 
@@ -3835,6 +4099,9 @@ function aplicarFiltrosViaPaineis(filtros) {
   if (filtros.prazo) document.getElementById("filter-prazo").value = filtros.prazo;
   if (filtros.leg) document.getElementById("filter-leg").value = filtros.leg;
   if (filtros.statusInterno) document.getElementById("filter-status-int").value = filtros.statusInterno;
+  if (filtros.etapa && document.getElementById("filter-etapa")) document.getElementById("filter-etapa").value = filtros.etapa;
+  if (filtros.casa && document.getElementById("filter-casa")) document.getElementById("filter-casa").value = filtros.casa;
+  if (filtros.tematica && document.getElementById("filter-tematica")) document.getElementById("filter-tematica").value = filtros.tematica;
   // Novos (últimos 7 dias) — mesma regra do pill: dataApresentacao >= hoje-7
   listaEstado.filtroNovos7d = !!filtros.novos7d;
   setTimeout(() => { aplicarFiltros(); ordenar(); renderTabela(); }, 50);
@@ -4010,6 +4277,63 @@ document.getElementById("btn-export-xlsx").addEventListener("click", () => {
 
 // ===== BACKUP =====
 // ===== Gerenciamento de RICs ocultos / excluídos (v4.6) =====
+// ===== Gerenciamento de feriados customizados (v4.6) =====
+function renderFeriadosUI() {
+  const cont = document.getElementById("feriados-resultado");
+  if (!cont) return;
+  const custom = lerFeriadosCustom();
+  const anoAtual = new Date().getFullYear();
+  const nacionais = feriadosNacionais(anoAtual);
+  // Render: lista de nacionais (read-only) + lista de custom (com excluir) + form para adicionar
+  cont.innerHTML = `
+    <details style="margin-top:8px" open>
+      <summary style="cursor:pointer;font-weight:600;color:var(--text)">Feriados nacionais ${anoAtual} (apenas leitura)</summary>
+      <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);margin-top:6px;padding:8px;background:var(--surface-2)">
+        ${nacionais.sort((a, b) => a.data.localeCompare(b.data)).map(f => `<div class="text-small" style="padding:2px 0">${formatarData(f.data)} — ${escapeHtml(f.nome)}${f.tipo === "movel" ? ' <span class="text-small text-muted">(móvel)</span>' : ''}</div>`).join("")}
+      </div>
+    </details>
+    <div style="margin-top:14px">
+      <b class="text-small">Feriados customizados (${custom.length})</b>
+      ${custom.length ? `<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);margin-top:6px">${custom.sort((a, b) => a.data.localeCompare(b.data)).map((f, i) => `<div class="painel-item" style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><b>${formatarData(f.data)}</b> — ${escapeHtml(f.nome)}</div><button class="btn btn-sm btn-danger" data-feriado-del="${escapeAttr(f.data)}|${i}" title="Excluir">🗑</button></div>`).join("")}</div>` : `<div class="text-small text-muted" style="padding:8px 0">Nenhum feriado customizado.</div>`}
+      <div class="form-row" style="margin-top:10px;align-items:flex-end">
+        <div><label>Data</label><input type="date" id="feriado-novo-data"></div>
+        <div style="flex:1"><label>Descrição</label><input type="text" id="feriado-novo-nome" placeholder="ex.: Aniversário da cidade, Recesso, Ponto facultativo..."></div>
+        <div><button class="btn btn-primary btn-sm" id="btn-feriado-adicionar">+ Adicionar</button></div>
+      </div>
+    </div>
+  `;
+  // Handlers
+  document.getElementById("btn-feriado-adicionar").addEventListener("click", () => {
+    const data = document.getElementById("feriado-novo-data").value;
+    const nome = document.getElementById("feriado-novo-nome").value.trim();
+    if (!data) { alert("Informe a data."); return; }
+    if (!nome) { alert("Informe a descrição."); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { alert("Data inválida."); return; }
+    const arr = lerFeriadosCustom();
+    if (arr.some(f => f.data === data)) {
+      if (!confirm(`Já existe um feriado customizado em ${formatarData(data)}. Substituir?`)) return;
+      const idx = arr.findIndex(f => f.data === data);
+      arr.splice(idx, 1);
+    }
+    arr.push({ data, nome });
+    salvarFeriadosCustom(arr);
+    invalidarCacheFeriados();
+    renderFeriadosUI();
+  });
+  cont.querySelectorAll("[data-feriado-del]").forEach(b => b.addEventListener("click", () => {
+    const [dataAlvo] = b.dataset.feriadoDel.split("|");
+    if (!confirm(`Excluir feriado customizado em ${formatarData(dataAlvo)}?`)) return;
+    const arr = lerFeriadosCustom().filter(f => f.data !== dataAlvo);
+    salvarFeriadosCustom(arr);
+    invalidarCacheFeriados();
+    renderFeriadosUI();
+  }));
+}
+
+document.getElementById("btn-gerenciar-feriados")?.addEventListener("click", () => {
+  renderFeriadosUI();
+});
+
 document.getElementById("btn-listar-ocultos").addEventListener("click", async () => {
   const cont = document.getElementById("gerenciar-ocultos-resultado");
   const props = await DB.getAll("proposicoes");
@@ -4444,8 +4768,8 @@ const XLSX_MERGE = (() => {
     "cancelado/retirado": "retirado",
     "conformidade": "conformidade",
     "validacao ssgp": "validacao_ssgp",
-    "validacao gm": "validacao_gm",
-    "validacao gm / expedicao": "validacao_gm",
+    "validacao gm": "validacao_gm_expedicao",
+    "validacao gm / expedicao": "validacao_gm_expedicao",
   };
   const CASA_MAP = {
     "camara dos deputados": "camara",
@@ -5356,6 +5680,203 @@ async function reverterImportacao(snapId) {
   }
 }
 
+// ===== MÓDULO FERIADOS E DIAS ÚTEIS (v4.6) =====
+// Calcula feriados nacionais brasileiros (fixos + móveis) + permite adicionar customizados.
+// Persistência dos customizados em localStorage.
+
+const FERIADOS_CUSTOM_KEY = "monitor-ric-feriados-custom";
+
+// Feriados fixos federais brasileiros (mês-dia, sempre nessa data)
+const FERIADOS_FIXOS = [
+  { md: "01-01", nome: "Confraternização Universal" },
+  { md: "04-21", nome: "Tiradentes" },
+  { md: "05-01", nome: "Dia do Trabalho" },
+  { md: "09-07", nome: "Independência do Brasil" },
+  { md: "10-12", nome: "Nossa Senhora Aparecida" },
+  { md: "11-02", nome: "Finados" },
+  { md: "11-15", nome: "Proclamação da República" },
+  { md: "11-20", nome: "Dia Nacional de Zumbi e da Consciência Negra" },
+  { md: "12-25", nome: "Natal" }
+];
+
+// Calcula a data da Páscoa de um dado ano (algoritmo de Gauss/Butcher)
+function calcularPascoa(ano) {
+  const a = ano % 19;
+  const b = Math.floor(ano / 100);
+  const c = ano % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(Date.UTC(ano, mes - 1, dia));
+}
+
+// Retorna lista de feriados nacionais (móveis incluídos) para um ano em formato yyyy-mm-dd
+function feriadosNacionais(ano) {
+  const list = [];
+  for (const f of FERIADOS_FIXOS) {
+    list.push({ data: `${ano}-${f.md}`, nome: f.nome, tipo: "fixo" });
+  }
+  // Móveis baseados na Páscoa
+  const pascoa = calcularPascoa(ano);
+  const adicionar = (deltaDias, nome) => {
+    const d = new Date(pascoa.getTime() + deltaDias * 86400000);
+    const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+    list.push({ data: iso, nome, tipo: "movel" });
+  };
+  adicionar(-48, "Segunda-feira de Carnaval");
+  adicionar(-47, "Terça-feira de Carnaval");
+  adicionar(-46, "Quarta-feira de Cinzas (ponto facultativo)");
+  adicionar(-2, "Sexta-feira da Paixão");
+  adicionar(60, "Corpus Christi");
+  return list;
+}
+
+function lerFeriadosCustom() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(FERIADOS_CUSTOM_KEY) || "[]");
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) { return []; }
+}
+
+function salvarFeriadosCustom(arr) {
+  localStorage.setItem(FERIADOS_CUSTOM_KEY, JSON.stringify(arr));
+}
+
+// Cache de feriados consolidados (nacionais + custom) por ano
+const _feriadosCache = new Map();
+function feriadosTotal(ano) {
+  if (_feriadosCache.has(ano)) return _feriadosCache.get(ano);
+  const nacionais = feriadosNacionais(ano);
+  const custom = lerFeriadosCustom().filter(f => f.data && f.data.startsWith(`${ano}-`));
+  const set = new Set([...nacionais.map(f => f.data), ...custom.map(f => f.data)]);
+  _feriadosCache.set(ano, set);
+  return set;
+}
+
+// Limpa cache de feriados (chamar ao adicionar/remover custom)
+function invalidarCacheFeriados() {
+  _feriadosCache.clear();
+}
+
+// Verifica se uma data ISO yyyy-mm-dd é dia útil (não fim de semana, não feriado nacional/custom)
+function ehDiaUtil(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay(); // 0 dom, 6 sáb
+  if (dow === 0 || dow === 6) return false;
+  return !feriadosTotal(y).has(iso);
+}
+
+// Adiciona N dias úteis a partir de uma data ISO. Se inclusive=true, conta o próprio dia se for útil.
+// Retorna a próxima data ISO que seja o N-ésimo dia útil contando para frente.
+function somarDiasUteis(isoInicial, n) {
+  if (!isoInicial || !/^\d{4}-\d{2}-\d{2}$/.test(isoInicial)) return "";
+  const [y, m, d] = isoInicial.split("-").map(Number);
+  let dt = new Date(Date.UTC(y, m - 1, d));
+  let dias = 0;
+  // Avançamos dia a dia até consumir N dias úteis
+  while (dias < n) {
+    dt = new Date(dt.getTime() + 86400000);
+    const iso = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+    if (ehDiaUtil(iso)) dias++;
+  }
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+}
+
+// Retorna o próximo dia útil a partir de uma data (inclusive — se já for útil, devolve ela mesma)
+function proximoDiaUtil(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  if (ehDiaUtil(iso)) return iso;
+  return somarDiasUteis(iso, 1);
+}
+
+// Conta quantos dias úteis há entre duas datas ISO (inclusive de ambos)
+function contarDiasUteis(isoInicio, isoFim) {
+  if (!isoInicio || !isoFim) return 0;
+  let count = 0;
+  let cur = isoInicio;
+  while (cur <= isoFim) {
+    if (ehDiaUtil(cur)) count++;
+    // Avança 1 dia
+    const [y, m, d] = cur.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d) + 86400000);
+    cur = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+  }
+  return count;
+}
+
+// ===== Cálculo de prazos sugeridos das etapas =====
+// Regra (spec do usuário):
+//   - 30 dias corridos a partir do primeiro dia útil após o Recebimento.
+//   - Total de dias úteis nesse intervalo determina a regra (18-22 dias úteis).
+//   - Cada regra define quantos dias úteis somam para cada etapa.
+//   - Se um vencimento cair em dia não útil, é prorrogado para o próximo dia útil.
+
+// Mapa: número de dias úteis no intervalo → quanto cada etapa soma da anterior
+const REGRAS_PRAZO_ETAPAS = {
+  22: { admissibilidade: 5, subsidios: 6, conformidade: 4, validacao_ssgp: 1, aprovacao_se: 2, validacao_gm_expedicao: 4 },
+  21: { admissibilidade: 5, subsidios: 5, conformidade: 4, validacao_ssgp: 1, aprovacao_se: 2, validacao_gm_expedicao: 4 },
+  20: { admissibilidade: 4, subsidios: 5, conformidade: 4, validacao_ssgp: 1, aprovacao_se: 2, validacao_gm_expedicao: 4 },
+  19: { admissibilidade: 4, subsidios: 5, conformidade: 4, validacao_ssgp: 1, aprovacao_se: 2, validacao_gm_expedicao: 3 },
+  18: { admissibilidade: 4, subsidios: 5, conformidade: 3, validacao_ssgp: 1, aprovacao_se: 2, validacao_gm_expedicao: 3 },
+};
+
+// Ordem das etapas (do início ao fim do fluxo)
+const ETAPAS_FLUXO_ORDEM = [
+  "admissibilidade", "subsidios", "conformidade", "validacao_ssgp", "aprovacao_se", "validacao_gm_expedicao"
+];
+
+// Estrutura completa das etapas (inclui Recebimento como ponto de partida)
+// Usada para renderizar a UI vertical e iterar
+const ETAPAS_FLUXO_COMPLETO = [
+  { id: "recebimento",            label: "Recebimento",            ehInicio: true },
+  { id: "admissibilidade",        label: "Admissibilidade" },
+  { id: "subsidios",              label: "Coleta de subsídios" },
+  { id: "conformidade",           label: "Análise de conformidade" },
+  { id: "validacao_ssgp",         label: "Validação SSGP" },
+  { id: "aprovacao_se",           label: "Aprovação SE" },
+  { id: "validacao_gm_expedicao", label: "Validação GM / Expedição (Prazo final CN)", ehFim: true }
+];
+
+// Calcula prazos sugeridos das etapas a partir da data de recebimento (yyyy-mm-dd)
+// Retorna objeto: { dia1, total_du, regra, prazos: { admissibilidade, subsidios, ... } }
+// Se a data for inválida, retorna null
+function calcularPrazosSugeridos(dataRecebimento) {
+  if (!dataRecebimento || !/^\d{4}-\d{2}-\d{2}$/.test(dataRecebimento)) return null;
+  // Dia 1 dos 30 = primeiro dia útil APÓS o recebimento
+  const dia1 = somarDiasUteis(dataRecebimento, 1);
+  if (!dia1) return null;
+  // Dia 30 (corridos) a partir do dia1 (que é o dia 1)
+  const [y, m, d] = dia1.split("-").map(Number);
+  const dia30Dt = new Date(Date.UTC(y, m - 1, d) + 29 * 86400000); // +29 = 30 dias corridos contando o dia1
+  const dia30Iso = `${dia30Dt.getUTCFullYear()}-${String(dia30Dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dia30Dt.getUTCDate()).padStart(2, "0")}`;
+  // Total de dias úteis entre dia1 e dia30 (inclusive)
+  const totalDU = contarDiasUteis(dia1, dia30Iso);
+  // Determina a regra mais próxima (entre 18 e 22)
+  // Se < 18 → usa 18 (cenário pior); se > 22 → usa 22
+  const ducap = Math.max(18, Math.min(22, totalDU));
+  const regra = REGRAS_PRAZO_ETAPAS[ducap];
+  // Calcula prazos cumulativamente, sempre prorrogando para dia útil se cair em não-útil
+  const prazos = {};
+  let base = dia1;
+  for (const etapa of ETAPAS_FLUXO_ORDEM) {
+    const d = somarDiasUteis(base, regra[etapa]);
+    // somarDiasUteis já garante dia útil (só avança em dias úteis)
+    prazos[etapa] = d;
+    base = d;
+  }
+  return { dia1, dia30: dia30Iso, totalDU, regraUsada: ducap, prazos };
+}
+
 // ===== MÓDULO RELATÓRIO (v4.6) =====
 // Geração de relatórios em PDF (via window.print) e Word (.docx via lib docx lazy-load)
 // Spec: prompt-relatorio-word-pdf.md (sections 1-16)
@@ -5464,6 +5985,7 @@ function relatorioEstadoPadrao() {
     filtros: {}, campos,
     organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
     formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "selo" },
+    introducao: { incluir: false, texto: "", indicadores: { total: true, etapas: true, temas: true } },
     escopo: { rics: [], total: 0 },
     presetUsuarioAtual: "",
   };
@@ -5542,7 +6064,9 @@ async function relatorioCalcularEscopo(estado) {
     else { va = a.dataApresentacao || ""; vb = b.dataApresentacao || ""; }
     return va < vb ? -dir : va > vb ? dir : 0;
   });
-  estado.escopo = { rics: lista, total: lista.length, marcacoes: mMap };
+  // Map de TODAS as proposições (não só do escopo filtrado): necessário para resolver análogos por id no relatório
+  const todosMap = new Map(todos.map(p => [p.id, p]));
+  estado.escopo = { rics: lista, total: lista.length, marcacoes: mMap, todosMap };
   return estado.escopo;
 }
 
@@ -5647,6 +6171,71 @@ function relatorioCabecalhoHtml(estado) {
   return `<div class="rel-cabecalho"><div class="rel-cabecalho-selo"><div class="rel-cabecalho-r">R</div><div class="rel-cabecalho-marca">MONITOR RIC</div></div><div class="rel-cabecalho-conteudo"><h1 class="rel-titulo">${escapeHtml(titulo)}</h1><div class="rel-meta">${data} · ${total} requerimento${total !== 1 ? "s" : ""}</div></div></div><div class="rel-regua-dourada"></div>`;
 }
 
+// Bloco introdutório com indicadores e texto livre (v4.6)
+function relatorioIntroducaoHtml(estado) {
+  const intro = estado.introducao;
+  if (!intro || !intro.incluir) return "";
+  const partes = [];
+  const ind = intro.indicadores || {};
+  // Texto introdutório
+  if (intro.texto && intro.texto.trim()) {
+    const tex = escapeHtml(intro.texto.trim()).replace(/\n/g, "<br>");
+    partes.push(`<div class="rel-intro-texto">${tex}</div>`);
+  }
+  // Indicadores
+  const indHtml = [];
+  if (ind.total) {
+    indHtml.push(`<div class="rel-indicador"><div class="rel-indicador-num">${estado.escopo.total}</div><div class="rel-indicador-label">Requerimentos no relatório</div></div>`);
+  }
+  if (ind.etapas) {
+    // Conta por etapa baseado em m.etapa
+    const mMap = estado.escopo.marcacoes;
+    const contagem = new Map();
+    for (const p of estado.escopo.rics) {
+      const m = mMap.get(p.id) || {};
+      const et = m.etapa || "(sem etapa)";
+      contagem.set(et, (contagem.get(et) || 0) + 1);
+    }
+    const items = [...contagem.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+    if (items.length > 0) {
+      const html = items.map(([k, v]) => {
+        let label = k;
+        if (k !== "(sem etapa)") {
+          const e = ETAPAS.find(x => x.v === k);
+          if (e) label = e.t;
+        }
+        return `<div class="rel-bd-row"><span class="rel-bd-label">${escapeHtml(label)}</span><span class="rel-bd-num">${v}</span></div>`;
+      }).join("");
+      indHtml.push(`<div class="rel-indicador rel-indicador-bd"><div class="rel-indicador-label rel-bd-titulo">Por etapa</div>${html}</div>`);
+    }
+  }
+  if (ind.temas) {
+    // Conta por tema (extraído do apelido em CAIXA ALTA)
+    const mMap = estado.escopo.marcacoes;
+    const contagem = new Map();
+    for (const p of estado.escopo.rics) {
+      const m = mMap.get(p.id) || {};
+      const ap = (m.apelido || "").trim();
+      let tema = "(sem objeto)";
+      if (ap) {
+        const mTema = ap.match(/^([A-ZÀ-Ÿ0-9][A-ZÀ-Ÿ0-9\s\-/]*[A-ZÀ-Ÿ0-9])\s+-\s+/);
+        tema = mTema ? mTema[1].trim() : ap.substring(0, 40);
+      }
+      contagem.set(tema, (contagem.get(tema) || 0) + 1);
+    }
+    const items = [...contagem.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+    if (items.length > 0) {
+      const html = items.map(([k, v]) => `<div class="rel-bd-row"><span class="rel-bd-label">${escapeHtml(k)}</span><span class="rel-bd-num">${v}</span></div>`).join("");
+      indHtml.push(`<div class="rel-indicador rel-indicador-bd"><div class="rel-indicador-label rel-bd-titulo">Por tema (objeto)</div>${html}</div>`);
+    }
+  }
+  if (indHtml.length > 0) {
+    partes.push(`<div class="rel-indicadores">${indHtml.join("")}</div>`);
+  }
+  if (partes.length === 0) return "";
+  return `<div class="rel-introducao">${partes.join("")}</div>`;
+}
+
 function relatorioBlocoLista(grupo, estado) {
   const camposLigados = [];
   for (const [g, mapa] of Object.entries(estado.campos)) {
@@ -5689,7 +6278,18 @@ function relatorioBlocoCompleto(grupo, estado) {
     }
     if (estado.campos.historico && estado.campos.historico.analogos && m.analogos && m.analogos.length) {
       const top = m.analogos.slice(0, 5);
-      blocos.push(`<div class="rel-sub-secao"><div class="rel-sub-titulo">Requerimentos análogos</div><ul class="rel-analogos">${top.map(a => `<li><b>${escapeHtml(a.identificacao||"")}</b>${a.apelido ? " — " + escapeHtml(a.apelido) : ""}${a.score!=null?` <span class="text-small text-muted">(${(a.score*100).toFixed(0)}%)</span>`:""}</li>`).join("")}</ul></div>`);
+      const todosMap = estado.escopo.todosMap || new Map();
+      const mMapAll = estado.escopo.marcacoes;
+      const itensValidos = top.map(a => {
+        // a estrutura salva é {id, score}; resolvemos identificação + apelido pelo id
+        const ap = todosMap.get(a.id);
+        if (!ap) return null;
+        const am = mMapAll.get(a.id) || {};
+        return { ap, am, score: a.score };
+      }).filter(Boolean);
+      if (itensValidos.length) {
+        blocos.push(`<div class="rel-sub-secao"><div class="rel-sub-titulo">Requerimentos análogos</div><ul class="rel-analogos">${itensValidos.map(({ap, am, score}) => `<li><b>${escapeHtml(ap.identificacao || "—")}</b>${am.apelido ? " — " + escapeHtml(am.apelido) : (ap.ementa ? " — " + escapeHtml(ap.ementa.substring(0, 100)) + (ap.ementa.length > 100 ? "…" : "") : "")}${score!=null?` <span class="text-small text-muted">(${(score*100).toFixed(0)}%)</span>`:""}</li>`).join("")}</ul></div>`);
+      }
     }
     return `<article class="rel-bloco">${idHtml}${blocos.join("")}</article>`;
   }).join("<hr class='rel-separador'>")}`;
@@ -5698,21 +6298,42 @@ function relatorioBlocoCompleto(grupo, estado) {
 function relatorioGerarHtml(estado, ehPrint) {
   const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
   const cabecalho = relatorioCabecalhoHtml(estado);
+  const introducao = relatorioIntroducaoHtml(estado);
   const corpo = grupos.map(g => estado.organizacao.modo === "lista" ? relatorioBlocoLista(g, estado) : relatorioBlocoCompleto(g, estado)).join("");
   const orientacao = estado.formatacao.orientacao === "paisagem" ? "landscape" : "portrait";
   const css = relatorioCss(ehPrint, orientacao);
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(estado.formatacao.titulo || "Relatório Monitor RIC")}</title><style>${css}</style></head><body class="rel-orient-${orientacao}">${estado.formatacao.marcaDagua ? '<div class="rel-marca-dagua">USO INTERNO</div>' : ''}<div class="rel-pagina">${cabecalho}${corpo}<footer class="rel-rodape">Gerado pelo Monitor RIC · ${new Date().toLocaleString("pt-BR")}</footer></div></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(estado.formatacao.titulo || "Relatório Monitor RIC")}</title><style>${css}</style></head><body class="rel-orient-${orientacao}">${estado.formatacao.marcaDagua ? '<div class="rel-marca-dagua">USO INTERNO</div>' : ''}<div class="rel-pagina">${cabecalho}${introducao}${corpo}<footer class="rel-rodape">Gerado pelo Monitor RIC · ${new Date().toLocaleString("pt-BR")}</footer></div></body></html>`;
 }
 
 function relatorioCss(ehPrint, orientacao) {
   const isLandscape = orientacao === "landscape";
   const maxW = isLandscape ? "29.7cm" : "21cm";
-  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Cambria","Source Serif Pro",Georgia,serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-cabecalho-simples{padding:14px 0 8px;margin-bottom:4px}.rel-titulo-simples{font-family:"Cambria",Georgia,serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta-simples{font-size:8px;color:#94A3B8}.rel-grupo{font-family:"Cambria",Georgia,serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Cambria",Georgia,serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Cambria",Georgia,serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
+  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-cabecalho-simples{padding:14px 0 8px;margin-bottom:4px}.rel-titulo-simples{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta-simples{font-size:8px;color:#94A3B8}.rel-grupo{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-introducao{margin:0 0 20px;background:#F8FAFC;border-left:3px solid #1E3A6F;padding:12px 16px;border-radius:0 4px 4px 0}.rel-intro-texto{font-size:10px;color:#1F2937;line-height:1.5;margin-bottom:12px}.rel-intro-texto:last-child{margin-bottom:0}.rel-indicadores{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.rel-indicador{background:#fff;border:1px solid #E2E8F0;padding:10px 12px;border-radius:4px}.rel-indicador-num{font-size:24px;font-weight:700;color:#1E3A6F;line-height:1}.rel-indicador-label{font-size:8px;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}.rel-indicador-bd .rel-indicador-label{margin-top:0;margin-bottom:6px}.rel-bd-titulo{font-weight:700;color:#1E3A6F}.rel-bd-row{display:flex;justify-content:space-between;align-items:baseline;padding:2px 0;border-bottom:0.5px dotted #E2E8F0;font-size:9px}.rel-bd-row:last-child{border-bottom:none}.rel-bd-label{color:#1F2937;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rel-bd-num{color:#1E3A6F;font-weight:700;font-variant-numeric:tabular-nums}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
 }
 
 async function relatorioGerarPdf(estado) {
   if (!estado.escopo.total) { alert("Nenhum requerimento no escopo. Ajuste os filtros."); return; }
   const html = relatorioGerarHtml(estado, true);
+  // Detecção de mobile (iOS/Android): em vez de iframe (cuja orientação @page é
+  // frequentemente ignorada na rotina nativa "Salvar como PDF"), abrimos o HTML
+  // em nova aba/janela e a impressão automática dispara o diálogo nativo do SO.
+  const ehMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const ehPaisagem = estado.formatacao.orientacao === "paisagem";
+  if (ehMobile || ehPaisagem) {
+    // Estratégia compatível: abrir janela nova com o HTML e auto-disparar print
+    // Adicionamos um pequeno script para chamar window.print() após o load.
+    const htmlComAuto = html.replace("</body>", `<script>window.addEventListener("load", () => setTimeout(() => window.print(), 400));</scr` + `ipt></body>`);
+    const w = window.open("", "_blank");
+    if (!w) {
+      alert("Seu navegador bloqueou a abertura da janela do PDF. Permita pop-ups para este site e tente novamente.");
+      return;
+    }
+    w.document.open();
+    w.document.write(htmlComAuto);
+    w.document.close();
+    return;
+  }
+  // Desktop em retrato: estratégia anterior com iframe oculto
   const iframe = document.createElement("iframe");
   iframe.style.cssText = "position:fixed;left:-9999px;top:0;width:21cm;height:29.7cm;visibility:hidden";
   document.body.appendChild(iframe);
@@ -5783,7 +6404,7 @@ async function relatorioGerarWord(estado) {
     if (variante === "simples") {
       return [
         new D.Paragraph({
-          children: [new D.TextRun({ text: titulo, size: 44, color: CORES.AZUL, font: "Cambria" })],
+          children: [new D.TextRun({ text: titulo, size: 44, color: CORES.AZUL })],
           spacing: { before: 80, after: 80 },
         }),
         new D.Paragraph({
@@ -5837,7 +6458,7 @@ async function relatorioGerarWord(estado) {
               margins: { top: 200, bottom: 200, left: 280, right: 280 },
               children: [
                 new D.Paragraph({
-                  children: [new D.TextRun({ text: titulo, size: 44, color: CORES.AZUL, font: "Cambria" })],
+                  children: [new D.TextRun({ text: titulo, size: 44, color: CORES.AZUL })],
                   spacing: { after: 120 },
                 }),
                 new D.Paragraph({
@@ -5856,7 +6477,7 @@ async function relatorioGerarWord(estado) {
   function paragrafoGrupo(nome, qtd) {
     return new D.Paragraph({
       children: [
-        new D.TextRun({ text: nome, bold: true, size: 28, color: CORES.AZUL, font: "Cambria" }),
+        new D.TextRun({ text: nome, bold: true, size: 28, color: CORES.AZUL }),
         new D.TextRun({ text: `  (${qtd})`, size: 22, color: CORES.CINZA }),
       ],
       spacing: { before: 360, after: 200 },
@@ -5929,8 +6550,8 @@ async function relatorioGerarWord(estado) {
     // Cabeçalho do bloco: identificação + casa
     elems.push(new D.Paragraph({
       children: [
-        new D.TextRun({ text: p.identificacao || "—", bold: true, size: 24, color: CORES.AZUL, font: "Cambria" }),
-        new D.TextRun({ text: ` — ${({camara:"Câmara dos Deputados",senado:"Senado Federal",cn:"Congresso Nacional",cldf:"CLDF"}[p.origem]||p.origem||"")}`, size: 22, color: CORES.AZUL, font: "Cambria" }),
+        new D.TextRun({ text: p.identificacao || "—", bold: true, size: 24, color: CORES.AZUL }),
+        new D.TextRun({ text: ` — ${({camara:"Câmara dos Deputados",senado:"Senado Federal",cn:"Congresso Nacional",cldf:"CLDF"}[p.origem]||p.origem||"")}`, size: 22, color: CORES.AZUL }),
       ],
       spacing: { after: 60 },
     }));
@@ -6009,20 +6630,31 @@ async function relatorioGerarWord(estado) {
     // Análogos
     if (estado.campos.historico && estado.campos.historico.analogos && m.analogos && m.analogos.length) {
       const top = m.analogos.slice(0, 5);
-      elems.push(new D.Paragraph({
-        children: [new D.TextRun({ text: "REQUERIMENTOS ANÁLOGOS", bold: true, size: 16, color: CORES.AZUL, characterSpacing: 16 })],
-        spacing: { before: 160, after: 80 },
-      }));
-      for (const a of top) {
+      const todosMap = estado.escopo.todosMap || new Map();
+      const mMapAll = estado.escopo.marcacoes;
+      const itensValidos = top.map(a => {
+        const ap = todosMap.get(a.id);
+        if (!ap) return null;
+        const am = mMapAll.get(a.id) || {};
+        return { ap, am, score: a.score };
+      }).filter(Boolean);
+      if (itensValidos.length) {
         elems.push(new D.Paragraph({
-          bullet: { level: 0 },
-          children: [
-            new D.TextRun({ text: a.identificacao || "—", bold: true, size: 16, color: CORES.CINZA_ESCURO }),
-            new D.TextRun({ text: a.apelido ? ` — ${limparHtml(a.apelido)}` : "", size: 16, color: CORES.CINZA_ESCURO }),
-            a.score != null ? new D.TextRun({ text: ` (${(a.score*100).toFixed(0)}%)`, size: 14, color: CORES.CINZA }) : new D.TextRun({ text: "" }),
-          ],
-          spacing: { after: 40 },
+          children: [new D.TextRun({ text: "REQUERIMENTOS ANÁLOGOS", bold: true, size: 16, color: CORES.AZUL, characterSpacing: 16 })],
+          spacing: { before: 160, after: 80 },
         }));
+        for (const { ap, am, score } of itensValidos) {
+          const labelExtra = am.apelido ? ` — ${limparHtml(am.apelido)}` : (ap.ementa ? ` — ${limparHtml(ap.ementa.substring(0, 100))}` : "");
+          elems.push(new D.Paragraph({
+            bullet: { level: 0 },
+            children: [
+              new D.TextRun({ text: ap.identificacao || "—", bold: true, size: 16, color: CORES.CINZA_ESCURO }),
+              new D.TextRun({ text: labelExtra, size: 16, color: CORES.CINZA_ESCURO }),
+              score != null ? new D.TextRun({ text: ` (${(score*100).toFixed(0)}%)`, size: 14, color: CORES.CINZA }) : new D.TextRun({ text: "" }),
+            ],
+            spacing: { after: 40 },
+          }));
+        }
       }
     }
     return elems;
@@ -6058,6 +6690,99 @@ async function relatorioGerarWord(estado) {
     children.push(new D.Paragraph({ children: [], spacing: { after: 240 } })); // espaçador após cabeçalho
   }
 
+  // Bloco introdutório com indicadores e texto livre
+  if (estado.introducao && estado.introducao.incluir) {
+    const intro = estado.introducao;
+    if (intro.texto && intro.texto.trim()) {
+      // Cada linha do texto vira um parágrafo
+      for (const linha of intro.texto.trim().split("\n")) {
+        children.push(new D.Paragraph({
+          children: [new D.TextRun({ text: linha, size: 20, color: CORES.CINZA_ESCURO })],
+          spacing: { after: 80 },
+        }));
+      }
+      children.push(new D.Paragraph({ children: [], spacing: { after: 80 } }));
+    }
+    const ind = intro.indicadores || {};
+    if (ind.total) {
+      children.push(new D.Paragraph({
+        children: [
+          new D.TextRun({ text: String(estado.escopo.total), bold: true, size: 32, color: CORES.AZUL }),
+          new D.TextRun({ text: `  Requerimentos no relatório`, size: 18, color: CORES.CINZA }),
+        ],
+        spacing: { after: 120 },
+      }));
+    }
+    const mMapIntro = estado.escopo.marcacoes;
+    function tabelaContagem(titulo, items) {
+      if (!items.length) return [];
+      const result = [];
+      result.push(new D.Paragraph({
+        children: [new D.TextRun({ text: titulo.toUpperCase(), bold: true, size: 16, color: CORES.AZUL, characterSpacing: 16 })],
+        spacing: { before: 120, after: 60 },
+      }));
+      result.push(new D.Table({
+        width: { size: 80, type: D.WidthType.PERCENTAGE },
+        rows: items.map(([k, v]) => new D.TableRow({
+          children: [
+            new D.TableCell({
+              width: { size: 80, type: D.WidthType.PERCENTAGE },
+              margins: { top: 40, bottom: 40, left: 80, right: 80 },
+              children: [new D.Paragraph({ children: [new D.TextRun({ text: String(k), size: 16, color: CORES.CINZA_ESCURO })] })],
+            }),
+            new D.TableCell({
+              width: { size: 20, type: D.WidthType.PERCENTAGE },
+              margins: { top: 40, bottom: 40, left: 80, right: 80 },
+              children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, children: [new D.TextRun({ text: String(v), bold: true, size: 16, color: CORES.AZUL })] })],
+            }),
+          ],
+        })),
+        borders: {
+          top: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          bottom: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          left: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          right: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          insideHorizontal: { style: D.BorderStyle.DOTTED, size: 2, color: "E2E8F0" },
+          insideVertical: { style: D.BorderStyle.NONE, size: 0, color: "FFFFFF" },
+        },
+      }));
+      return result;
+    }
+    if (ind.etapas) {
+      const cont = new Map();
+      for (const p of estado.escopo.rics) {
+        const m = mMapIntro.get(p.id) || {};
+        const et = m.etapa || "(sem etapa)";
+        cont.set(et, (cont.get(et) || 0) + 1);
+      }
+      const items = [...cont.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8)
+        .map(([k, v]) => {
+          let label = k;
+          if (k !== "(sem etapa)") {
+            const e = ETAPAS.find(x => x.v === k);
+            if (e) label = e.t;
+          }
+          return [label, v];
+        });
+      for (const it of tabelaContagem("Por etapa", items)) children.push(it);
+    }
+    if (ind.temas) {
+      const cont = new Map();
+      for (const p of estado.escopo.rics) {
+        const m = mMapIntro.get(p.id) || {};
+        const ap = (m.apelido || "").trim();
+        let tema = "(sem objeto)";
+        if (ap) {
+          const mt = ap.match(/^([A-ZÀ-Ÿ0-9][A-ZÀ-Ÿ0-9\s\-/]*[A-ZÀ-Ÿ0-9])\s+-\s+/);
+          tema = mt ? mt[1].trim() : ap.substring(0, 40);
+        }
+        cont.set(tema, (cont.get(tema) || 0) + 1);
+      }
+      const items = [...cont.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+      for (const it of tabelaContagem("Por tema (objeto)", items)) children.push(it);
+    }
+    children.push(new D.Paragraph({ children: [], spacing: { after: 240 } })); // espaçador
+  }
   const grupos = relatorioAgrupar(estado.escopo.rics, estado.organizacao.agruparPor, estado.escopo.marcacoes);
   const camposLigados = camposLigadosArr(estado);
   const mMap = estado.escopo.marcacoes;
@@ -6338,6 +7063,22 @@ async function relatorioRenderModal() {
   </div>
 </details>
 
+<details class="rel-bloco" data-bloco-id="I"${openAttr("I", false)}>
+  <summary class="rel-bloco-summary"><b>I. Introdução e indicadores</b>${e.introducao && e.introducao.incluir ? ' · <span class="rel-bloco-resumo">ativo</span>' : ''}</summary>
+  <div class="rel-bloco-conteudo">
+    <label><input type="checkbox" id="rel-intro-incluir"${e.introducao && e.introducao.incluir ? " checked" : ""}> <b>Incluir bloco introdutório no relatório</b></label>
+    <p class="text-small text-muted">Aparece entre o cabeçalho e o conteúdo. Permite adicionar contexto e visão geral antes dos detalhes.</p>
+    <label style="margin-top:10px">Texto introdutório (opcional)</label>
+    <textarea id="rel-intro-texto" rows="4" placeholder="ex.: Este relatório consolida os RICs aprovados em maio/2026, organizados por temática. Atenção aos RICs com prazo final próximo." ${!(e.introducao && e.introducao.incluir) ? "disabled" : ""}>${escapeHtml((e.introducao && e.introducao.texto) || "")}</textarea>
+    <label style="margin-top:10px"><b>Indicadores</b></label>
+    <div class="form-row" style="margin-top:4px">
+      <label><input type="checkbox" id="rel-intro-ind-total"${e.introducao && e.introducao.indicadores && e.introducao.indicadores.total ? " checked" : ""} ${!(e.introducao && e.introducao.incluir) ? "disabled" : ""}> Total de RICs do relatório</label>
+      <label><input type="checkbox" id="rel-intro-ind-etapas"${e.introducao && e.introducao.indicadores && e.introducao.indicadores.etapas ? " checked" : ""} ${!(e.introducao && e.introducao.incluir) ? "disabled" : ""}> Contagem por etapa</label>
+      <label><input type="checkbox" id="rel-intro-ind-temas"${e.introducao && e.introducao.indicadores && e.introducao.indicadores.temas ? " checked" : ""} ${!(e.introducao && e.introducao.incluir) ? "disabled" : ""}> Contagem por tema (objeto)</label>
+    </div>
+  </div>
+</details>
+
 <details class="rel-bloco" data-bloco-id="F"${openAttr("F", false)}>
   <summary class="rel-bloco-summary"><b>F. Presets do usuário</b> · <span class="rel-bloco-resumo">${presetsUsuario.length} salvo${presetsUsuario.length!==1?"s":""}</span></summary>
   <div class="rel-bloco-conteudo">
@@ -6431,6 +7172,27 @@ async function relatorioRenderModal() {
   if (elOrient) elOrient.addEventListener("change", () => { relatorioEstado.formatacao.orientacao = elOrient.value; relatorioRenderModal(); });
   const elCab = document.getElementById("rel-fmt-cabecalho");
   if (elCab) elCab.addEventListener("change", () => { relatorioEstado.formatacao.cabecalho = elCab.value; relatorioRenderModal(); });
+
+  // Handlers da introdução
+  const elIntroIncluir = document.getElementById("rel-intro-incluir");
+  if (elIntroIncluir) elIntroIncluir.addEventListener("change", () => {
+    if (!relatorioEstado.introducao) relatorioEstado.introducao = { texto: "", indicadores: { total: true, etapas: true, temas: true } };
+    relatorioEstado.introducao.incluir = elIntroIncluir.checked;
+    relatorioRenderModal();
+  });
+  const elIntroTexto = document.getElementById("rel-intro-texto");
+  if (elIntroTexto) elIntroTexto.addEventListener("input", () => {
+    if (!relatorioEstado.introducao) relatorioEstado.introducao = { incluir: true, indicadores: { total: true, etapas: true, temas: true } };
+    relatorioEstado.introducao.texto = elIntroTexto.value;
+  });
+  ["total", "etapas", "temas"].forEach(k => {
+    const el = document.getElementById(`rel-intro-ind-${k}`);
+    if (el) el.addEventListener("change", () => {
+      if (!relatorioEstado.introducao) relatorioEstado.introducao = { incluir: true, texto: "", indicadores: {} };
+      if (!relatorioEstado.introducao.indicadores) relatorioEstado.introducao.indicadores = {};
+      relatorioEstado.introducao.indicadores[k] = el.checked;
+    });
+  });
 
   // Handlers de presets de usuário
   const elPresetUsu = document.getElementById("rel-preset-usuario");
