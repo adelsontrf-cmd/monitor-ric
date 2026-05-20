@@ -734,7 +734,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="header-actions">
       <div class="header-actions-tema">
         <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
-        <span class="versao-badge" title="Versão atual">v4.5</span>
+        <span class="versao-badge" title="Versão atual">v4.6</span>
       </div>
     </div>
   </div>
@@ -2377,6 +2377,9 @@ async function sincronizarIncremental(numdias) {
       const norm = normalizaProposicaoCamara(m);
       const old = existentes.get(norm.id);
       if (old) norm.coletadoEm = old.coletadoEm;
+      // v4.6: enriquecimento completo no incremental — busca detalhe (autor com partido/UF,
+      // ementa completa, despacho, inteiro teor), autor avulso e tramitações/situação.
+      await camaraEnriquecerDetalhe(norm); await sleep(THROTTLE_MS);
       await camaraEnriquecerAutor(norm); await sleep(THROTTLE_MS);
       await enriquecerProposicao(norm, { log, forcar: true }); await sleep(THROTTLE_MS);
       proposicoesParaSalvar.push(norm);
@@ -2397,6 +2400,8 @@ async function sincronizarIncremental(numdias) {
       const norm = normalizaMateriaSenado(m);
       const old = existentes.get(norm.id);
       if (old) norm.coletadoEm = old.coletadoEm;
+      // v4.6: enriquecimento completo no incremental — busca inteiro teor + autor + movimentações + situação
+      await senadoBuscarInteiroTeor(norm); await sleep(THROTTLE_MS);
       await enriquecerProposicao(norm, { log, forcar: true }); await sleep(THROTTLE_MS);
       proposicoesParaSalvar.push(norm);
       if (!old) novos.push(norm);
@@ -2942,6 +2947,26 @@ function renderEtapasFluxoHtml(m) {
 }
 
 // Bind dos handlers das etapas (checkboxes e prazos reais)
+// Atualiza os campos readonly "Etapa atual" e "Prazo da etapa atual" no cabeçalho
+// da Tramitação interna. Sempre reflete a primeira etapa não concluída do fluxo,
+// ou — se todas concluídas — a última etapa. Prefere prazoReal; cai pra prazoSugerido.
+function atualizarPrazoEtapaAtualUI(marc) {
+  const elInfo = document.getElementById("m-etapa-atual-info");
+  const elPrazo = document.getElementById("m-prazo-etapa-atual");
+  if (!elInfo || !elPrazo) return;
+  const ef = (marc && marc.etapasFluxo) || {};
+  let atual = null;
+  for (const e of ETAPAS_FLUXO_COMPLETO) {
+    const d = ef[e.id];
+    if (!d || !d.concluida) { atual = e; break; }
+  }
+  if (!atual) atual = ETAPAS_FLUXO_COMPLETO[ETAPAS_FLUXO_COMPLETO.length - 1]; // todas concluídas → mostra a última
+  elInfo.value = atual.label;
+  const d = ef[atual.id] || {};
+  const prz = d.prazoReal || d.prazoSugerido || "";
+  elPrazo.value = prz ? formatarData(prz) : "—";
+}
+
 function bindEtapasFluxoHandlers(ricId) {
   // Checkboxes de concluído
   document.querySelectorAll("[data-etapa-cb]").forEach(cb => {
@@ -2962,6 +2987,8 @@ function bindEtapasFluxoHandlers(ricId) {
         elBloco.innerHTML = renderEtapasFluxoHtml(marc);
         bindEtapasFluxoHandlers(ricId);
       }
+      // Atualiza o campo unificado "Prazo da etapa atual"
+      atualizarPrazoEtapaAtualUI(marc);
     });
   });
   // Inputs de prazo real
@@ -2978,8 +3005,13 @@ function bindEtapasFluxoHandlers(ricId) {
         const elPrazoFinal = document.getElementById("m-prazo-final-cn");
         if (elPrazoFinal && inp.value) elPrazoFinal.value = inp.value;
       }
+      // Atualiza o campo unificado "Prazo da etapa atual"
+      atualizarPrazoEtapaAtualUI(marc);
     });
   });
+  // Sempre que rebindar, garante que o campo unificado esteja sincronizado
+  const marc = listaEstado.marcacoes.get(ricId);
+  if (marc) atualizarPrazoEtapaAtualUI(marc);
 }
 
 async function abrirDetalhe(id) {
@@ -3098,6 +3130,11 @@ async function abrirDetalhe(id) {
         <div><label>Status interno</label><select id="m-status-interno">${statusIntOpts}</select></div>
         <div><label>Data do recebimento (SEI)</label><input type="date" id="m-data-recebimento-sei" value="${escapeAttr(m.dataRecebimentoSEI || "")}"></div>
         <div><label>Prazo final CN <span class="text-small text-muted">(auto da última etapa — editável)</span></label><input type="date" id="m-prazo-final-cn" value="${escapeAttr(m.prazoFinalCN || "")}"></div>
+      </div>
+      <div class="field-row-3">
+        <div><label>Etapa atual <span class="text-small text-muted">(da lista abaixo)</span></label><input type="text" id="m-etapa-atual-info" readonly value=""></div>
+        <div><label>Prazo da etapa atual <span class="text-small text-muted">(reflete a etapa em curso)</span></label><input type="text" id="m-prazo-etapa-atual" readonly value=""></div>
+        <div></div>
       </div>
       <div class="field-row-3">
         <div><label>Data da resposta</label><input type="date" id="m-data-resposta" value="${escapeAttr(m.dataResposta || "")}"></div>
@@ -5853,26 +5890,47 @@ const ETAPAS_FLUXO_COMPLETO = [
 function calcularPrazosSugeridos(dataRecebimento) {
   if (!dataRecebimento || !/^\d{4}-\d{2}-\d{2}$/.test(dataRecebimento)) return null;
   // Dia 1 dos 30 = primeiro dia útil APÓS o recebimento
+  // (CPC art. 224: exclui o dia do começo)
   const dia1 = somarDiasUteis(dataRecebimento, 1);
   if (!dia1) return null;
   // Dia 30 (corridos) a partir do dia1 (que é o dia 1)
+  // (CF art. 50 §2º: 30 dias)
   const [y, m, d] = dia1.split("-").map(Number);
   const dia30Dt = new Date(Date.UTC(y, m - 1, d) + 29 * 86400000); // +29 = 30 dias corridos contando o dia1
-  const dia30Iso = `${dia30Dt.getUTCFullYear()}-${String(dia30Dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dia30Dt.getUTCDate()).padStart(2, "0")}`;
+  let dia30Iso = `${dia30Dt.getUTCFullYear()}-${String(dia30Dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dia30Dt.getUTCDate()).padStart(2, "0")}`;
+  // CPC art. 224 §1º: se o vencimento cair em dia não útil, prorroga para o próximo dia útil
+  if (!ehDiaUtil(dia30Iso)) dia30Iso = proximoDiaUtil(dia30Iso);
   // Total de dias úteis entre dia1 e dia30 (inclusive)
   const totalDU = contarDiasUteis(dia1, dia30Iso);
-  // Determina a regra mais próxima (entre 18 e 22)
-  // Se < 18 → usa 18 (cenário pior); se > 22 → usa 22
+  // Determina a regra (entre 18 e 22). Clamp em caso de extremos.
   const ducap = Math.max(18, Math.min(22, totalDU));
   const regra = REGRAS_PRAZO_ETAPAS[ducap];
-  // Calcula prazos cumulativamente, sempre prorrogando para dia útil se cair em não-útil
+  // Cascata de etapas: cada etapa soma N dias úteis A PARTIR da etapa anterior,
+  // contando-a como dia útil 1. Isso faz a SOMA das transições coincidir com o
+  // total de dias úteis no intervalo, garantindo que a última etapa
+  // (validacao_gm_expedicao) caia no MESMO dia que o prazo final CN.
+  //
+  // Exemplo regra 22, Dia 1 = seg 08/06/2026:
+  //   Admiss = 5º dia útil contando Dia 1 = 12/06 (sex)
+  //   Subs   = Admiss + 6 d.ú. (sem contar Admiss) = 22/06 (seg)
+  //   ...
+  //   GM/Exp = +4 d.ú. = 07/07 (ter) = Dia 30
   const prazos = {};
   let base = dia1;
+  let isPrimeira = true;
   for (const etapa of ETAPAS_FLUXO_ORDEM) {
-    const d = somarDiasUteis(base, regra[etapa]);
-    // somarDiasUteis já garante dia útil (só avança em dias úteis)
-    prazos[etapa] = d;
-    base = d;
+    const n = regra[etapa];
+    let alvo;
+    if (isPrimeira) {
+      // A primeira etapa conta o próprio Dia 1 como dia útil 1, então somamos n-1 dias úteis
+      alvo = (n <= 1) ? base : somarDiasUteis(base, n - 1);
+      isPrimeira = false;
+    } else {
+      // Etapas seguintes: somam n dias úteis a partir da etapa anterior (sem contar)
+      alvo = somarDiasUteis(base, n);
+    }
+    prazos[etapa] = alvo;
+    base = alvo;
   }
   return { dia1, dia30: dia30Iso, totalDU, regraUsada: ducap, prazos };
 }
@@ -5906,7 +5964,6 @@ const RELATORIO_CAMPOS = {
       { id: "dataApresentacao", label: "Data de apresentação" },
       { id: "urlPortal", label: "Link do portal oficial" }, { id: "urlInteiroTeor", label: "Link do inteiro teor" },
     ],
-    defaultOn: true,
   },
   conteudo: {
     nome: "Conteúdo legislativo",
@@ -5916,7 +5973,6 @@ const RELATORIO_CAMPOS = {
       { id: "dataAprovacao", label: "Data de aprovação" }, { id: "despachoAprovacao", label: "Despacho de aprovação" },
       { id: "ultimaMovimentacao", label: "Última movimentação" },
     ],
-    defaultOn: true,
   },
   analise: {
     nome: "Análise da SSGP",
@@ -5927,8 +5983,6 @@ const RELATORIO_CAMPOS = {
       { id: "relevante", label: "Relevante (Sim/Não)" }, { id: "palavrasChave", label: "Palavras-chave (SSGP)" },
       { id: "resumo", label: "Resumo" }, { id: "comentarios", label: "Comentários" },
     ],
-    defaultOn: false,
-    defaultParcial: ["apelido", "tematica"],
   },
   tramitacaoInterna: {
     nome: "Tramitação interna",
@@ -5940,7 +5994,6 @@ const RELATORIO_CAMPOS = {
       { id: "tipoResposta", label: "Tipo de resposta" }, { id: "oficio", label: "Ofício" },
       { id: "atribuicao", label: "Atribuição" }, { id: "unidadesConsultadas", label: "Unidades consultadas" },
     ],
-    defaultOn: false,
   },
   historico: {
     nome: "Histórico e análogos (apenas modo Completo)",
@@ -5948,7 +6001,6 @@ const RELATORIO_CAMPOS = {
       { id: "historicoTramitacao", label: "Histórico de tramitação" },
       { id: "analogos", label: "Requerimentos análogos" },
     ],
-    defaultOn: false,
     apenasCompleto: true,
   },
 };
@@ -5971,12 +6023,10 @@ function relatorioEstadoPadrao() {
   for (const [grupo, def] of Object.entries(RELATORIO_CAMPOS)) {
     campos[grupo] = {};
     for (const c of def.campos) {
-      if (def.defaultOn) campos[grupo][c.id] = true;
-      else if (def.defaultParcial && def.defaultParcial.includes(c.id)) campos[grupo][c.id] = true;
-      else campos[grupo][c.id] = false;
+      campos[grupo][c.id] = false;
     }
   }
-  // Pré-seleciona os 6 campos do escopo mínimo
+  // Pré-seleciona somente os 6 campos do escopo mínimo
   for (const f of RELATORIO_CAMPOS_PRESELECIONADOS) {
     if (campos[f.grupo]) campos[f.grupo][f.id] = true;
   }
@@ -5984,7 +6034,7 @@ function relatorioEstadoPadrao() {
     preset: "personalizado", presetParam: { periodo: 30 },
     filtros: {}, campos,
     organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
-    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "selo" },
+    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "selo", estiloLinks: "url" },
     introducao: { incluir: false, texto: "", indicadores: { total: true, etapas: true, temas: true } },
     escopo: { rics: [], total: 0 },
     presetUsuarioAtual: "",
@@ -6029,6 +6079,21 @@ async function relatorioCalcularEscopo(estado) {
     if (f.apresAte) lista = lista.filter(p => p.dataApresentacao && p.dataApresentacao <= f.apresAte);
     if (f.aprovDe) lista = lista.filter(p => p.dataAprovacao && p.dataAprovacao >= f.aprovDe);
     if (f.aprovAte) lista = lista.filter(p => p.dataAprovacao && p.dataAprovacao <= f.aprovAte);
+    // Filtros por Prazo final CN — considera o valor da marcação ou o sugerido pelo histórico
+    if (f.prazoCnDe) {
+      lista = lista.filter(p => {
+        const m = mMap.get(p.id) || {};
+        const prz = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
+        return prz && prz >= f.prazoCnDe;
+      });
+    }
+    if (f.prazoCnAte) {
+      lista = lista.filter(p => {
+        const m = mMap.get(p.id) || {};
+        const prz = m.prazoFinalCN || p.prazoFinalCNSugerido || "";
+        return prz && prz <= f.prazoCnAte;
+      });
+    }
     if (f.respDe) lista = lista.filter(p => { const m = mMap.get(p.id) || {}; return m.dataResposta && m.dataResposta >= f.respDe; });
     if (f.respAte) lista = lista.filter(p => { const m = mMap.get(p.id) || {}; return m.dataResposta && m.dataResposta <= f.respAte; });
     if (f.movDias) {
@@ -6111,17 +6176,26 @@ function relatorioAgrupar(lista, agruparPor, marcsMap) {
   return arr;
 }
 
-function relatorioValorCampo(p, m, campoId) {
+function relatorioValorCampo(p, m, campoId, opts) {
   if (!m) m = {};
+  opts = opts || {};
+  const estiloLinks = opts.estiloLinks || "url"; // "url" ou "botao"
   const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function renderLink(url, labelBotao) {
+    if (!url) return "—";
+    if (estiloLinks === "botao") {
+      return `<a href="${esc(url)}" target="_blank" rel="noopener" class="rel-link-botao">${esc(labelBotao)}</a>`;
+    }
+    return `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
+  }
   switch (campoId) {
     case "casa": return ({ camara: "Câmara dos Deputados", senado: "Senado Federal", cn: "Congresso Nacional", cldf: "CLDF" }[p.origem] || p.origem || "—");
     case "sigla": return esc(p.sigla || "—");
     case "identificacao": return esc(p.identificacao || "—");
     case "autor": return esc(formatarAutor(p) || "—");
     case "dataApresentacao": return formatarData(p.dataApresentacao) || "—";
-    case "urlPortal": return p.urlPortal ? `<a href="${esc(p.urlPortal)}" target="_blank" rel="noopener">${esc(p.urlPortal)}</a>` : "—";
-    case "urlInteiroTeor": return p.urlInteiroTeor ? `<a href="${esc(p.urlInteiroTeor)}" target="_blank" rel="noopener">${esc(p.urlInteiroTeor)}</a>` : "—";
+    case "urlPortal": return renderLink(p.urlPortal, "Abrir página oficial");
+    case "urlInteiroTeor": return renderLink(p.urlInteiroTeor, "Abrir inteiro teor");
     case "ementa": return esc(p.ementa || "—");
     case "ementaDetalhada": return esc(p.ementaDetalhada || "—");
     case "keywords": return esc(p.keywords || "—");
@@ -6249,14 +6323,16 @@ function relatorioBlocoLista(grupo, estado) {
   }
   if (camposLigados.length === 0) return "<p class='rel-aviso'>Nenhum campo selecionado.</p>";
   const mMap = estado.escopo.marcacoes;
+  const optsValor = { estiloLinks: (estado.formatacao && estado.formatacao.estiloLinks) || "url" };
   return `${grupo.nome ? `<h2 class="rel-grupo">${escapeHtml(grupo.nome)} <span class="rel-grupo-cnt">(${grupo.rics.length})</span></h2>` : ""}<table class="rel-tabela"><thead><tr>${camposLigados.map(c => `<th>${escapeHtml(c.label)}</th>`).join("")}</tr></thead><tbody>${grupo.rics.map(p => {
     const m = mMap.get(p.id) || {};
-    return `<tr>${camposLigados.map(c => `<td>${relatorioValorCampo(p, m, c.id)}</td>`).join("")}</tr>`;
+    return `<tr>${camposLigados.map(c => `<td>${relatorioValorCampo(p, m, c.id, optsValor)}</td>`).join("")}</tr>`;
   }).join("")}</tbody></table>`;
 }
 
 function relatorioBlocoCompleto(grupo, estado) {
   const mMap = estado.escopo.marcacoes;
+  const optsValor = { estiloLinks: (estado.formatacao && estado.formatacao.estiloLinks) || "url" };
   return `${grupo.nome ? `<h2 class="rel-grupo">${escapeHtml(grupo.nome)} <span class="rel-grupo-cnt">(${grupo.rics.length})</span></h2>` : ""}${grupo.rics.map(p => {
     const m = mMap.get(p.id) || {};
     const blocos = [];
@@ -6266,7 +6342,7 @@ function relatorioBlocoCompleto(grupo, estado) {
       const camposAtivos = def.campos.filter(c => estado.campos[grupoKey][c.id] && !["identificacao","casa","autor","dataApresentacao"].includes(c.id));
       if (camposAtivos.length === 0) continue;
       const linhas = camposAtivos.map(c => {
-        const v = relatorioValorCampo(p, m, c.id);
+        const v = relatorioValorCampo(p, m, c.id, optsValor);
         if (v === "—" || v === "") return "";
         return `<div class="rel-kv"><div class="rel-kv-k">${escapeHtml(c.label)}</div><div class="rel-kv-v">${v}</div></div>`;
       }).filter(Boolean).join("");
@@ -6308,7 +6384,7 @@ function relatorioGerarHtml(estado, ehPrint) {
 function relatorioCss(ehPrint, orientacao) {
   const isLandscape = orientacao === "landscape";
   const maxW = isLandscape ? "29.7cm" : "21cm";
-  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-cabecalho-simples{padding:14px 0 8px;margin-bottom:4px}.rel-titulo-simples{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta-simples{font-size:8px;color:#94A3B8}.rel-grupo{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-introducao{margin:0 0 20px;background:#F8FAFC;border-left:3px solid #1E3A6F;padding:12px 16px;border-radius:0 4px 4px 0}.rel-intro-texto{font-size:10px;color:#1F2937;line-height:1.5;margin-bottom:12px}.rel-intro-texto:last-child{margin-bottom:0}.rel-indicadores{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.rel-indicador{background:#fff;border:1px solid #E2E8F0;padding:10px 12px;border-radius:4px}.rel-indicador-num{font-size:24px;font-weight:700;color:#1E3A6F;line-height:1}.rel-indicador-label{font-size:8px;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}.rel-indicador-bd .rel-indicador-label{margin-top:0;margin-bottom:6px}.rel-bd-titulo{font-weight:700;color:#1E3A6F}.rel-bd-row{display:flex;justify-content:space-between;align-items:baseline;padding:2px 0;border-bottom:0.5px dotted #E2E8F0;font-size:9px}.rel-bd-row:last-child{border-bottom:none}.rel-bd-label{color:#1F2937;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rel-bd-num{color:#1E3A6F;font-weight:700;font-variant-numeric:tabular-nums}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
+  return `*{box-sizing:border-box}body{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;color:#1F2937;margin:0;padding:0;background:#fff;font-size:11px;line-height:1.45}.rel-pagina{max-width:${maxW};margin:0 auto;padding:1.5cm 2cm}.rel-cabecalho{display:flex;align-items:stretch;min-height:80px;margin-bottom:4px}.rel-cabecalho-selo{background:#1E3A6F;color:#fff;width:28%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 8px}.rel-cabecalho-r{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:48px;font-weight:700;line-height:1}.rel-cabecalho-marca{font-size:7px;letter-spacing:0.12em;margin-top:6px;text-transform:uppercase}.rel-cabecalho-conteudo{flex:1;padding:14px 16px;display:flex;flex-direction:column;justify-content:center}.rel-titulo{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta{font-size:8px;color:#94A3B8}.rel-regua-dourada{height:2px;background:#C9A14A;margin-bottom:16px}.rel-cabecalho-simples{padding:14px 0 8px;margin-bottom:4px}.rel-titulo-simples{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:22px;font-weight:400;color:#1E3A6F;margin:0 0 6px 0;line-height:1.2}.rel-meta-simples{font-size:8px;color:#94A3B8}.rel-grupo{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:16px;font-weight:700;color:#1E3A6F;border-top:1px solid #1E3A6F;border-bottom:1px solid #1E3A6F;padding:6px 0;margin:18px 0 12px}.rel-grupo-cnt{font-size:11px;font-weight:400;color:#64748B;float:right}.rel-tabela{width:100%;border-collapse:collapse;margin-bottom:14px}.rel-tabela th{background:#1E3A6F;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:5px 6px;text-align:left}.rel-tabela td{font-size:9px;padding:5px 6px;border-bottom:0.5px solid #E2E8F0;vertical-align:top}.rel-tabela tr:nth-child(even) td{background:#F8FAFC}.rel-bloco{margin:14px 0;padding:12px;border-left:3px solid #C9A14A;background:#FAFBFC;page-break-inside:avoid}.rel-bloco-id{font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:14px;font-weight:700;color:#1E3A6F;margin:0 0 2px}.rel-bloco-sub{font-size:10px;color:#64748B;margin-bottom:6px}.rel-bloco-divisor{height:0.75px;background:#C9A14A;margin:6px 0 10px}.rel-sub-secao{margin-bottom:10px}.rel-sub-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1E3A6F;margin-bottom:5px;padding-top:4px}.rel-kv{margin-bottom:4px}.rel-kv-k{font-size:9px;font-weight:700;color:#475569}.rel-kv-v{font-size:9px;color:#1F2937;white-space:pre-wrap}.rel-hist-tabela{width:100%;border-collapse:collapse;font-size:8px;margin-top:4px}.rel-hist-tabela th,.rel-hist-tabela td{padding:3px 5px;border-bottom:0.5px solid #E2E8F0;text-align:left;vertical-align:top}.rel-hist-tabela th{background:#F1F5F9;color:#475569;font-weight:700}.rel-hist-aprov td{background:#ECFDF5!important;color:#047857}.rel-analogos{margin:4px 0 0 16px;padding:0;font-size:9px}.rel-analogos li{margin-bottom:3px}.rel-separador{border:none;border-top:0.5px solid #E2E8F0;margin:12px 0}.rel-introducao{margin:0 0 20px;background:#F8FAFC;border-left:3px solid #1E3A6F;padding:12px 16px;border-radius:0 4px 4px 0}.rel-intro-texto{font-size:10px;color:#1F2937;line-height:1.5;margin-bottom:12px}.rel-intro-texto:last-child{margin-bottom:0}.rel-indicadores{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.rel-indicador{background:#fff;border:1px solid #E2E8F0;padding:10px 12px;border-radius:4px}.rel-indicador-num{font-size:24px;font-weight:700;color:#1E3A6F;line-height:1}.rel-indicador-label{font-size:8px;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}.rel-indicador-bd .rel-indicador-label{margin-top:0;margin-bottom:6px}.rel-bd-titulo{font-weight:700;color:#1E3A6F}.rel-bd-row{display:flex;justify-content:space-between;align-items:baseline;padding:2px 0;border-bottom:0.5px dotted #E2E8F0;font-size:9px}.rel-bd-row:last-child{border-bottom:none}.rel-bd-label{color:#1F2937;max-width:75%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rel-bd-num{color:#1E3A6F;font-weight:700;font-variant-numeric:tabular-nums}.rel-rodape{margin-top:24px;padding-top:8px;border-top:0.5px solid #E2E8F0;font-size:7px;color:#94A3B8;text-align:center}.rel-link-botao{display:inline-block;padding:4px 10px;background:#1E3A6F;color:#fff!important;text-decoration:none!important;border-radius:3px;font-size:9px;font-weight:600;letter-spacing:0.04em}.rel-link-botao:hover{background:#2C4A7F}.rel-aviso{color:#94A3B8;font-style:italic;padding:14px;text-align:center}.rel-marca-dagua{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-family:"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;font-size:80px;color:#1E3A6F;opacity:0.06;pointer-events:none;z-index:1000;white-space:nowrap;font-weight:700;letter-spacing:0.05em}a{color:#1E3A6F;text-decoration:underline}@media print{@page{size:A4 ${orientacao};margin:1.5cm 2cm}body{font-size:10px}.rel-pagina{padding:0;max-width:none}.rel-grupo{page-break-before:always}.rel-grupo:first-child{page-break-before:avoid}.rel-bloco{page-break-inside:avoid}}`;
 }
 
 async function relatorioGerarPdf(estado) {
@@ -6442,7 +6518,7 @@ async function relatorioGerarWord(estado) {
               children: [
                 new D.Paragraph({
                   alignment: D.AlignmentType.CENTER,
-                  children: [new D.TextRun({ text: "R", bold: true, size: 96, color: CORES.BRANCO, font: "Cambria" })],
+                  children: [new D.TextRun({ text: "R", bold: true, size: 96, color: CORES.BRANCO, font: "Calibri" })],
                   spacing: { before: 0, after: 80 },
                 }),
                 new D.Paragraph({
@@ -6500,18 +6576,33 @@ async function relatorioGerarWord(estado) {
         })],
       })),
     });
+    const optsValor = { estiloLinks: (estado.formatacao && estado.formatacao.estiloLinks) || "url" };
     const dataRows = rics.map((p, idx) => {
       const m = marcsMap.get(p.id) || {};
       const zebra = idx % 2 === 1;
       return new D.TableRow({
         children: camposLigados.map(c => {
-          const v = limparHtml(relatorioValorCampo(p, m, c.id));
+          // Para urlPortal/urlInteiroTeor, geramos um hyperlink real do Word
+          let cellChildren;
+          const url = c.id === "urlPortal" ? p.urlPortal : (c.id === "urlInteiroTeor" ? p.urlInteiroTeor : null);
+          if ((c.id === "urlPortal" || c.id === "urlInteiroTeor") && url) {
+            const label = optsValor.estiloLinks === "botao"
+              ? (c.id === "urlPortal" ? "Abrir página oficial" : "Abrir inteiro teor")
+              : url;
+            cellChildren = [new D.Paragraph({
+              children: [new D.ExternalHyperlink({
+                link: url,
+                children: [new D.TextRun({ text: label, size: 16, color: CORES.AZUL, underline: {} })],
+              })],
+            })];
+          } else {
+            const v = limparHtml(relatorioValorCampo(p, m, c.id, optsValor));
+            cellChildren = [new D.Paragraph({ children: [new D.TextRun({ text: v, size: 16, color: CORES.CINZA_ESCURO })] })];
+          }
           return new D.TableCell({
             shading: zebra ? { fill: CORES.FUNDO_HEADER } : undefined,
             margins: { top: 80, bottom: 80, left: 100, right: 100 },
-            children: [new D.Paragraph({
-              children: [new D.TextRun({ text: v, size: 16, color: CORES.CINZA_ESCURO })],
-            })],
+            children: cellChildren,
           });
         }),
       });
@@ -6562,6 +6653,7 @@ async function relatorioGerarWord(estado) {
       border: { bottom: { color: CORES.DOURADO, space: 2, value: "single", size: 4 } },
     }));
     // Sub-seções por grupo
+    const optsValorCompleto = { estiloLinks: (estado.formatacao && estado.formatacao.estiloLinks) || "url" };
     for (const [grupoKey, def] of Object.entries(RELATORIO_CAMPOS)) {
       if (grupoKey === "historico") continue;
       const camposAtivos = def.campos.filter(c => estado.campos[grupoKey][c.id] && !["identificacao","casa","autor","dataApresentacao"].includes(c.id));
@@ -6569,7 +6661,27 @@ async function relatorioGerarWord(estado) {
       const subBuf = [];
       let temConteudo = false;
       for (const c of camposAtivos) {
-        const vRaw = relatorioValorCampo(p, m, c.id);
+        // Hyperlink especial para URLs
+        const url = c.id === "urlPortal" ? p.urlPortal : (c.id === "urlInteiroTeor" ? p.urlInteiroTeor : null);
+        if ((c.id === "urlPortal" || c.id === "urlInteiroTeor")) {
+          if (!url) continue;
+          temConteudo = true;
+          const label = optsValorCompleto.estiloLinks === "botao"
+            ? (c.id === "urlPortal" ? "Abrir página oficial" : "Abrir inteiro teor")
+            : url;
+          subBuf.push(new D.Paragraph({
+            children: [
+              new D.TextRun({ text: `${c.label}: `, bold: true, size: 18, color: CORES.CINZA_MEDIO }),
+              new D.ExternalHyperlink({
+                link: url,
+                children: [new D.TextRun({ text: label, size: 18, color: CORES.AZUL, underline: {} })],
+              }),
+            ],
+            spacing: { after: 80 },
+          }));
+          continue;
+        }
+        const vRaw = relatorioValorCampo(p, m, c.id, optsValorCompleto);
         if (vRaw === "—" || !vRaw) continue;
         temConteudo = true;
         subBuf.push(new D.Paragraph({
@@ -6850,6 +6962,12 @@ async function relatorioGerarWord(estado) {
   const titulo = estado.formatacao.titulo || "Relatório de requerimentos";
   const doc = new D.Document({
     creator: "Monitor RIC", title: titulo, description: "Relatório gerado pelo Monitor RIC",
+    // v4.6: força sans-serif (Calibri) como fonte padrão em todo o documento
+    styles: {
+      default: {
+        document: { run: { font: "Calibri" } },
+      },
+    },
     sections: [{
       properties: {
         page: {
@@ -7015,6 +7133,12 @@ async function relatorioRenderModal() {
           <div><label>Aprovação de</label><input type="date" id="rel-f-aprov-de" value="${escapeAttr(e.filtros.aprovDe||"")}"></div>
           <div><label>Aprovação até</label><input type="date" id="rel-f-aprov-ate" value="${escapeAttr(e.filtros.aprovAte||"")}"></div>
         </div>
+        <div class="form-row">
+          <div><label>Prazo final CN de</label><input type="date" id="rel-f-prazocn-de" value="${escapeAttr(e.filtros.prazoCnDe||"")}"></div>
+          <div><label>Prazo final CN até</label><input type="date" id="rel-f-prazocn-ate" value="${escapeAttr(e.filtros.prazoCnAte||"")}"></div>
+          <div></div>
+          <div></div>
+        </div>
       </div>
     `}
     <div class="rel-contador">Escopo atual: <b>${e.escopo.total}</b> requerimento${e.escopo.total!==1?"s":""}</div>
@@ -7053,6 +7177,10 @@ async function relatorioRenderModal() {
         <option value="nenhum"${e.formatacao.cabecalho==="nenhum"?" selected":""}>Sem cabeçalho</option>
       </select></div>
       <div><label>Orientação da página</label><select id="rel-fmt-orientacao"><option value="retrato"${e.formatacao.orientacao!=="paisagem"?" selected":""}>Retrato</option><option value="paisagem"${e.formatacao.orientacao==="paisagem"?" selected":""}>Paisagem</option></select></div>
+      <div><label>Inteiro Teor / página oficial</label><select id="rel-fmt-links">
+        <option value="url"${(e.formatacao.estiloLinks||"url")==="url"?" selected":""}>Mostrar URL completa</option>
+        <option value="botao"${e.formatacao.estiloLinks==="botao"?" selected":""}>Como botão clicável</option>
+      </select></div>
     </div>
     <div class="form-row" style="margin-top:8px">
       <div style="display:flex;align-items:center;gap:14px;padding-top:6px">
@@ -7132,6 +7260,7 @@ async function relatorioRenderModal() {
   bindFiltro("rel-f-statusint", "statusInterno"); bindFiltro("rel-f-rel", "rel");
   bindFiltro("rel-f-apres-de", "apresDe"); bindFiltro("rel-f-apres-ate", "apresAte");
   bindFiltro("rel-f-aprov-de", "aprovDe"); bindFiltro("rel-f-aprov-ate", "aprovAte");
+  bindFiltro("rel-f-prazocn-de", "prazoCnDe"); bindFiltro("rel-f-prazocn-ate", "prazoCnAte");
   const elLivre = document.getElementById("rel-f-livre");
   if (elLivre) elLivre.addEventListener("input", () => {
     if (elLivre.value) relatorioEstado.filtros.livre = elLivre.value;
@@ -7172,6 +7301,8 @@ async function relatorioRenderModal() {
   if (elOrient) elOrient.addEventListener("change", () => { relatorioEstado.formatacao.orientacao = elOrient.value; relatorioRenderModal(); });
   const elCab = document.getElementById("rel-fmt-cabecalho");
   if (elCab) elCab.addEventListener("change", () => { relatorioEstado.formatacao.cabecalho = elCab.value; relatorioRenderModal(); });
+  const elLinks = document.getElementById("rel-fmt-links");
+  if (elLinks) elLinks.addEventListener("change", () => { relatorioEstado.formatacao.estiloLinks = elLinks.value; });
 
   // Handlers da introdução
   const elIntroIncluir = document.getElementById("rel-intro-incluir");
