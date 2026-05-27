@@ -145,6 +145,19 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 }
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; min-width: 0; }
 .header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
+/* v4.7: indicador de status CloudSync */
+.cloud-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.cloud-status:hover { filter: brightness(0.97); }
+.cloud-status-icon { font-size: 12px; line-height: 1; }
+.cloud-status.cloud-local { color: var(--muted); }
+.cloud-status.cloud-syncing { color: #2563eb; border-color: #93c5fd; background: rgba(37,99,235,0.08); }
+.cloud-status.cloud-syncing .cloud-status-icon { animation: cloud-spin 1s linear infinite; }
+.cloud-status.cloud-ok { color: #047857; border-color: #6ee7b7; background: rgba(4,120,87,0.08); }
+.cloud-status.cloud-pending { color: #b45309; border-color: #fcd34d; background: rgba(180,83,9,0.08); }
+.cloud-status.cloud-error { color: #b91c1c; border-color: #fca5a5; background: rgba(185,28,28,0.08); }
+.cloud-status.cloud-offline { color: var(--muted); border-color: var(--border); }
+@keyframes cloud-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@media (max-width: 600px) { .cloud-status-txt { display: none; } }
 .versao-badge { display: inline-flex; align-items: center; padding: 0; border: none; border-radius: 0; font-size: 9px; font-weight: 600; background: transparent; color: var(--muted); letter-spacing: 0.05em; margin: 0; line-height: 1; opacity: 0.7; }
 .header-actions-tema { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .header-actions-tema .versao-badge { margin-top: 0; }
@@ -545,8 +558,14 @@ html.dark .log { background: #020617; }
 .modal-section:last-child { border-bottom: none; }
 .modal-section h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
 /* Modal sections colapsáveis */
-.modal-section.collapsible > .section-header { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; padding: 4px 0; margin-bottom: 0; }
-.modal-section.collapsible > .section-header h3 { margin: 0; flex: 1; }
+/* v4.7: acordeão do modal de configurações */
+.cfg-acordeao { transition: all 0.2s; }
+.cfg-acordeao-header { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px; }
+.cfg-acordeao-header::before { content: "\25BC"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.cfg-acordeao.cfg-collapsed .cfg-acordeao-header::before { transform: rotate(-90deg); }
+.cfg-acordeao.cfg-collapsed > *:not(.cfg-acordeao-header) { display: none !important; }
+.cfg-acordeao.cfg-collapsed { padding-bottom: 12px; }
+.modal-section.collapsible > .section-header { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; padding: 4px 0; margin-bottom: 0; }.modal-section.collapsible > .section-header h3 { margin: 0; flex: 1; }
 .modal-section.collapsible > .section-header::before { content: "▼"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
 .modal-section.collapsible.collapsed > .section-header::before { transform: rotate(-90deg); }
 .modal-section.collapsible.collapsed > .section-header { margin-bottom: 0; padding-bottom: 4px; }
@@ -733,8 +752,9 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
+        <button class="cloud-status cloud-local" id="cloud-status-indicator" title="CloudSync" aria-label="Status de sincronização"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Local</span></button>
         <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
-        <span class="versao-badge" title="Versão atual">v4.6</span>
+        <span class="versao-badge" title="Versão atual">v4.7</span>
       </div>
     </div>
   </div>
@@ -743,6 +763,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
       <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
         <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sincronizar</button>
+        <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">➕</span>Incluir requerimento</button>
         <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">⬆</span>Atualizar via XLSX</button>
         <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
       </div>
@@ -925,7 +946,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div id="filtros-container" style="margin-top:12px">
       <div class="form-row">
-        <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto, resumo, comentários"></div>
+        <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto, resumo, observações"></div>
         <div><label>Casa</label><select id="filter-casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option></select></div>
         <div><label>Sigla</label><select id="filter-sigla"><option value="">Todas</option><option value="RIC">RIC</option><option value="RQS">RQS</option><option value="REQ">REQ</option></select></div>
         <div><label>Ano</label><select id="filter-ano"><option value="">Todos</option></select></div>
@@ -1134,6 +1155,90 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 </div>
 
+<div class="modal-bg" id="modal-incluir-manual">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>➕ Incluir requerimento manualmente</h2>
+      <button class="modal-close" data-close-modal="modal-incluir-manual">&times;</button>
+    </div>
+    <div class="card">
+      <p class="text-small text-muted" style="margin-bottom:12px">Informe a casa, o tipo e o número/ano. O sistema buscará na API oficial e, se encontrar, preencherá automaticamente ementa, autor, tramitação e links. Se não encontrar (a busca por número/ano é limitada no Senado), o requerimento é criado em branco para você completar manualmente.</p>
+      <div class="form-row">
+        <div><label>Casa</label><select id="im-casa">
+          <option value="camara">Câmara dos Deputados</option>
+          <option value="senado">Senado Federal</option>
+        </select></div>
+        <div><label>Tipo</label><select id="im-sigla">
+          <option value="RIC">RIC</option>
+          <option value="RQS">RQS</option>
+          <option value="REQ">REQ</option>
+        </select></div>
+        <div><label>Número</label><input type="number" id="im-numero" placeholder="ex.: 1234" min="1"></div>
+        <div><label>Ano</label><input type="number" id="im-ano" placeholder="ex.: 2026" min="1988" max="2100"></div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn btn-primary" id="btn-im-confirmar">Buscar e incluir</button>
+      </div>
+      <div id="im-feedback" class="text-small" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-cloudsync">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>☁ Sincronização na nuvem</h2>
+      <button class="modal-close" data-close-modal="modal-cloudsync">&times;</button>
+    </div>
+    <div class="card">
+      <div id="cloud-estado-resumo" class="text-small" style="margin-bottom:12px"></div>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+        <button class="btn btn-primary btn-sm" id="btn-cloud-sync-agora">↻ Sincronizar agora</button>
+        <button class="btn btn-sm" id="btn-cloud-desconectar">Desconectar</button>
+      </div>
+    </div>
+    <div class="card cfg-acordeao">
+      <h2 class="cfg-acordeao-header">Configuração</h2>
+      <p class="text-small text-muted" style="margin-bottom:10px">Sincronização single-user via GitHub Gist privado. Os dados são cifrados (AES-GCM 256) antes de sair deste computador. Informe um PAT fine-grained com permissão de Gists e o ID do Gist (ou crie um novo).</p>
+      <div class="form-row">
+        <div style="flex:2"><label>Personal Access Token (PAT)</label><input type="password" id="cfg-cloud-pat" placeholder="github_pat_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-cloud-pat-nofill"></div>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div style="flex:2"><label>Gist ID</label><input type="text" id="cfg-cloud-gistid" placeholder="ID do Gist secreto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-cloud-gistid-nofill"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-sm" id="btn-cloud-criar-gist">+ Criar novo Gist</button></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" id="btn-cloud-salvar-cfg">Salvar configuração</button>
+      </div>
+      <div id="cloud-cfg-feedback" class="text-small" style="margin-top:8px"></div>
+    </div>
+    <div class="card cfg-acordeao cfg-collapsed">
+      <h2 class="cfg-acordeao-header">Ativar outro computador</h2>
+      <p class="text-small text-muted" style="margin-bottom:10px">Exporte a configuração neste computador e cole no outro para ativar a sincronização com um único <i>paste</i>.</p>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+        <button class="btn btn-sm" id="btn-cloud-exportar">Exportar configuração</button>
+      </div>
+      <textarea id="cloud-export-texto" rows="3" readonly style="margin-top:8px;display:none" placeholder="Texto de configuração aparecerá aqui"></textarea>
+      <div style="margin-top:12px">
+        <label>Importar configuração (colar do outro computador)</label>
+        <textarea id="cloud-import-texto" rows="3" placeholder="Cole aqui o texto MRIC1:..." autocomplete="off" data-1p-ignore data-lpignore="true"></textarea>
+        <button class="btn btn-sm btn-primary" id="btn-cloud-importar" style="margin-top:8px">Importar e ativar</button>
+      </div>
+      <div id="cloud-import-feedback" class="text-small" style="margin-top:8px"></div>
+    </div>
+    <div class="card cfg-acordeao cfg-collapsed">
+      <h2 class="cfg-acordeao-header">Como configurar (passo a passo)</h2>
+      <ol class="text-small" style="line-height:1.7;padding-left:20px">
+        <li>No GitHub, gere um <b>PAT fine-grained</b> restrito a <b>Gists</b> (Account settings → Developer settings → Fine-grained tokens; em "Account permissions", habilite "Gists: Read and write").</li>
+        <li>Cole o PAT no campo acima e clique em <b>"+ Criar novo Gist"</b> — o ID será preenchido automaticamente.</li>
+        <li>Clique em <b>Salvar configuração</b> e depois em <b>Sincronizar agora</b>.</li>
+        <li>Em cada computador adicional, use <b>Exportar configuração</b> aqui e <b>Importar e ativar</b> lá — um único <i>paste</i> resolve.</li>
+        <li><b>Computador compartilhado?</b> Clique em <b>Desconectar</b> ao terminar de usar, para remover as credenciais deste dispositivo.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-config">
   <div class="modal modal-wide">
     <div class="modal-header">
@@ -1144,7 +1249,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <h2>🤖 API Gemini (análise automática de PDFs)</h2>
       <p class="text-small text-muted" style="margin-bottom:12px">Configure sua chave da Google Gemini API para analisar automaticamente o inteiro teor dos requerimentos e pré-preencher os campos Objeto e Resumo. <a href="https://aistudio.google.com/apikey" target="_blank">Obter chave</a>.</p>
       <div class="form-row">
-        <div style="flex:2"><label>Chave da API</label><input type="password" id="cfg-gemini-key" placeholder="AIza..."></div>
+        <div style="flex:2"><label>Chave da API</label><input type="password" id="cfg-gemini-key" placeholder="AIza..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-gemini-key-nofill"></div>
         <div><label>Modelo</label><select id="cfg-gemini-model">
           <option value="gemini-2.5-flash">gemini-2.5-flash (rápido, recomendado)</option>
           <option value="gemini-2.5-pro">gemini-2.5-pro (mais preciso)</option>
@@ -1265,7 +1370,7 @@ const URL_CAMARA = "https://dadosabertos.camara.leg.br/api/v2";
 const URL_SENADO = "https://legis.senado.leg.br/dadosabertos";
 const DB_NAME = "monitor-ric";
 const DB_NAME_LEGADO = "monitor-sic";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const SCHEMA_VERSAO_DADOS = 6;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
@@ -1390,6 +1495,8 @@ const DB = (() => {
         if (!d.objectStoreNames.contains("marcacoes")) d.createObjectStore("marcacoes", { keyPath: "proposicaoId" });
         if (!d.objectStoreNames.contains("config")) d.createObjectStore("config", { keyPath: "key" });
         if (!d.objectStoreNames.contains("naomapeadas")) d.createObjectStore("naomapeadas", { keyPath: "situacao" });
+        // v4.7: store de tombstones (registros deletados) para CloudSync
+        if (!d.objectStoreNames.contains("tombstones")) d.createObjectStore("tombstones", { keyPath: "id" });
       };
       req.onsuccess = () => { db = req.result; resolve(db); };
       req.onerror = () => reject(req.error);
@@ -1398,15 +1505,38 @@ const DB = (() => {
   function tx(stores, mode = "readonly") { return db.transaction(stores, mode); }
   function getAll(store) { return new Promise((res, rej) => { const r = tx([store]).objectStore(store).getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
   function get(store, key) { return new Promise((res, rej) => { const r = tx([store]).objectStore(store).get(key); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
-  function put(store, value) { return new Promise((res, rej) => { const r = tx([store], "readwrite").objectStore(store).put(value); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
-  function bulkPut(store, values) { return new Promise((res, rej) => { const t = tx([store], "readwrite"); const s = t.objectStore(store); values.forEach(v => s.put(v)); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); }
+  function put(store, value, opts) {
+    opts = opts || {};
+    return new Promise((res, rej) => {
+      const r = tx([store], "readwrite").objectStore(store).put(value);
+      r.onsuccess = () => { res(r.result); if (opts.sync !== false) CloudSync.notificarMudanca(); };
+      r.onerror = () => rej(r.error);
+    });
+  }
+  function bulkPut(store, values, opts) {
+    opts = opts || {};
+    return new Promise((res, rej) => {
+      const t = tx([store], "readwrite"); const s = t.objectStore(store);
+      values.forEach(v => s.put(v));
+      t.oncomplete = () => { res(); if (opts.sync !== false) CloudSync.notificarMudanca(); };
+      t.onerror = () => rej(t.error);
+    });
+  }
+  function del(store, key, opts) {
+    opts = opts || {};
+    return new Promise((res, rej) => {
+      const r = tx([store], "readwrite").objectStore(store).delete(key);
+      r.onsuccess = () => { res(); if (opts.sync !== false) CloudSync.notificarMudanca(); };
+      r.onerror = () => rej(r.error);
+    });
+  }
   function clear(store) { return new Promise((res, rej) => { const r = tx([store], "readwrite").objectStore(store).clear(); r.onsuccess = () => res(); r.onerror = () => rej(r.error); }); }
-  function clearAll() { return Promise.all(["proposicoes","marcacoes","config","naomapeadas"].map(clear)); }
-  return { open, getAll, get, put, bulkPut, clear, clearAll };
+  function clearAll() { return Promise.all(["proposicoes","marcacoes","config","naomapeadas","tombstones"].map(clear)); }
+  return { open, getAll, get, put, bulkPut, delete: del, clear, clearAll };
 })();
 
 async function getConfig(key, def) { const r = await DB.get("config", key); return r ? r.value : def; }
-async function setConfig(key, value) { await DB.put("config", { key, value }); }
+async function setConfig(key, value, opts) { await DB.put("config", { key, value }, opts); }
 
 // ===== Migração v1/v2 → v3 (incluindo cópia do banco legado monitor-sic) =====
 async function migrarBancoLegado() {
@@ -2252,6 +2382,116 @@ async function enriquecerProposicao(prop, opts = {}) {
   }
 }
 
+// ===== Inclusão manual de requerimento (v4.7) =====
+// Busca na API da casa por sigla+numero+ano; se achar, cria proposição enriquecida
+// com id real. Se não achar (ou API não suportar — caso do Senado), cria proposição
+// sintética com id "manual-..." totalmente editável no modal de detalhe.
+async function camaraBuscarPorNumeroAno(sigla, numero, ano) {
+  const url = `${URL_CAMARA}/proposicoes?siglaTipo=${encodeURIComponent(sigla)}&numero=${encodeURIComponent(numero)}&ano=${encodeURIComponent(ano)}&itens=20&ordem=ASC&ordenarPor=id`;
+  const data = await smartFetch(url);
+  const lista = data.dados || [];
+  // Match exato por número e ano
+  return lista.find(p => String(p.numero) === String(numero) && String(p.ano) === String(ano)) || lista[0] || null;
+}
+
+async function senadoBuscarPorNumeroAno(sigla, numero, ano) {
+  // O Senado não tem endpoint confiável de busca por sigla+numero+ano para RQS/REQ.
+  // Tentamos o pesquisa de matérias; se falhar ou não bater, retorna null (cai em sintético).
+  try {
+    const url = `${URL_SENADO}/materia/pesquisa/lista?sigla=${encodeURIComponent(sigla)}&numero=${encodeURIComponent(numero)}&ano=${encodeURIComponent(ano)}`;
+    const data = await smartFetch(url);
+    // Estrutura variável; tentamos extrair de forma defensiva
+    const materias = data?.PesquisaBasicaMateria?.Materias?.Materia
+      || data?.ListaMateria?.Materias?.Materia
+      || null;
+    if (!materias) return null;
+    const arr = Array.isArray(materias) ? materias : [materias];
+    // Match por número/ano
+    const achado = arr.find(m => {
+      const ic = m.IdentificacaoMateria || m;
+      return String(ic.NumeroMateria || ic.Numero) === String(numero) && String(ic.AnoMateria || ic.Ano) === String(ano);
+    });
+    return achado || null;
+  } catch (e) {
+    return null; // API não suportou — cai em sintético
+  }
+}
+
+async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
+  sigla = (sigla || "").trim().toUpperCase();
+  numero = String(numero || "").trim();
+  ano = String(ano || "").trim();
+  if (!sigla || !numero || !ano) throw new Error("Informe tipo, número e ano.");
+
+  // Verifica se já existe na base (por identificação)
+  const idTentativa = casa === "camara" ? null : null; // id real só após busca
+  const existentes = await DB.getAll("proposicoes");
+  const jaExiste = existentes.find(p =>
+    p.origem === casa && String(p.numero) === numero && String(p.ano) === ano && (p.sigla || "").toUpperCase() === sigla
+  );
+  if (jaExiste) {
+    return { resultado: "existente", proposicao: jaExiste };
+  }
+
+  if (casa === "camara") {
+    const achado = await camaraBuscarPorNumeroAno(sigla, numero, ano);
+    if (achado) {
+      const norm = normalizaProposicaoCamara(achado);
+      // Enriquecimento completo
+      await camaraEnriquecerDetalhe(norm); await sleep(THROTTLE_MS);
+      await camaraEnriquecerAutor(norm); await sleep(THROTTLE_MS);
+      await enriquecerProposicao(norm, { forcar: true }); await sleep(THROTTLE_MS);
+      norm.inclusaoManual = true;
+      await DB.put("proposicoes", norm);
+      return { resultado: "enriquecido", proposicao: norm };
+    }
+  } else if (casa === "senado") {
+    const achado = await senadoBuscarPorNumeroAno(sigla, numero, ano);
+    if (achado) {
+      // Tenta normalizar a partir do que veio (estrutura de pesquisa difere da de detalhe)
+      const ic = achado.IdentificacaoMateria || achado;
+      const fake = {
+        Codigo: ic.CodigoMateria || ic.Codigo || `${sigla}${numero}${ano}`,
+        Sigla: sigla, Numero: numero, Ano: ano,
+        Ementa: achado.Ementa || achado.EmentaMateria || "",
+        Autor: achado.Autor || "",
+        Data: achado.DataApresentacao || "",
+        DescricaoIdentificacao: `${sigla} ${numero}/${ano}`,
+        UrlDetalheMateria: ic.CodigoMateria ? `https://www25.senado.leg.br/web/atividade/materias/-/materia/${ic.CodigoMateria}` : ""
+      };
+      const norm = normalizaMateriaSenado(fake);
+      try { await senadoBuscarInteiroTeor(norm); await sleep(THROTTLE_MS); } catch (e) {}
+      try { await enriquecerProposicao(norm, { forcar: true }); await sleep(THROTTLE_MS); } catch (e) {}
+      norm.inclusaoManual = true;
+      await DB.put("proposicoes", norm);
+      return { resultado: "enriquecido", proposicao: norm };
+    }
+  }
+
+  // Fallback sintético — não encontrado ou API não suportou
+  const idSint = `manual-${casa}-${sigla}-${numero}-${ano}-${Date.now().toString(36)}`;
+  const comissao = "";
+  const sintetico = {
+    id: idSint, idOriginal: null, origem: casa,
+    sigla, numero: parseInt(numero, 10) || numero, ano: parseInt(ano, 10) || ano,
+    identificacao: `${sigla} ${numero}/${ano}`,
+    ementa: "", ementaDetalhada: "", keywords: "",
+    dataApresentacao: "",
+    autor: "", autorPartido: "", autorUF: "",
+    situacaoBruta: "", descricaoTramitacao: "", despacho: "",
+    siglaOrgao: "",
+    url: "", urlInteiroTeor: "",
+    urlPortal: "",
+    historico: [], situacaoLegislativa: "pendente",
+    dataAprovacao: "", despachoAprovacao: "",
+    ultimaMovimentacaoData: "",
+    inclusaoManual: true, sintetico: true,
+    dataEnriquecimento: "", coletadoEm: new Date().toISOString()
+  };
+  await DB.put("proposicoes", sintetico);
+  return { resultado: "sintetico", proposicao: sintetico };
+}
+
 // ===== LOG =====
 const log = (() => {
   const el = document.getElementById("sync-log");
@@ -2877,6 +3117,9 @@ async function excluirRic(id) {
   // Apaga
   if (m) await DB.delete("marcacoes", id);
   await DB.delete("proposicoes", id);
+  // v4.7: registra tombstones para não ressuscitar o item entre dispositivos (CloudSync)
+  if (m) await CloudSync.registrarTombstone("marc", id);
+  await CloudSync.registrarTombstone("prop", id);
 }
 
 async function reverterExclusao(snapId) {
@@ -2885,6 +3128,11 @@ async function reverterExclusao(snapId) {
   if (!snap) throw new Error("Snapshot não encontrado.");
   await DB.put("proposicoes", snap.proposicao);
   if (snap.marcacao) await DB.put("marcacoes", snap.marcacao);
+  // v4.7: remove tombstones para o item poder voltar a sincronizar normalmente
+  try {
+    await DB.delete("tombstones", "prop:" + snap.proposicao.id, { sync: false });
+    await DB.delete("tombstones", "marc:" + snap.proposicao.id, { sync: false });
+  } catch (e) {}
   // Remove o snapshot consumido
   const novo = arr.filter(s => s.id !== snapId);
   localStorage.setItem(RIC_EXCLUSAO_SNAPSHOTS_KEY, JSON.stringify(novo));
@@ -3107,7 +3355,7 @@ async function abrirDetalhe(id) {
       <div class="section-content">
       <label>Resumo</label>
       <textarea id="m-resumo" rows="6" placeholder="Resumo do conteúdo dos quesitos formulados...">${escapeHtml(m.resumo || "")}</textarea>
-      <label style="margin-top:10px">Comentários / Observações</label>
+      <label style="margin-top:10px">Observações</label>
       <textarea id="m-comentarios" rows="8" placeholder="Anotações da triagem (precedentes, observações de admissibilidade etc.)">${escapeHtml(m.comentarios || "")}</textarea>
 
       <!-- Buscar análogos integrado à Análise da SSGP -->
@@ -3601,12 +3849,29 @@ async function abrirDetalhe(id) {
     };
   }
 
-  // Toggle das seções colapsáveis (v4.6: independente — vários podem ficar abertos)
+  // Toggle das seções colapsáveis
+  // v4.7: acordeão EXCLUSIVO — só um aberto por vez; ao abrir um, fecha os outros.
+  // Ao trocar de tópico, salva automaticamente a marcação (persiste o que estava aberto).
   document.querySelectorAll("#modal-detalhe .modal-section.collapsible > .section-header").forEach(h => {
-    h.addEventListener("click", () => {
-      h.parentElement.classList.toggle("collapsed");
+    h.addEventListener("click", async () => {
+      const sec = h.parentElement;
+      const estaAberto = !sec.classList.contains("collapsed");
+      if (estaAberto) {
+        // Fechando o tópico atual → salva
+        await salvarMarcacaoAtual();
+        sec.classList.add("collapsed");
+      } else {
+        // Abrindo um tópico → salva o que estava aberto e fecha todos os outros (exclusivo)
+        await salvarMarcacaoAtual();
+        document.querySelectorAll("#modal-detalhe .modal-section.collapsible").forEach(s => s.classList.add("collapsed"));
+        sec.classList.remove("collapsed");
+      }
     });
   });
+  // v4.7: inicia com o tópico "Objeto" aberto (todos os outros fechados)
+  document.querySelectorAll("#modal-detalhe .modal-section.collapsible").forEach(s => s.classList.add("collapsed"));
+  const secObjeto = document.querySelector('#modal-detalhe .modal-section.collapsible[data-sec="objeto"]');
+  if (secObjeto) secObjeto.classList.remove("collapsed");
 
   // Bind das etapas do fluxo (v4.6)
   bindEtapasFluxoHandlers(id);
@@ -4654,7 +4919,174 @@ document.getElementById("btn-dark-toggle").addEventListener("click", async () =>
 // ===== HISTORY API: setup dos handlers dos botões abrir-modal =====
 // (abrirModal já é History-aware desde a definição no topo do script UI)
 document.getElementById("btn-open-sync").onclick = () => { fecharMenuAcoes(); popularAnos(); abrirModal("modal-sync"); renderNaoMapeadas(); };
-document.getElementById("btn-open-config").onclick = async () => { fecharMenuAcoes(); await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); };
+// v4.7: converte os cards do modal de configurações em acordeão exclusivo (1 aberto por vez)
+function configToAcordeao() {
+  const modal = document.getElementById("modal-config");
+  if (!modal) return;
+  const body = modal.querySelector(".modal") || modal;
+  if (!body) return;
+  // Seleciona os cards diretos do corpo (exceto o header principal "Configurações")
+  const cards = [...body.querySelectorAll(":scope > .card")];
+  cards.forEach((card, idx) => {
+    if (card.dataset.acordeaoPronto === "1") return;
+    const h2 = card.querySelector(":scope > h2");
+    if (!h2) { card.dataset.acordeaoPronto = "1"; return; }
+    card.classList.add("cfg-acordeao");
+    if (idx !== 0) card.classList.add("cfg-collapsed");
+    h2.classList.add("cfg-acordeao-header");
+    h2.addEventListener("click", () => {
+      const estaAberto = !card.classList.contains("cfg-collapsed");
+      // Fecha todos
+      cards.forEach(c => c.classList.add("cfg-collapsed"));
+      // Se estava fechado, abre; se estava aberto, deixa fechado (toggle exclusivo)
+      if (!estaAberto) card.classList.remove("cfg-collapsed");
+    });
+    card.dataset.acordeaoPronto = "1";
+  });
+}
+
+document.getElementById("btn-open-config").onclick = async () => { fecharMenuAcoes(); await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); configToAcordeao(); };
+
+// ===== Handlers da UI CloudSync (v4.7) =====
+function renderCloudModalEstado() {
+  const cfg = CloudSync.cfg;
+  const resumo = document.getElementById("cloud-estado-resumo");
+  if (resumo) {
+    const st = CloudSync.status;
+    const stTxt = { local: "Local (sem sincronização)", sincronizando: "Sincronizando…", sincronizado: "Sincronizado", pendente: "Pendente (alterações não enviadas)", erro: "Erro na última sincronização", offline: "Offline" }[st] || st;
+    resumo.innerHTML = CloudSync.estaConfigurado()
+      ? `Status: <b>${stTxt}</b><br>Gist ID: <code>${escapeHtml(cfg.gistId)}</code>`
+      : `Não configurado. Preencha PAT + Gist ID abaixo, ou importe a configuração de outro computador.`;
+  }
+  // Preenche os campos (sem expor o PAT inteiro se já salvo — mostra como está)
+  const elPat = document.getElementById("cfg-cloud-pat");
+  const elGist = document.getElementById("cfg-cloud-gistid");
+  if (elPat && cfg.pat) elPat.value = cfg.pat;
+  if (elGist && cfg.gistId) elGist.value = cfg.gistId;
+}
+
+document.getElementById("cloud-status-indicator").onclick = () => {
+  abrirModal("modal-cloudsync");
+  renderCloudModalEstado();
+};
+
+// ===== Inclusão manual de requerimento (v4.7) =====
+document.getElementById("btn-incluir-manual").onclick = () => {
+  fecharMenuAcoes();
+  document.getElementById("im-feedback").innerHTML = "";
+  document.getElementById("im-numero").value = "";
+  document.getElementById("im-ano").value = new Date().getFullYear();
+  abrirModal("modal-incluir-manual");
+};
+
+document.getElementById("im-casa").addEventListener("change", e => {
+  const casa = e.target.value;
+  const elSigla = document.getElementById("im-sigla");
+  if (casa === "camara") {
+    elSigla.innerHTML = '<option value="RIC">RIC</option>';
+  } else {
+    elSigla.innerHTML = '<option value="RQS">RQS</option><option value="REQ">REQ</option>';
+  }
+});
+
+document.getElementById("btn-im-confirmar").onclick = async () => {
+  const casa = document.getElementById("im-casa").value;
+  const sigla = document.getElementById("im-sigla").value;
+  const numero = document.getElementById("im-numero").value.trim();
+  const ano = document.getElementById("im-ano").value.trim();
+  const fb = document.getElementById("im-feedback");
+  if (!numero || !ano) { fb.innerHTML = '<span style="color:#b91c1c">Informe número e ano.</span>'; return; }
+  fb.innerHTML = "Buscando na API oficial…";
+  const btn = document.getElementById("btn-im-confirmar");
+  btn.disabled = true;
+  try {
+    const r = await incluirRequerimentoManual({ casa, sigla, numero, ano });
+    await carregarLista();
+    aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
+    if (r.resultado === "existente") {
+      fb.innerHTML = '<span style="color:#b45309">Este requerimento já existe na base. Abrindo o detalhe…</span>';
+      setTimeout(() => { dispararFecharModal("modal-incluir-manual"); abrirDetalhe(r.proposicao.id); }, 800);
+    } else if (r.resultado === "enriquecido") {
+      fb.innerHTML = '<span style="color:#047857">✓ Encontrado e enriquecido pela API. Abrindo o detalhe…</span>';
+      setTimeout(() => { dispararFecharModal("modal-incluir-manual"); abrirDetalhe(r.proposicao.id); }, 900);
+    } else {
+      fb.innerHTML = '<span style="color:#b45309">Não encontrado na API (ou busca não suportada). Criado em <b>modo sintético</b> — complete os dados no detalhe. Abrindo…</span>';
+      setTimeout(() => { dispararFecharModal("modal-incluir-manual"); abrirDetalhe(r.proposicao.id); }, 1200);
+    }
+  } catch (e) {
+    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+document.getElementById("btn-cloud-salvar-cfg").onclick = async () => {
+  const pat = document.getElementById("cfg-cloud-pat").value.trim();
+  const gistId = document.getElementById("cfg-cloud-gistid").value.trim();
+  const fb = document.getElementById("cloud-cfg-feedback");
+  if (!pat || !gistId) { fb.innerHTML = '<span style="color:#b91c1c">Informe PAT e Gist ID (ou crie um novo Gist).</span>'; return; }
+  await CloudSync.salvarConfig(pat, gistId);
+  fb.innerHTML = '<span style="color:#047857">Configuração salva. Sincronizando…</span>';
+  const r = await CloudSync.sincronizarAgora();
+  fb.innerHTML = r.ok ? '<span style="color:#047857">Sincronizado com sucesso.</span>' : `<span style="color:#b91c1c">${escapeHtml(r.erro || "Falha na sincronização")}</span>`;
+  renderCloudModalEstado();
+};
+
+document.getElementById("btn-cloud-criar-gist").onclick = async () => {
+  const pat = document.getElementById("cfg-cloud-pat").value.trim();
+  const fb = document.getElementById("cloud-cfg-feedback");
+  if (!pat) { fb.innerHTML = '<span style="color:#b91c1c">Informe o PAT antes de criar o Gist.</span>'; return; }
+  fb.innerHTML = "Criando Gist secreto…";
+  try {
+    await CloudSync.salvarConfig(pat, ""); // grava o PAT para o create usar
+    const gistId = await CloudSync.criarNovoGist();
+    document.getElementById("cfg-cloud-gistid").value = gistId;
+    await CloudSync.salvarConfig(pat, gistId);
+    fb.innerHTML = `<span style="color:#047857">Gist criado: <code>${escapeHtml(gistId)}</code>. Clique em "Salvar configuração" para sincronizar.</span>`;
+    renderCloudModalEstado();
+  } catch (e) {
+    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e.message)}</span>`;
+  }
+};
+
+document.getElementById("btn-cloud-sync-agora").onclick = async () => {
+  const r = await CloudSync.sincronizarAgora();
+  renderCloudModalEstado();
+  if (!r.ok && r.erro) alert("Falha na sincronização: " + r.erro);
+};
+
+document.getElementById("btn-cloud-desconectar").onclick = async () => {
+  if (!confirm("Desconectar a sincronização deste computador? As credenciais (PAT e Gist ID) serão removidas deste dispositivo. Os dados locais permanecem.")) return;
+  await CloudSync.desconectar();
+  document.getElementById("cfg-cloud-pat").value = "";
+  document.getElementById("cfg-cloud-gistid").value = "";
+  renderCloudModalEstado();
+};
+
+document.getElementById("btn-cloud-exportar").onclick = () => {
+  const txt = CloudSync.exportarConfig();
+  const ta = document.getElementById("cloud-export-texto");
+  if (!txt) { alert("Configure o PAT e o Gist ID antes de exportar."); return; }
+  ta.style.display = "block";
+  ta.value = txt;
+  ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+};
+
+document.getElementById("btn-cloud-importar").onclick = async () => {
+  const txt = document.getElementById("cloud-import-texto").value.trim();
+  const fb = document.getElementById("cloud-import-feedback");
+  if (!txt) { fb.innerHTML = '<span style="color:#b91c1c">Cole o texto de configuração.</span>'; return; }
+  try {
+    await CloudSync.importarConfig(txt);
+    fb.innerHTML = '<span style="color:#047857">Configuração importada. Sincronizando…</span>';
+    const r = await CloudSync.sincronizarAgora();
+    fb.innerHTML = r.ok ? '<span style="color:#047857">Ativado e sincronizado.</span>' : `<span style="color:#b91c1c">${escapeHtml(r.erro || "Falha")}</span>`;
+    renderCloudModalEstado();
+  } catch (e) {
+    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e.message)}</span>`;
+  }
+};
 
 // Menu de ações — abre/fecha o dropdown
 const menuAcoesEl = document.getElementById("menu-acoes");
@@ -4680,6 +5112,8 @@ document.querySelectorAll("[data-close-modal]").forEach(b => {
   b.onclick = e => dispararFecharModal(b.dataset.closeModal);
 });
 document.querySelectorAll(".modal-bg").forEach(bg => {
+  // v4.7: modal-detalhe NÃO fecha ao clicar fora (só pelo X), para evitar perda acidental de edição
+  if (bg.id === "modal-detalhe") return;
   bg.onclick = e => { if (e.target === bg) dispararFecharModal(bg.id); };
 });
 
@@ -5717,6 +6151,392 @@ async function reverterImportacao(snapId) {
   }
 }
 
+// ===== MÓDULO CLOUDSYNC (v4.7) — sincronização single-user via GitHub Gist privado =====
+// Reaproveita o desenho da v4.4, removendo coordenação multiusuário.
+// CRIPTO: AES-GCM 256, gzip antes de cifrar, chave derivada de PAT+GistID (PBKDF2-SHA256 100k).
+// CLOUD: wrappers GET/PATCH no Gist; status no header; offline-first; sync automático + manual.
+// MERGE: last-write-wins por timestamp; tombstone básico local para não ressuscitar deletados.
+
+class CloudHttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.name = "CloudHttpError";
+    this.status = status;
+  }
+}
+
+const CloudSync = (() => {
+  // ---- Estado interno ----
+  let _cfg = { pat: "", gistId: "" };         // credenciais
+  let _key = null;                            // CryptoKey derivada (cache em memória)
+  let _status = "local";                      // local|sincronizando|sincronizado|pendente|erro|offline
+  let _debounceTimer = null;
+  let _ultimoErro = "";
+  let _syncEmCurso = false;
+  const GIST_FILENAME = "monitor-ric-data.json.enc";
+  const ENVELOPE_V = 1;
+
+  // ---- Utilidades base64 / bytes ----
+  function bytesToB64(bytes) {
+    let bin = "";
+    const arr = new Uint8Array(bytes);
+    const chunk = 0x8000;
+    for (let i = 0; i < arr.length; i += chunk) {
+      bin += String.fromCharCode.apply(null, arr.subarray(i, i + chunk));
+    }
+    return btoa(bin);
+  }
+  function b64ToBytes(b64) {
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+
+  // ---- gzip via CompressionStream (fallback: sem compressão) ----
+  async function gzip(str) {
+    const enc = new TextEncoder().encode(str);
+    if (typeof CompressionStream === "undefined") return { data: enc, compressed: false };
+    try {
+      const cs = new CompressionStream("gzip");
+      const writer = cs.writable.getWriter();
+      writer.write(enc); writer.close();
+      const ab = await new Response(cs.readable).arrayBuffer();
+      return { data: new Uint8Array(ab), compressed: true };
+    } catch (e) {
+      return { data: enc, compressed: false };
+    }
+  }
+  async function gunzip(bytes, compressed) {
+    if (!compressed) return new TextDecoder().decode(bytes);
+    const ds = new DecompressionStream("gzip");
+    const writer = ds.writable.getWriter();
+    writer.write(bytes); writer.close();
+    const ab = await new Response(ds.readable).arrayBuffer();
+    return new TextDecoder().decode(ab);
+  }
+
+  // ---- Derivação de chave: PBKDF2-SHA256(PAT+GistID), salt determinístico do GistID ----
+  async function saltDeterministico(gistId) {
+    const base = new TextEncoder().encode("monitor-ric-v1:" + gistId);
+    const hash = await crypto.subtle.digest("SHA-256", base);
+    return new Uint8Array(hash).slice(0, 16); // primeiros 16 bytes
+  }
+  async function derivarChave(pat, gistId) {
+    const material = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(pat + ":" + gistId),
+      { name: "PBKDF2" }, false, ["deriveKey"]
+    );
+    const salt = await saltDeterministico(gistId);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+      material,
+      { name: "AES-GCM", length: 256 },
+      false, ["encrypt", "decrypt"]
+    );
+  }
+  async function garantirChave() {
+    if (_key) return _key;
+    if (!_cfg.pat || !_cfg.gistId) throw new Error("CloudSync não configurado.");
+    _key = await derivarChave(_cfg.pat, _cfg.gistId);
+    return _key;
+  }
+
+  // ---- Cifragem / decifragem (envelope) ----
+  async function cifrar(plaintext) {
+    const key = await garantirChave();
+    const { data, compressed } = await gzip(plaintext);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+    return JSON.stringify({
+      v: ENVELOPE_V, alg: "AES-GCM-256", kdf: "PBKDF2-SHA256-100k",
+      compressed, iv: bytesToB64(iv), ciphertext: bytesToB64(ct)
+    });
+  }
+  async function decifrar(envelopeStr) {
+    const env = JSON.parse(envelopeStr);
+    const key = await garantirChave();
+    const iv = b64ToBytes(env.iv);
+    const ct = b64ToBytes(env.ciphertext);
+    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+    return gunzip(new Uint8Array(plain), env.compressed);
+  }
+
+  // ---- Wrappers HTTP do GitHub Gist ----
+  async function gistGet(gistId, pat) {
+    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }
+    });
+    if (!resp.ok) throw httpError(resp.status);
+    return resp.json();
+  }
+  async function gistPatch(gistId, pat, contentStr) {
+    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+      method: "PATCH",
+      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
+      body: JSON.stringify({ files: { [GIST_FILENAME]: { content: contentStr } } })
+    });
+    if (!resp.ok) throw httpError(resp.status);
+    return resp.json();
+  }
+  async function gistCreate(pat) {
+    const resp = await fetch(`https://api.github.com/gists`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
+      body: JSON.stringify({ description: "Monitor RIC — dados sincronizados (cifrados)", public: false, files: { [GIST_FILENAME]: { content: "{}" } } })
+    });
+    if (!resp.ok) throw httpError(resp.status);
+    return resp.json();
+  }
+  function httpError(status) {
+    const msgs = {
+      401: "Token (PAT) inválido ou expirado. Verifique o PAT.",
+      403: "Acesso negado (403). O PAT precisa de permissão de leitura/escrita em Gists, e pode estar com rate limit.",
+      404: "Gist não encontrado (404). Verifique o Gist ID ou crie um novo Gist."
+    };
+    return new CloudHttpError(status, msgs[status] || `Erro HTTP ${status} ao acessar o GitHub.`);
+  }
+
+  // ---- Serialização do snapshot local ----
+  async function montarSnapshotLocal() {
+    const [proposicoes, marcacoes, naomapeadas, tombstones, config] = await Promise.all([
+      DB.getAll("proposicoes"), DB.getAll("marcacoes"), DB.getAll("naomapeadas"),
+      DB.getAll("tombstones"), DB.getAll("config")
+    ]);
+    // Não sincroniza credenciais de nuvem nem chave Gemini (sensíveis e específicas do dispositivo)
+    const configFiltrada = config.filter(c => !["cloudPat", "cloudGistId", "geminiKey"].includes(c.key));
+    return {
+      schema: "monitor-ric-cloud-v1",
+      exportadoEm: new Date().toISOString(),
+      proposicoes, marcacoes, naomapeadas, tombstones,
+      config: configFiltrada
+    };
+  }
+
+  // ---- Merge last-write-wins ----
+  function timestampDe(obj) {
+    // Para proposições: prefere dataEnriquecimento, depois coletadoEm
+    // Para marcações: atualizadoEm
+    return obj.dataEnriquecimento || obj.atualizadoEm || obj.coletadoEm || obj.exportadoEm || "";
+  }
+  function mergeListas(local, remoto, keyField) {
+    const map = new Map();
+    for (const item of local) map.set(item[keyField], item);
+    for (const item of remoto) {
+      const ex = map.get(item[keyField]);
+      if (!ex) { map.set(item[keyField], item); continue; }
+      // Last-write-wins por timestamp
+      const tEx = timestampDe(ex), tNew = timestampDe(item);
+      if (tNew > tEx) map.set(item[keyField], item);
+    }
+    return [...map.values()];
+  }
+
+  async function aplicarSnapshotRemoto(remoto) {
+    // Carrega locais
+    const [propLocal, marcLocal, naoLocal, tombLocal] = await Promise.all([
+      DB.getAll("proposicoes"), DB.getAll("marcacoes"), DB.getAll("naomapeadas"), DB.getAll("tombstones")
+    ]);
+    // Tombstones: união (não ressuscita deletados entre dispositivos do mesmo usuário)
+    const tombMap = new Map();
+    for (const t of [...tombLocal, ...(remoto.tombstones || [])]) {
+      const ex = tombMap.get(t.id);
+      if (!ex || (t.deletadoEm || "") > (ex.deletadoEm || "")) tombMap.set(t.id, t);
+    }
+    const tombstones = [...tombMap.values()];
+    const tombIds = new Set(tombstones.map(t => t.id));
+
+    // Merge das listas
+    let proposicoes = mergeListas(propLocal, remoto.proposicoes || [], "id");
+    let marcacoes = mergeListas(marcLocal, remoto.marcacoes || [], "proposicaoId");
+    let naomapeadas = mergeListas(naoLocal, remoto.naomapeadas || [], "situacao");
+
+    // Remove itens com tombstone (deletados)
+    proposicoes = proposicoes.filter(p => !tombIds.has("prop:" + p.id));
+    marcacoes = marcacoes.filter(m => !tombIds.has("marc:" + m.proposicaoId));
+
+    // Persiste tudo SEM disparar nova sync (sync: false)
+    await DB.bulkPut("tombstones", tombstones, { sync: false });
+    if (proposicoes.length) await DB.bulkPut("proposicoes", proposicoes, { sync: false });
+    if (marcacoes.length) await DB.bulkPut("marcacoes", marcacoes, { sync: false });
+    if (naomapeadas.length) await DB.bulkPut("naomapeadas", naomapeadas, { sync: false });
+    // Config compartilhada (last-write-wins simples)
+    if (remoto.config) {
+      for (const c of remoto.config) {
+        if (["cloudPat", "cloudGistId", "geminiKey"].includes(c.key)) continue;
+        await DB.put("config", c, { sync: false });
+      }
+    }
+  }
+
+  // ---- Status / indicador ----
+  function setStatus(s, erro) {
+    _status = s;
+    if (erro !== undefined) _ultimoErro = erro;
+    renderStatusIndicator();
+  }
+  function renderStatusIndicator() {
+    const el = document.getElementById("cloud-status-indicator");
+    if (!el) return;
+    const mapa = {
+      local:        { icon: "○", txt: "Local", cls: "cloud-local" },
+      sincronizando:{ icon: "↻", txt: "Sincronizando…", cls: "cloud-syncing" },
+      sincronizado: { icon: "✓", txt: "Sincronizado", cls: "cloud-ok" },
+      pendente:     { icon: "●", txt: "Pendente", cls: "cloud-pending" },
+      erro:         { icon: "⚠", txt: "Erro", cls: "cloud-error" },
+      offline:      { icon: "⊘", txt: "Offline", cls: "cloud-offline" },
+    };
+    const m = mapa[_status] || mapa.local;
+    el.className = "cloud-status " + m.cls;
+    el.innerHTML = `<span class="cloud-status-icon">${m.icon}</span><span class="cloud-status-txt">${m.txt}</span>`;
+    el.title = _ultimoErro && _status === "erro" ? _ultimoErro : `CloudSync: ${m.txt}`;
+  }
+
+  // ---- Carregamento da config ----
+  async function carregarConfig() {
+    _cfg.pat = await getConfig("cloudPat", "");
+    _cfg.gistId = await getConfig("cloudGistId", "");
+    _key = null; // invalida cache de chave
+    if (estaConfigurado()) setStatus("pendente"); else setStatus("local");
+  }
+  function estaConfigurado() { return !!(_cfg.pat && _cfg.gistId); }
+
+  async function salvarConfig(pat, gistId) {
+    _cfg.pat = pat.trim();
+    _cfg.gistId = gistId.trim();
+    _key = null;
+    await setConfig("cloudPat", _cfg.pat, { sync: false });
+    await setConfig("cloudGistId", _cfg.gistId, { sync: false });
+    if (estaConfigurado()) setStatus("pendente"); else setStatus("local");
+  }
+
+  async function desconectar() {
+    _cfg = { pat: "", gistId: "" };
+    _key = null;
+    await setConfig("cloudPat", "", { sync: false });
+    await setConfig("cloudGistId", "", { sync: false });
+    setStatus("local");
+  }
+
+  // ---- Sync principal ----
+  async function sincronizarAgora(opts) {
+    opts = opts || {};
+    if (!estaConfigurado()) { setStatus("local"); return { ok: false, motivo: "não configurado" }; }
+    if (!navigator.onLine) { setStatus("offline"); return { ok: false, motivo: "offline" }; }
+    if (_syncEmCurso) return { ok: false, motivo: "já em curso" };
+    _syncEmCurso = true;
+    setStatus("sincronizando");
+    try {
+      // 1. Baixa remoto
+      let remotoObj = null;
+      const gist = await comBackoff(() => gistGet(_cfg.gistId, _cfg.pat));
+      const file = gist.files && gist.files[GIST_FILENAME];
+      if (file && file.content && file.content.trim() && file.content.trim() !== "{}") {
+        try {
+          const plain = await decifrar(file.content);
+          remotoObj = JSON.parse(plain);
+        } catch (e) {
+          // Conteúdo ilegível (chave errada?) — não sobrescreve cegamente
+          throw new Error("Falha ao decifrar dados da nuvem. Verifique se o PAT e o Gist ID conferem com os que criaram o backup.");
+        }
+      }
+      // 2. Aplica remoto sobre local (merge)
+      if (remotoObj) await aplicarSnapshotRemoto(remotoObj);
+      // 3. Sobe estado mesclado
+      const snap = await montarSnapshotLocal();
+      const envelope = await cifrar(JSON.stringify(snap));
+      await comBackoff(() => gistPatch(_cfg.gistId, _cfg.pat, envelope));
+      await setConfig("cloudUltimaSync", new Date().toISOString(), { sync: false });
+      setStatus("sincronizado");
+      // Atualiza a UI da aplicação se merge trouxe mudanças
+      if (remotoObj && !opts.silencioso) {
+        if (typeof recarregarTudo === "function") await recarregarTudo();
+      }
+      return { ok: true };
+    } catch (e) {
+      const ehAuth = e instanceof CloudHttpError && (e.status === 401 || e.status === 403);
+      setStatus("erro", e.message);
+      console.error("CloudSync erro:", e);
+      return { ok: false, erro: e.message, auth: ehAuth };
+    } finally {
+      _syncEmCurso = false;
+    }
+  }
+
+  // ---- Backoff exponencial (sem retry em erro de auth) ----
+  async function comBackoff(fn, tentativas = 3) {
+    let ultimoErro;
+    for (let i = 0; i < tentativas; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        ultimoErro = e;
+        // Não faz retry em erro de autenticação
+        if (e instanceof CloudHttpError && (e.status === 401 || e.status === 403 || e.status === 404)) throw e;
+        // Backoff: 500ms, 1s, 2s...
+        if (i < tentativas - 1) await new Promise(r => setTimeout(r, 500 * Math.pow(2, i)));
+      }
+    }
+    throw ultimoErro;
+  }
+
+  // ---- Notificação de mudança (debounced) ----
+  function notificarMudanca() {
+    if (!estaConfigurado()) return;
+    setStatus("pendente");
+    if (_debounceTimer) clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(() => { sincronizarAgora({ silencioso: true }); }, 2500);
+  }
+
+  // ---- Registro de tombstone ao deletar ----
+  async function registrarTombstone(tipo, idReal) {
+    const tid = tipo + ":" + idReal;
+    await DB.put("tombstones", { id: tid, tipo, refId: idReal, deletadoEm: new Date().toISOString() }, { sync: false });
+  }
+
+  // ---- Criar novo Gist ----
+  async function criarNovoGist() {
+    if (!_cfg.pat) throw new Error("Informe o PAT antes de criar o Gist.");
+    const gist = await gistCreate(_cfg.pat);
+    _cfg.gistId = gist.id;
+    await setConfig("cloudGistId", gist.id, { sync: false });
+    setStatus("pendente");
+    return gist.id;
+  }
+
+  // ---- Exportar / importar config ----
+  function exportarConfig() {
+    if (!estaConfigurado()) return "";
+    // Formato simples: base64 de JSON
+    return "MRIC1:" + btoa(JSON.stringify({ pat: _cfg.pat, gistId: _cfg.gistId }));
+  }
+  async function importarConfig(texto) {
+    const t = (texto || "").trim();
+    if (!t.startsWith("MRIC1:")) throw new Error("Texto de configuração inválido.");
+    const obj = JSON.parse(atob(t.slice(6)));
+    if (!obj.pat || !obj.gistId) throw new Error("Configuração incompleta.");
+    await salvarConfig(obj.pat, obj.gistId);
+    return true;
+  }
+
+  // ---- Listeners de rede ----
+  function initRede() {
+    window.addEventListener("online", () => {
+      if (estaConfigurado()) { setStatus("pendente"); sincronizarAgora({ silencioso: true }); }
+    });
+    window.addEventListener("offline", () => { if (estaConfigurado()) setStatus("offline"); });
+  }
+
+  return {
+    carregarConfig, salvarConfig, desconectar, estaConfigurado,
+    sincronizarAgora, notificarMudanca, registrarTombstone,
+    criarNovoGist, exportarConfig, importarConfig,
+    renderStatusIndicator, setStatus, initRede,
+    get cfg() { return { ..._cfg }; },
+    get status() { return _status; },
+  };
+})();
+
 // ===== MÓDULO FERIADOS E DIAS ÚTEIS (v4.6) =====
 // Calcula feriados nacionais brasileiros (fixos + móveis) + permite adicionar customizados.
 // Persistência dos customizados em localStorage.
@@ -5978,10 +6798,10 @@ const RELATORIO_CAMPOS = {
     nome: "Análise da SSGP",
     campos: [
       { id: "apelido", label: "Objeto resumido" },
-      { id: "objetoTema", label: "Objeto — só o TEMA (CAIXA ALTA)" },
+      { id: "objetoTema", label: "Assunto" },
       { id: "tematica", label: "Temática" },
       { id: "relevante", label: "Relevante (Sim/Não)" }, { id: "palavrasChave", label: "Palavras-chave (SSGP)" },
-      { id: "resumo", label: "Resumo" }, { id: "comentarios", label: "Comentários" },
+      { id: "resumo", label: "Resumo" }, { id: "comentarios", label: "Observações" },
     ],
   },
   tramitacaoInterna: {
@@ -6034,7 +6854,7 @@ function relatorioEstadoPadrao() {
     preset: "personalizado", presetParam: { periodo: 30 },
     filtros: {}, campos,
     organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
-    formatacao: { titulo: "", variante: "selo", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "selo", estiloLinks: "url" },
+    formatacao: { titulo: "", variante: "simples", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "simples", estiloLinks: "url" },
     introducao: { incluir: false, texto: "", indicadores: { total: true, etapas: true, temas: true } },
     escopo: { rics: [], total: 0 },
     presetUsuarioAtual: "",
@@ -7148,7 +7968,7 @@ async function relatorioRenderModal() {
 <details class="rel-bloco" data-bloco-id="B"${openAttr("B", false)}>
   <summary class="rel-bloco-summary"><b>B. Campos a incluir</b></summary>
   <div class="rel-bloco-conteudo">
-    <p class="text-small text-muted" style="margin-bottom:8px">Campos <b>pré-selecionados</b> por padrão: Número/ano, Autor, Objeto, Resumo, Comentários e Prazo CN final. Você pode desmarcar ou adicionar outros conforme a necessidade.</p>
+    <p class="text-small text-muted" style="margin-bottom:8px">Campos <b>pré-selecionados</b> por padrão: Número/ano, Autor, Objeto, Resumo, Observações e Prazo CN final. Você pode desmarcar ou adicionar outros conforme a necessidade.</p>
     ${blocoB}
   </div>
 </details>
@@ -7386,6 +8206,18 @@ document.querySelectorAll("[data-rel-painel]").forEach(b => b.addEventListener("
 }));
 
 
+// v4.7: recarrega dados em memória e re-renderiza a UI (chamada após merge do CloudSync)
+async function recarregarTudo() {
+  try {
+    await carregarLista();
+    aplicarFiltros();
+    ordenar();
+    renderTabela();
+    renderHeaderStats();
+    renderPainel();
+  } catch (e) { console.error("recarregarTudo:", e); }
+}
+
 (async () => {
   try {
     await DB.open();
@@ -7399,6 +8231,14 @@ document.querySelectorAll("[data-rel-painel]").forEach(b => b.addEventListener("
     await renderDashboard();
     // Detectar estado inconsistente de aplicação XLSX (rollback automático)
     await XLSX_MERGE.verificarEstadoInconsistente();
+    // v4.7: CloudSync — carrega config, inicia listeners de rede, sincroniza ao abrir
+    await CloudSync.carregarConfig();
+    CloudSync.initRede();
+    CloudSync.renderStatusIndicator();
+    if (CloudSync.estaConfigurado()) {
+      // Sync ao abrir (não bloqueia a UI)
+      CloudSync.sincronizarAgora().catch(e => console.error("Sync inicial:", e));
+    }
   } catch (e) {
     alert("Falha ao inicializar: " + e.message);
     console.error(e);
