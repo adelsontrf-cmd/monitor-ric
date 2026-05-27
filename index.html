@@ -752,7 +752,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
-        <button class="cloud-status cloud-local" id="cloud-status-indicator" title="CloudSync" aria-label="Status de sincronização"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Local</span></button>
+        <button class="cloud-status cloud-local" id="cloud-status-indicator" title="Clique para sincronizar agora" aria-label="Sincronizar agora"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Local</span></button>
         <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
         <span class="versao-badge" title="Versão atual">v4.7</span>
       </div>
@@ -763,6 +763,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
       <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
         <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sincronizar</button>
+        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">☁</span>Sincronização na nuvem</button>
         <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">➕</span>Incluir requerimento</button>
         <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">⬆</span>Atualizar via XLSX</button>
         <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
@@ -4920,32 +4921,35 @@ document.getElementById("btn-dark-toggle").addEventListener("click", async () =>
 // (abrirModal já é History-aware desde a definição no topo do script UI)
 document.getElementById("btn-open-sync").onclick = () => { fecharMenuAcoes(); popularAnos(); abrirModal("modal-sync"); renderNaoMapeadas(); };
 // v4.7: converte os cards do modal de configurações em acordeão exclusivo (1 aberto por vez)
-function configToAcordeao() {
-  const modal = document.getElementById("modal-config");
+function configToAcordeao(modalId = "modal-config", opts = {}) {
+  const { todosFechados = false } = opts;
+  const modal = document.getElementById(modalId);
   if (!modal) return;
   const body = modal.querySelector(".modal") || modal;
   if (!body) return;
-  // Seleciona os cards diretos do corpo (exceto o header principal "Configurações")
+  // Seleciona os cards diretos do corpo (exceto o header principal)
   const cards = [...body.querySelectorAll(":scope > .card")];
   cards.forEach((card, idx) => {
-    if (card.dataset.acordeaoPronto === "1") return;
     const h2 = card.querySelector(":scope > h2");
     if (!h2) { card.dataset.acordeaoPronto = "1"; return; }
-    card.classList.add("cfg-acordeao");
-    if (idx !== 0) card.classList.add("cfg-collapsed");
-    h2.classList.add("cfg-acordeao-header");
-    h2.addEventListener("click", () => {
-      const estaAberto = !card.classList.contains("cfg-collapsed");
-      // Fecha todos
-      cards.forEach(c => c.classList.add("cfg-collapsed"));
-      // Se estava fechado, abre; se estava aberto, deixa fechado (toggle exclusivo)
-      if (!estaAberto) card.classList.remove("cfg-collapsed");
-    });
-    card.dataset.acordeaoPronto = "1";
+    // Estado inicial colapsado (recalculado a cada abertura)
+    if (todosFechados || idx !== 0) card.classList.add("cfg-collapsed");
+    else card.classList.remove("cfg-collapsed");
+    // Registra o handler de clique apenas uma vez
+    if (card.dataset.acordeaoPronto !== "1") {
+      card.classList.add("cfg-acordeao");
+      h2.classList.add("cfg-acordeao-header");
+      h2.addEventListener("click", () => {
+        const estaAberto = !card.classList.contains("cfg-collapsed");
+        cards.forEach(c => c.classList.add("cfg-collapsed"));
+        if (!estaAberto) card.classList.remove("cfg-collapsed");
+      });
+      card.dataset.acordeaoPronto = "1";
+    }
   });
 }
 
-document.getElementById("btn-open-config").onclick = async () => { fecharMenuAcoes(); await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); configToAcordeao(); };
+document.getElementById("btn-open-config").onclick = async () => { fecharMenuAcoes(); await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); configToAcordeao("modal-config", { todosFechados: true }); };
 
 // ===== Handlers da UI CloudSync (v4.7) =====
 function renderCloudModalEstado() {
@@ -4965,9 +4969,27 @@ function renderCloudModalEstado() {
   if (elGist && cfg.gistId) elGist.value = cfg.gistId;
 }
 
-document.getElementById("cloud-status-indicator").onclick = () => {
+// v4.7.1: abre o modal de sincronização (agora acessível pelo menu de ações)
+function abrirModalCloudSync() {
   abrirModal("modal-cloudsync");
   renderCloudModalEstado();
+  configToAcordeao("modal-cloudsync", { todosFechados: true });
+}
+
+document.getElementById("btn-open-cloudsync").onclick = () => { fecharMenuAcoes(); abrirModalCloudSync(); };
+
+// v4.7.1: o clique no badge dispara "Sincronizar agora" (não abre mais o modal).
+// Se não estiver configurado, abre o modal para o usuário configurar.
+document.getElementById("cloud-status-indicator").onclick = async () => {
+  if (!CloudSync.estaConfigurado()) {
+    abrirModalCloudSync();
+    return;
+  }
+  const r = await CloudSync.sincronizarAgora();
+  if (!r.ok && r.erro) {
+    // Em caso de erro, abre o modal para o usuário ver/ajustar
+    abrirModalCloudSync();
+  }
 };
 
 // ===== Inclusão manual de requerimento (v4.7) =====
@@ -6854,7 +6876,7 @@ function relatorioEstadoPadrao() {
     preset: "personalizado", presetParam: { periodo: 30 },
     filtros: {}, campos,
     organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
-    formatacao: { titulo: "", variante: "simples", numeracao: true, marcaDagua: false, orientacao: "retrato", cabecalho: "simples", estiloLinks: "url" },
+    formatacao: { titulo: "", variante: "simples", numeracao: true, marcaDagua: false, orientacao: "paisagem", cabecalho: "simples", estiloLinks: "url" },
     introducao: { incluir: false, texto: "", indicadores: { total: true, etapas: true, temas: true } },
     escopo: { rics: [], total: 0 },
     presetUsuarioAtual: "",
