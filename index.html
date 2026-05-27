@@ -1210,6 +1210,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
       <div class="toolbar" style="margin-top:10px">
         <button class="btn btn-primary btn-sm" id="btn-cloud-salvar-cfg">Salvar configuração</button>
+        <button class="btn btn-sm" id="btn-cloud-testar">Testar conexão</button>
       </div>
       <div id="cloud-cfg-feedback" class="text-small" style="margin-top:8px"></div>
     </div>
@@ -1230,11 +1231,13 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="card cfg-acordeao cfg-collapsed">
       <h2 class="cfg-acordeao-header">Como configurar (passo a passo)</h2>
       <ol class="text-small" style="line-height:1.7;padding-left:20px">
-        <li>No GitHub, gere um <b>PAT fine-grained</b> restrito a <b>Gists</b> (Account settings → Developer settings → Fine-grained tokens; em "Account permissions", habilite "Gists: Read and write").</li>
-        <li>Cole o PAT no campo acima e clique em <b>"+ Criar novo Gist"</b> — o ID será preenchido automaticamente.</li>
-        <li>Clique em <b>Salvar configuração</b> e depois em <b>Sincronizar agora</b>.</li>
+        <li><b>Recomendado — token clássico (mais confiável para Gists):</b> GitHub → Settings → Developer settings → <b>Personal access tokens → Tokens (classic)</b> → <b>Generate new token (classic)</b>. Em "Select scopes", marque apenas <b>gist</b>. Gere e copie o token.</li>
+        <li>(Alternativa fine-grained: em "Account permissions" habilite "Gists: Read and write" — porém tokens fine-grained às vezes dão erro 403 em Gists, por isso o clássico é preferível.)</li>
+        <li>Cole o token no campo <b>PAT</b> acima e clique em <b>Testar conexão</b> para confirmar que tem acesso a Gists.</li>
+        <li>Clique em <b>"+ Criar novo Gist"</b> — o ID será preenchido automaticamente.</li>
+        <li>Clique em <b>Salvar configuração</b>. A primeira sincronização ocorre automaticamente.</li>
         <li>Em cada computador adicional, use <b>Exportar configuração</b> aqui e <b>Importar e ativar</b> lá — um único <i>paste</i> resolve.</li>
-        <li><b>Computador compartilhado?</b> Clique em <b>Desconectar</b> ao terminar de usar, para remover as credenciais deste dispositivo.</li>
+        <li><b>Computador compartilhado?</b> Clique em <b>Desconectar</b> ao terminar, para remover as credenciais deste dispositivo.</li>
       </ol>
     </div>
   </div>
@@ -3851,19 +3854,15 @@ async function abrirDetalhe(id) {
   }
 
   // Toggle das seções colapsáveis
-  // v4.7: acordeão EXCLUSIVO — só um aberto por vez; ao abrir um, fecha os outros.
-  // Ao trocar de tópico, salva automaticamente a marcação (persiste o que estava aberto).
+  // v4.7.1: acordeão EXCLUSIVO — só um aberto por vez; ao abrir um, fecha os outros.
+  // SEM auto-save: as alterações são gravadas apenas quando o usuário clica em "Salvar".
   document.querySelectorAll("#modal-detalhe .modal-section.collapsible > .section-header").forEach(h => {
-    h.addEventListener("click", async () => {
+    h.addEventListener("click", () => {
       const sec = h.parentElement;
       const estaAberto = !sec.classList.contains("collapsed");
       if (estaAberto) {
-        // Fechando o tópico atual → salva
-        await salvarMarcacaoAtual();
         sec.classList.add("collapsed");
       } else {
-        // Abrindo um tópico → salva o que estava aberto e fecha todos os outros (exclusivo)
-        await salvarMarcacaoAtual();
         document.querySelectorAll("#modal-detalhe .modal-section.collapsible").forEach(s => s.classList.add("collapsed"));
         sec.classList.remove("collapsed");
       }
@@ -5052,6 +5051,23 @@ document.getElementById("btn-cloud-salvar-cfg").onclick = async () => {
   const r = await CloudSync.sincronizarAgora();
   fb.innerHTML = r.ok ? '<span style="color:#047857">Sincronizado com sucesso.</span>' : `<span style="color:#b91c1c">${escapeHtml(r.erro || "Falha na sincronização")}</span>`;
   renderCloudModalEstado();
+};
+
+document.getElementById("btn-cloud-testar").onclick = async () => {
+  const pat = document.getElementById("cfg-cloud-pat").value.trim();
+  const fb = document.getElementById("cloud-cfg-feedback");
+  if (!pat) { fb.innerHTML = '<span style="color:#b91c1c">Cole o PAT antes de testar.</span>'; return; }
+  fb.innerHTML = "Testando conexão com o GitHub…";
+  try {
+    const r = await CloudSync.diagnosticar(pat);
+    if (r.ok) {
+      fb.innerHTML = `<span style="color:#047857">✓ ${escapeHtml(r.msg)}</span>`;
+    } else {
+      fb.innerHTML = `<span style="color:#b91c1c">✗ ${escapeHtml(r.msg)}</span>`;
+    }
+  } catch (e) {
+    fb.innerHTML = `<span style="color:#b91c1c">Falha no teste: ${escapeHtml(e.message)}</span>`;
+  }
 };
 
 document.getElementById("btn-cloud-criar-gist").onclick = async () => {
@@ -6289,7 +6305,7 @@ const CloudSync = (() => {
     const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
       headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }
     });
-    if (!resp.ok) throw httpError(resp.status);
+    if (!resp.ok) throw await httpError(resp);
     return resp.json();
   }
   async function gistPatch(gistId, pat, contentStr) {
@@ -6298,7 +6314,7 @@ const CloudSync = (() => {
       headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
       body: JSON.stringify({ files: { [GIST_FILENAME]: { content: contentStr } } })
     });
-    if (!resp.ok) throw httpError(resp.status);
+    if (!resp.ok) throw await httpError(resp);
     return resp.json();
   }
   async function gistCreate(pat) {
@@ -6307,16 +6323,60 @@ const CloudSync = (() => {
       headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
       body: JSON.stringify({ description: "Monitor RIC — dados sincronizados (cifrados)", public: false, files: { [GIST_FILENAME]: { content: "{}" } } })
     });
-    if (!resp.ok) throw httpError(resp.status);
+    if (!resp.ok) throw await httpError(resp);
     return resp.json();
   }
-  function httpError(status) {
-    const msgs = {
-      401: "Token (PAT) inválido ou expirado. Verifique o PAT.",
-      403: "Acesso negado (403). O PAT precisa de permissão de leitura/escrita em Gists, e pode estar com rate limit.",
-      404: "Gist não encontrado (404). Verifique o Gist ID ou crie um novo Gist."
-    };
-    return new CloudHttpError(status, msgs[status] || `Erro HTTP ${status} ao acessar o GitHub.`);
+  async function httpError(resp) {
+    const status = resp.status;
+    // Tenta ler a mensagem do GitHub e os headers de rate limit
+    let ghMsg = "";
+    try { const body = await resp.json(); ghMsg = body && body.message ? body.message : ""; } catch (e) {}
+    const remaining = resp.headers.get("x-ratelimit-remaining");
+    const reset = resp.headers.get("x-ratelimit-reset");
+    const ehRateLimit = remaining === "0";
+    let msg;
+    if (status === 401) {
+      msg = "Token (PAT) inválido ou expirado. Gere um novo token e cole de novo.";
+    } else if (status === 403) {
+      if (ehRateLimit) {
+        let quando = "";
+        if (reset) { const dt = new Date(parseInt(reset, 10) * 1000); quando = ` Tente novamente após ${dt.toLocaleTimeString("pt-BR")}.`; }
+        msg = `Limite de requisições do GitHub atingido (rate limit).${quando}`;
+      } else {
+        // 403 sem rate limit = problema de permissão. Fine-grained PATs costumam falhar aqui.
+        msg = "Acesso negado (403). Tokens fine-grained às vezes não conseguem ler/escrever Gists mesmo com a permissão marcada. " +
+              "Recomendado: use um token CLÁSSICO (Classic token) com o escopo \"gist\" marcado — é o mais confiável para Gists.";
+      }
+    } else if (status === 404) {
+      msg = "Gist não encontrado (404). Confira o Gist ID, ou crie um novo Gist.";
+    } else {
+      msg = `Erro HTTP ${status} ao acessar o GitHub.`;
+    }
+    if (ghMsg) msg += ` (GitHub: ${ghMsg})`;
+    return new CloudHttpError(status, msg);
+  }
+
+  // ---- Diagnóstico: testa se o PAT consegue acessar a API de Gists ----
+  async function diagnosticar(pat) {
+    // 1. Testa autenticação básica
+    const respUser = await fetch("https://api.github.com/user", {
+      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json" }
+    });
+    if (respUser.status === 401) return { ok: false, etapa: "auth", msg: "PAT inválido ou expirado." };
+    if (!respUser.ok && respUser.status !== 403) return { ok: false, etapa: "auth", msg: `Falha ao autenticar (HTTP ${respUser.status}).` };
+    let login = "(desconhecido)";
+    try { const u = await respUser.json(); login = u.login || login; } catch (e) {}
+    // 2. Testa LISTAR gists (precisa de permissão de leitura de gist)
+    const respList = await fetch("https://api.github.com/gists?per_page=1", {
+      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json" }
+    });
+    if (respList.status === 403) {
+      const rem = respList.headers.get("x-ratelimit-remaining");
+      if (rem === "0") return { ok: false, etapa: "ratelimit", msg: "Rate limit do GitHub atingido. Aguarde alguns minutos." };
+      return { ok: false, etapa: "permissao", login, msg: "O PAT autentica, mas NÃO tem permissão de Gists. Use um Classic token com escopo \"gist\", ou um fine-grained com \"Gists: Read and write\"." };
+    }
+    if (!respList.ok) return { ok: false, etapa: "gist", login, msg: `Falha ao listar Gists (HTTP ${respList.status}).` };
+    return { ok: true, login, msg: `PAT válido para o usuário ${login}, com acesso a Gists.` };
   }
 
   // ---- Serialização do snapshot local ----
@@ -6554,6 +6614,7 @@ const CloudSync = (() => {
     sincronizarAgora, notificarMudanca, registrarTombstone,
     criarNovoGist, exportarConfig, importarConfig,
     renderStatusIndicator, setStatus, initRede,
+    diagnosticar: (pat) => diagnosticar(pat),
     get cfg() { return { ..._cfg }; },
     get status() { return _status; },
   };
