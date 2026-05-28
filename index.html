@@ -762,16 +762,18 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="menu-acoes" id="menu-acoes">
       <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
       <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
-        <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sincronizar</button>
+        <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sincronizar API</button>
         <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">☁</span>Sincronização na nuvem</button>
         <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">➕</span>Incluir requerimento</button>
+        <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✏️</span>Edição em lote</button>
         <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">⬆</span>Atualizar via XLSX</button>
+        <button class="menu-item" id="btn-open-export-xlsx" role="menuitem"><span class="menu-item-icon">📤</span>Exportar XLSX</button>
         <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
       </div>
     </div>
     <div class="statusbar-item" style="margin-left:auto;flex-direction:row;gap:8px;align-items:center;cursor:default" title="Última sincronização">
       <div style="display:flex;flex-direction:column">
-        <span class="label">Última sync</span>
+        <span class="label">Última sync API</span>
         <span class="value tabular" style="font-size:13px" id="stat-sync">nunca</span>
       </div>
       <button class="btn btn-icon btn-ghost btn-sync-rapida" id="btn-sync-rapida" title="Sincronização incremental rápida (usa a quantidade de dias configurada)" aria-label="Sincronização incremental">⟳</button>
@@ -879,8 +881,6 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 
 <!-- ABA GERENCIAL — ex-conteúdo da aba Painel v4.4 (sem gráficos) -->
 <section class="pane" id="pane-gerencial">
-  <div class="alertas-bar" id="alertas-bar"></div>
-
   <h2 class="painel-titulo" data-grupo="congresso">Requerimentos no Congresso</h2>
   <div class="grid-3 painel-grupo" data-grupo-content="congresso">
     <div class="painel-coluna">
@@ -1153,6 +1153,109 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-relatorio">&times;</button>
     </div>
     <div id="modal-relatorio-body"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-export-xlsx">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📤 Exportar para XLSX (Controle RI)</h2>
+      <button class="modal-close" data-close-modal="modal-export-xlsx">&times;</button>
+    </div>
+    <div class="card">
+      <p class="text-small text-muted" style="margin-bottom:12px">Exporta um arquivo XLSX com a aba <b>Controle RI</b> no mesmo formato do <code>Controle_RICs.xlsx</code> (26 colunas). Apenas os RICs selecionados são incluídos; campos inexistentes no app ficam em branco no XLSX.</p>
+      <div class="form-row" style="margin-bottom:8px">
+        <div style="flex:2"><label>Buscar RICs</label><input type="text" id="exp-busca" placeholder="número, autor, objeto, casa..."></div>
+        <div><label>Casa</label><select id="exp-casa">
+          <option value="">Todas</option>
+          <option value="camara">Câmara</option>
+          <option value="senado">Senado</option>
+          <option value="cn">Congresso Nacional</option>
+          <option value="cldf">CLDF</option>
+        </select></div>
+        <div style="display:flex;align-items:flex-end;gap:6px">
+          <button class="btn btn-sm" id="exp-select-all">Marcar todos</button>
+          <button class="btn btn-sm" id="exp-select-none">Desmarcar</button>
+        </div>
+      </div>
+      <div class="text-small text-muted" id="exp-contador" style="margin-bottom:6px">—</div>
+      <div id="exp-lista" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;background:var(--surface-2)"></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn btn-primary" id="btn-export-xlsx-gerar">📤 Exportar XLSX</button>
+        <span class="text-small text-muted" id="exp-feedback"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-edicao-lote">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>✏️ Edição em lote</h2>
+      <button class="modal-close" data-close-modal="modal-edicao-lote">&times;</button>
+    </div>
+    <div class="card">
+      <p class="text-small text-muted" style="margin-bottom:12px">Aplica o mesmo conjunto de valores aos RICs selecionados. Campos deixados em branco <b>não são alterados</b> nos RICs (preservam o valor atual). Marque apenas o que quer mudar em lote.</p>
+      <div class="form-row" style="margin-bottom:8px">
+        <div style="flex:2"><label>Buscar RICs</label><input type="text" id="lote-busca" placeholder="número, autor, objeto, casa..."></div>
+        <div><label>Casa</label><select id="lote-casa">
+          <option value="">Todas</option>
+          <option value="camara">Câmara</option>
+          <option value="senado">Senado</option>
+          <option value="cn">Congresso Nacional</option>
+          <option value="cldf">CLDF</option>
+        </select></div>
+        <div style="display:flex;align-items:flex-end;gap:6px">
+          <button class="btn btn-sm" id="lote-select-all">Marcar todos</button>
+          <button class="btn btn-sm" id="lote-select-none">Desmarcar</button>
+        </div>
+      </div>
+      <div class="text-small text-muted" id="lote-contador" style="margin-bottom:6px">—</div>
+      <div id="lote-lista" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;background:var(--surface-2);margin-bottom:14px"></div>
+
+      <h3 style="margin:0 0 10px;font-size:14px">Campos a alterar nos RICs selecionados</h3>
+      <div class="form-row">
+        <div>
+          <label><input type="checkbox" id="lote-ck-etapa"> Etapa</label>
+          <select id="lote-etapa" disabled>
+            <option value="">—</option>
+            <option value="recebimento">Recebimento</option>
+            <option value="admissibilidade">Admissibilidade</option>
+            <option value="subsidios">Coleta de subsídios</option>
+            <option value="conformidade">Análise de conformidade</option>
+            <option value="validacao_ssgp">Validação SSGP</option>
+            <option value="aprovacao_se">Aprovação SE</option>
+            <option value="validacao_gm_expedicao">Validação GM / Expedição (Prazo final CN)</option>
+          </select>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-prazoetapa"> Prazo da etapa <span class="text-small text-muted">(prazo REAL da etapa marcada acima)</span></label>
+          <input type="date" id="lote-prazoetapa" disabled>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-tematica"> Temática</label>
+          <select id="lote-tematica" disabled></select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div>
+          <label><input type="checkbox" id="lote-ck-nuprec"> Processo de recebimento (NUP)</label>
+          <input type="text" id="lote-nuprec" placeholder="00046.001234/2026-XX" disabled>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-dataresp"> Data da resposta</label>
+          <input type="date" id="lote-dataresp" disabled>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-tiporesp"> Tipo de resposta</label>
+          <select id="lote-tiporesp" disabled></select>
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn btn-primary" id="btn-lote-aplicar">✓ Aplicar aos selecionados</button>
+        <span class="text-small text-muted" id="lote-feedback"></span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3539,16 +3642,11 @@ async function abrirDetalhe(id) {
     });
   }
 
-  // Ao preencher data do recebimento SEI, apenas sugere mudança de status (sem calcular prazo)
-  // Handler do recebimento SEI: ajusta status interno automaticamente
-  // E (v4.6) RECALCULA os prazos SUGERIDOS de todas as etapas do fluxo.
+  // Ao preencher data do recebimento SEI, RECALCULA os prazos SUGERIDOS de todas as etapas do fluxo.
   // Os prazos REAIS são mantidos. Esta é a única coisa que dispara recálculo.
+  // A mudança automática de status interno ("Em andamento na Casa Civil") acontece no salvarMarcacaoAtual().
   document.getElementById("m-data-recebimento-sei").addEventListener("change", e => {
     const dataReceb = e.target.value;
-    if (dataReceb) {
-      const stEl = document.getElementById("m-status-interno");
-      if (stEl.value === "novo" || stEl.value === "tramitacao_cn") stEl.value = "andamento_cc";
-    }
     // Recalcula prazos sugeridos com base no novo recebimento
     const marcAtual = listaEstado.marcacoes.get(id) || {};
     if (!marcAtual.etapasFluxo) marcAtual.etapasFluxo = {};
@@ -3749,6 +3847,47 @@ async function abrirDetalhe(id) {
       analogosCalculadoEm: marcAnterior.analogosCalculadoEm || "",
       atualizadoEm: new Date().toISOString()
     };
+    // v4.7.3: Automação de status interno (não bloqueante — o campo permanece editável)
+    // Regras (em ordem de elevação progressiva):
+    //   - Tem objeto (apelido) preenchido e status era "novo"        → "tramitacao_cn"
+    //   - Tem data de recebimento SEI e status era "novo|tramitacao_cn" → "andamento_cc"
+    //   - Tem data da resposta e status anterior é qualquer um < respondido → "respondido"
+    // A automação SÓ eleva (nunca rebaixa). O usuário pode escolher manualmente qualquer
+    // valor (incluindo rebaixar para casos de retirada do RIC) — só não rebaixamos
+    // automaticamente atrás dele.
+    const stAnterior = marcAnterior.statusInterno || "";
+    const stForm = novoM.statusInterno;
+    const ORDEM_ST = ["novo", "tramitacao_cn", "andamento_cc", "respondido"];
+    function elevar(stAtual, stProposto) {
+      const iA = ORDEM_ST.indexOf(stAtual);
+      const iP = ORDEM_ST.indexOf(stProposto);
+      if (iA < 0 || iP < 0) return stAtual;
+      return iP > iA ? stProposto : stAtual;
+    }
+    // Detecta se o usuário mudou MANUALMENTE o select (form != valor anterior do BD)
+    // Se mudou manualmente, respeita a escolha. Se manteve, aplica automações.
+    const usuarioMudouManualmente = stForm !== stAnterior;
+    if (!usuarioMudouManualmente) {
+      let st = stForm || "novo";
+      // Regra 1: objeto salvo → tramitação CN (eleva a partir de "novo")
+      if (novoM.apelido && (st === "novo" || st === "")) {
+        st = elevar(st === "" ? "novo" : st, "tramitacao_cn");
+      }
+      // Regra 2: data de recebimento → andamento CC
+      if (novoM.dataRecebimentoSEI) {
+        st = elevar(st, "andamento_cc");
+      }
+      // Regra 3: data da resposta → respondido
+      if (novoM.dataResposta) {
+        st = elevar(st, "respondido");
+      }
+      if (st !== stForm) {
+        novoM.statusInterno = st;
+        // Reflete a mudança no select também, para o usuário ver
+        const elSt = document.getElementById("m-status-interno");
+        if (elSt) elSt.value = st;
+      }
+    }
     await DB.put("marcacoes", novoM);
     listaEstado.marcacoes.set(id, novoM);
     // Feedback (no header)
@@ -3982,23 +4121,7 @@ async function renderPainel() {
   document.getElementById("cnt-andamento").textContent = ccAguardando.length;
   document.getElementById("lst-andamento").innerHTML = renderPainelListaAcomp(ccAguardando);
 
-  // Barra de alertas no topo (sem "vencidos", com combinado e aprovados gerais)
-  // "Novos (7 dias)" sempre considera 7 dias fixos, independente do filtro do painel
-  const lim7 = addDiasIso(hoje, -7);
-  const novos7d = all.filter(p => p.dataApresentacao && p.dataApresentacao >= lim7).length;
-  const totalAprovados = all.filter(p => p.situacaoLegislativa === "aprovado").length;
-  const alertas = [
-    { cls: "warning", num: ccAguardando.length, label: "em andamento / aguardando resposta", filtro: { leg: "aguardando_resposta" } },
-    { cls: "purple-pill", num: totalAprovados, label: "aprovados", filtro: { leg: "aprovado" } },
-    { cls: "info", num: novos7d, label: "novos (últimos 7 dias)", filtro: { novos7d: true } }
-  ];
-  document.getElementById("alertas-bar").innerHTML = alertas.map(a => `
-    <div class="alerta-pill ${a.cls} ${a.num === 0 ? 'zero' : ''}" data-alerta='${escapeAttr(JSON.stringify(a.filtro))}'>
-      <span class="dot"></span><span class="num tabular">${a.num}</span><span>${a.label}</span>
-    </div>
-  `).join("");
-
-  // Bind clicks no painel + alertas (DEVE rodar APÓS atualizar todos os innerHTML)
+  // Bind clicks no painel (DEVE rodar APÓS atualizar todos os innerHTML)
   bindarPainelClicks();
 
   // (Aba Gerencial não renderiza gráficos — eles ficam na aba Painel via renderDashboard)
@@ -5040,6 +5163,293 @@ document.getElementById("btn-im-confirmar").onclick = async () => {
     btn.disabled = false;
   }
 };
+
+
+// ============================================================
+// EXPORTAR PARA XLSX (Controle RI) — v4.7.3
+// ============================================================
+// Mapeamentos inversos (valor do app → texto do XLSX)
+const EXP_STATUS_TXT = { novo: "", tramitacao_cn: "Em tramitação no Congresso Nacional", andamento_cc: "Em andamento na Casa Civil", respondido: "Respondido", retirado: "Retirado/Não enviado" };
+const EXP_ETAPA_TXT = { recebimento: "Recebimento", admissibilidade: "Admissibilidade", subsidios: "Subsídios", conformidade: "Conformidade", validacao_ssgp: "Validação SSGP", aprovacao_se: "Aprovação SE", validacao_gm_expedicao: "Validação GM / Expedicao" };
+const EXP_TIPORESP_TXT = { competencia_ausente: "Ausência de competência da Casa Civil", concedida: "Informação concedida", parcial: "Informação parcialmente concedida", rito_nao_cumprido: "Pedido não cumpriu rito legal ou requisito de admissibilidade" };
+const EXP_CASA_TXT = { camara: "Câmara dos Deputados", senado: "Senado Federal", congresso: "Congresso Nacional", cn: "Congresso Nacional", cldf: "Câmara Legislativa do Distrito Federal" };
+
+// Estado da seleção (Set de ids) para cada modal
+let expSelecionados = new Set();
+let loteSelecionados = new Set();
+
+// Helper: lista de RICs filtrada para os seletores
+function _listaRicsParaSelecao(termo, casa) {
+  const t = (termo || "").toLowerCase().trim();
+  const props = (listaEstado.itens || []).filter(p => !p.oculto);
+  return props.filter(p => {
+    if (casa && p.origem !== casa) return false;
+    if (!t) return true;
+    const m = listaEstado.marcacoes.get(p.id) || {};
+    const blob = `${p.identificacao} ${p.autor || ""} ${m.apelido || ""} ${p.ementa || ""} ${p.origem || ""}`.toLowerCase();
+    return blob.includes(t);
+  }).sort((a, b) => (b.dataApresentacao || "").localeCompare(a.dataApresentacao || ""));
+}
+
+function _objetoBreve(p) {
+  const m = listaEstado.marcacoes.get(p.id) || {};
+  const obj = m.apelido || p.ementa || "";
+  return obj.length > 90 ? obj.slice(0, 90) + "…" : obj;
+}
+
+// ---- Render da lista de seleção (Exportar) ----
+function renderExportLista() {
+  const termo = document.getElementById("exp-busca").value;
+  const casa = document.getElementById("exp-casa").value;
+  const lista = _listaRicsParaSelecao(termo, casa);
+  const cont = document.getElementById("exp-lista");
+  cont.innerHTML = lista.map(p => {
+    const checked = expSelecionados.has(p.id) ? "checked" : "";
+    return `<label style="display:flex;gap:8px;align-items:flex-start;padding:6px 4px;border-bottom:1px solid var(--border);cursor:pointer">
+      <input type="checkbox" class="exp-ck" data-id="${escapeAttr(p.id)}" ${checked} style="margin-top:3px">
+      <span><b>${escapeHtml(p.identificacao)}</b> <span class="text-small text-muted">— ${escapeHtml(_objetoBreve(p) || "(sem objeto)")}</span></span>
+    </label>`;
+  }).join("") || `<div style="padding:20px;text-align:center;color:var(--muted)">Nenhum RIC encontrado.</div>`;
+  cont.querySelectorAll(".exp-ck").forEach(ck => {
+    ck.addEventListener("change", () => {
+      if (ck.checked) expSelecionados.add(ck.dataset.id); else expSelecionados.delete(ck.dataset.id);
+      atualizarExpContador();
+    });
+  });
+  atualizarExpContador();
+}
+function atualizarExpContador() {
+  document.getElementById("exp-contador").textContent = `${expSelecionados.size} RIC(s) selecionado(s)`;
+}
+
+// ---- Geração do XLSX ----
+function gerarXLSXExport() {
+  if (expSelecionados.size === 0) { document.getElementById("exp-feedback").innerHTML = '<span style="color:#b91c1c">Selecione ao menos um RIC.</span>'; return; }
+  const props = (listaEstado.itens || []).filter(p => expSelecionados.has(p.id));
+  // Ordena por casa e número
+  props.sort((a, b) => (a.origem || "").localeCompare(b.origem || "") || (parseInt(a.numero,10)||0) - (parseInt(b.numero,10)||0));
+  // Helper de data → Date (para a célula sair formatada como data no Excel)
+  const toDate = iso => {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return "";
+    const [y,m,d] = iso.substring(0,10).split("-").map(Number);
+    return new Date(Date.UTC(y, m-1, d));
+  };
+  // Cabeçalho EXATO do Controle RI (26 colunas)
+  const headers = ["RI (nº)","TIPO","Casa","Status","Ofício","Protocolo PR (DATA)","Prazo final","Processo de envio","Processo de resposta","Autor ","Partido","UF","Temáticas","Temática relevante?","Objeto","Resumo","Status no Congresso","Unidades","Etapa","Prazo da etapa","Observação","Data da resposta","Tipo de resposta","Atribuição","Link Congresso","Link Inteiro teor"];
+  const linhas = props.map(p => {
+    const m = listaEstado.marcacoes.get(p.id) || {};
+    // Etapa atual (primeira não concluída) e seu prazo real
+    let etapaAtualId = "", prazoEtapaIso = "";
+    if (m.etapasFluxo) {
+      for (const e of ETAPAS_FLUXO_COMPLETO) {
+        const d = m.etapasFluxo[e.id];
+        if (!d || !d.concluida) { etapaAtualId = e.id; prazoEtapaIso = (d && (d.prazoReal || d.prazoSugerido)) || ""; break; }
+      }
+      if (!etapaAtualId) { const ult = ETAPAS_FLUXO_COMPLETO[ETAPAS_FLUXO_COMPLETO.length-1]; etapaAtualId = ult.id; const d = m.etapasFluxo[ult.id]||{}; prazoEtapaIso = d.prazoReal || d.prazoSugerido || ""; }
+    } else if (m.etapa) {
+      etapaAtualId = m.etapa; prazoEtapaIso = m.prazoEtapa || "";
+    }
+    return {
+      "RI (nº)": `${p.numero}/${p.ano}`,
+      "TIPO": p.sigla || "",
+      "Casa": EXP_CASA_TXT[p.origem] || p.origem || "",
+      "Status": EXP_STATUS_TXT[m.statusInterno] !== undefined ? EXP_STATUS_TXT[m.statusInterno] : "",
+      "Ofício": m.oficio || "",
+      "Protocolo PR (DATA)": toDate(m.dataRecebimentoSEI),
+      "Prazo final": toDate(m.prazoFinalCN),
+      "Processo de envio": m.nupRecebimento || "",
+      "Processo de resposta": m.nupResposta || "",
+      "Autor ": p.autor || "",
+      "Partido": p.autorPartido || "",
+      "UF": p.autorUF || "",
+      "Temáticas": m.tematica || "",
+      "Temática relevante?": m.relevante ? "Sim" : "Não",
+      "Objeto": m.apelido || "",
+      "Resumo": m.resumo || "",
+      "Status no Congresso": LABEL_LEG[p.situacaoLegislativa] || "",
+      "Unidades": (m.unidadesConsultadas || []).join(", "),
+      "Etapa": EXP_ETAPA_TXT[etapaAtualId] || "",
+      "Prazo da etapa": toDate(prazoEtapaIso),
+      "Observação": m.comentarios || "",
+      "Data da resposta": toDate(m.dataResposta),
+      "Tipo de resposta": EXP_TIPORESP_TXT[m.tipoResposta] || "",
+      "Atribuição": m.atribuicao || "",
+      "Link Congresso": p.urlPortal || "",
+      "Link Inteiro teor": p.urlInteiroTeor || "",
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(linhas, { header: headers, cellDates: true });
+  // Largura das colunas (aproximada)
+  ws["!cols"] = headers.map(h => ({ wch: Math.max(12, Math.min(40, h.length + 4)) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Controle RI");
+  const ts = new Date().toISOString().substring(0, 10);
+  XLSX.writeFile(wb, `Controle_RICs_export_${ts}.xlsx`);
+  document.getElementById("exp-feedback").innerHTML = `<span style="color:#047857">✓ XLSX gerado com ${linhas.length} RIC(s).</span>`;
+}
+
+document.getElementById("btn-open-export-xlsx").onclick = () => {
+  fecharMenuAcoes();
+  expSelecionados = new Set();
+  document.getElementById("exp-busca").value = "";
+  document.getElementById("exp-casa").value = "";
+  document.getElementById("exp-feedback").innerHTML = "";
+  renderExportLista();
+  abrirModal("modal-export-xlsx");
+};
+document.getElementById("exp-busca").addEventListener("input", renderExportLista);
+document.getElementById("exp-casa").addEventListener("change", renderExportLista);
+document.getElementById("exp-select-all").onclick = () => {
+  const termo = document.getElementById("exp-busca").value;
+  const casa = document.getElementById("exp-casa").value;
+  _listaRicsParaSelecao(termo, casa).forEach(p => expSelecionados.add(p.id));
+  renderExportLista();
+};
+document.getElementById("exp-select-none").onclick = () => { expSelecionados = new Set(); renderExportLista(); };
+document.getElementById("btn-export-xlsx-gerar").onclick = gerarXLSXExport;
+
+// ============================================================
+// EDIÇÃO EM LOTE — v4.7.3
+// ============================================================
+function renderLoteLista() {
+  const termo = document.getElementById("lote-busca").value;
+  const casa = document.getElementById("lote-casa").value;
+  const lista = _listaRicsParaSelecao(termo, casa);
+  const cont = document.getElementById("lote-lista");
+  cont.innerHTML = lista.map(p => {
+    const checked = loteSelecionados.has(p.id) ? "checked" : "";
+    return `<label style="display:flex;gap:8px;align-items:flex-start;padding:6px 4px;border-bottom:1px solid var(--border);cursor:pointer">
+      <input type="checkbox" class="lote-ck" data-id="${escapeAttr(p.id)}" ${checked} style="margin-top:3px">
+      <span><b>${escapeHtml(p.identificacao)}</b> <span class="text-small text-muted">— ${escapeHtml(_objetoBreve(p) || "(sem objeto)")}</span></span>
+    </label>`;
+  }).join("") || `<div style="padding:20px;text-align:center;color:var(--muted)">Nenhum RIC encontrado.</div>`;
+  cont.querySelectorAll(".lote-ck").forEach(ck => {
+    ck.addEventListener("change", () => {
+      if (ck.checked) loteSelecionados.add(ck.dataset.id); else loteSelecionados.delete(ck.dataset.id);
+      atualizarLoteContador();
+    });
+  });
+  atualizarLoteContador();
+}
+function atualizarLoteContador() {
+  document.getElementById("lote-contador").textContent = `${loteSelecionados.size} RIC(s) selecionado(s)`;
+}
+
+function popularSelectsLote() {
+  // Temática
+  const elTem = document.getElementById("lote-tematica");
+  if (elTem && !elTem.dataset.pronto) {
+    elTem.innerHTML = '<option value="">—</option>' + TEMATICAS.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
+    elTem.dataset.pronto = "1";
+  }
+  // Tipo de resposta
+  const elTipo = document.getElementById("lote-tiporesp");
+  if (elTipo && !elTipo.dataset.pronto) {
+    elTipo.innerHTML = TIPOS_RESPOSTA.map(t => `<option value="${escapeAttr(t.v)}">${escapeHtml(t.t)}</option>`).join("");
+    elTipo.dataset.pronto = "1";
+  }
+}
+
+// Liga cada checkbox ao seu input (habilita/desabilita)
+function bindLoteCampos() {
+  const pares = [
+    ["lote-ck-etapa", "lote-etapa"],
+    ["lote-ck-prazoetapa", "lote-prazoetapa"],
+    ["lote-ck-tematica", "lote-tematica"],
+    ["lote-ck-nuprec", "lote-nuprec"],
+    ["lote-ck-dataresp", "lote-dataresp"],
+    ["lote-ck-tiporesp", "lote-tiporesp"],
+  ];
+  pares.forEach(([ckId, inpId]) => {
+    const ck = document.getElementById(ckId);
+    const inp = document.getElementById(inpId);
+    if (ck && inp && !ck.dataset.bound) {
+      ck.addEventListener("change", () => { inp.disabled = !ck.checked; });
+      ck.dataset.bound = "1";
+    }
+  });
+}
+
+document.getElementById("btn-open-edicao-lote").onclick = () => {
+  fecharMenuAcoes();
+  loteSelecionados = new Set();
+  document.getElementById("lote-busca").value = "";
+  document.getElementById("lote-casa").value = "";
+  document.getElementById("lote-feedback").innerHTML = "";
+  popularSelectsLote();
+  bindLoteCampos();
+  // Reseta os checkboxes de campos
+  ["lote-ck-etapa","lote-ck-prazoetapa","lote-ck-tematica","lote-ck-nuprec","lote-ck-dataresp","lote-ck-tiporesp"].forEach(id => {
+    const ck = document.getElementById(id); if (ck) ck.checked = false;
+  });
+  ["lote-etapa","lote-prazoetapa","lote-tematica","lote-nuprec","lote-dataresp","lote-tiporesp"].forEach(id => {
+    const inp = document.getElementById(id); if (inp) { inp.disabled = true; if (inp.tagName === "SELECT") inp.selectedIndex = 0; else inp.value = ""; }
+  });
+  renderLoteLista();
+  abrirModal("modal-edicao-lote");
+};
+document.getElementById("lote-busca").addEventListener("input", renderLoteLista);
+document.getElementById("lote-casa").addEventListener("change", renderLoteLista);
+document.getElementById("lote-select-all").onclick = () => {
+  const termo = document.getElementById("lote-busca").value;
+  const casa = document.getElementById("lote-casa").value;
+  _listaRicsParaSelecao(termo, casa).forEach(p => loteSelecionados.add(p.id));
+  renderLoteLista();
+};
+document.getElementById("lote-select-none").onclick = () => { loteSelecionados = new Set(); renderLoteLista(); };
+
+document.getElementById("btn-lote-aplicar").onclick = async () => {
+  const fb = document.getElementById("lote-feedback");
+  if (loteSelecionados.size === 0) { fb.innerHTML = '<span style="color:#b91c1c">Selecione ao menos um RIC.</span>'; return; }
+  // Coleta os campos marcados
+  const campos = {};
+  if (document.getElementById("lote-ck-etapa").checked) campos.etapa = document.getElementById("lote-etapa").value;
+  if (document.getElementById("lote-ck-prazoetapa").checked) campos.prazoEtapa = document.getElementById("lote-prazoetapa").value;
+  if (document.getElementById("lote-ck-tematica").checked) campos.tematica = document.getElementById("lote-tematica").value;
+  if (document.getElementById("lote-ck-nuprec").checked) campos.nupRecebimento = document.getElementById("lote-nuprec").value.trim();
+  if (document.getElementById("lote-ck-dataresp").checked) campos.dataResposta = document.getElementById("lote-dataresp").value;
+  if (document.getElementById("lote-ck-tiporesp").checked) campos.tipoResposta = document.getElementById("lote-tiporesp").value;
+  if (Object.keys(campos).length === 0) { fb.innerHTML = '<span style="color:#b91c1c">Marque ao menos um campo para alterar.</span>'; return; }
+  if (!confirm(`Aplicar ${Object.keys(campos).length} campo(s) a ${loteSelecionados.size} RIC(s)?`)) return;
+
+  const atualizadas = [];
+  for (const id of loteSelecionados) {
+    const m = Object.assign({ proposicaoId: id }, listaEstado.marcacoes.get(id) || {});
+    if (!m.etapasFluxo) m.etapasFluxo = {};
+    if ("tematica" in campos) m.tematica = campos.tematica;
+    if ("nupRecebimento" in campos) m.nupRecebimento = campos.nupRecebimento;
+    if ("dataResposta" in campos) m.dataResposta = campos.dataResposta;
+    if ("tipoResposta" in campos) m.tipoResposta = campos.tipoResposta;
+    // Etapa: marca como atual (registra no etapasFluxo a etapa escolhida)
+    if ("etapa" in campos && campos.etapa) {
+      m.etapa = campos.etapa;
+      if (!m.etapasFluxo[campos.etapa]) m.etapasFluxo[campos.etapa] = { concluida: false, prazoSugerido: "", prazoReal: "" };
+    }
+    // Prazo da etapa: grava no prazoReal da etapa escolhida (ou da etapa atual se não escolheu)
+    if ("prazoEtapa" in campos) {
+      let etapaAlvo = campos.etapa;
+      if (!etapaAlvo) {
+        // usa a etapa atual (primeira não concluída)
+        for (const e of ETAPAS_FLUXO_COMPLETO) {
+          const d = m.etapasFluxo[e.id];
+          if (!d || !d.concluida) { etapaAlvo = e.id; break; }
+        }
+      }
+      if (etapaAlvo) {
+        if (!m.etapasFluxo[etapaAlvo]) m.etapasFluxo[etapaAlvo] = { concluida: false, prazoSugerido: "", prazoReal: "" };
+        m.etapasFluxo[etapaAlvo].prazoReal = campos.prazoEtapa;
+      }
+    }
+    m.atualizadoEm = new Date().toISOString();
+    atualizadas.push(m);
+  }
+  await DB.bulkPut("marcacoes", atualizadas);
+  atualizadas.forEach(m => listaEstado.marcacoes.set(m.proposicaoId, m));
+  aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
+  fb.innerHTML = `<span style="color:#047857">✓ ${atualizadas.length} RIC(s) atualizado(s).</span>`;
+  setTimeout(() => { dispararFecharModal("modal-edicao-lote"); }, 1200);
+};
+
 
 document.getElementById("btn-cloud-salvar-cfg").onclick = async () => {
   const pat = document.getElementById("cfg-cloud-pat").value.trim();
