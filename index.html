@@ -136,15 +136,16 @@ header.app-header { background: var(--bg-header); border-bottom: 2px solid var(-
 html.dark header.app-header { border-bottom: 1px solid var(--border); }
 .header-top { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 12px; }
 .header-brand { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
-.brand-logo { width: 47px; height: 47px; flex: 0 0 47px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
-.brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 21px; }
+.brand-logo { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; filter: contrast(1.1); }
+.brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 23px; }
 html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 @media (max-width: 640px) {
-  .brand-logo { width: 43px; height: 43px; flex: 0 0 43px; }
+  .brand-logo { width: 48px; height: 48px; flex: 0 0 48px; }
 }
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; min-width: 0; }
-.header-brand h1 small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
+.header-brand h1 .h1-titulo { display: inline-flex; align-items: baseline; gap: 6px; }
+.header-brand h1 small { display: block; font-size: 9.9px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; opacity: 0.7; }
 /* v4.7: indicador de status CloudSync */
 .cloud-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; transition: all 0.2s; }
 .cloud-status:hover { filter: brightness(0.97); }
@@ -158,7 +159,7 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 .cloud-status.cloud-offline { color: var(--muted); border-color: var(--border); }
 @keyframes cloud-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 @media (max-width: 600px) { .cloud-status-txt { display: none; } }
-.versao-badge { display: inline-flex; align-items: center; padding: 0; border: none; border-radius: 0; font-size: 9px; font-weight: 600; background: transparent; color: var(--muted); letter-spacing: 0.05em; margin: 0; line-height: 1; opacity: 0.7; }
+.versao-badge { display: inline-flex; align-items: baseline; padding: 0; border: none; border-radius: 0; font-size: 8px; font-weight: 600; background: transparent; color: var(--muted); letter-spacing: 0.03em; margin: 0; line-height: 1; opacity: 0.7; }
 .header-actions-tema { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .header-actions-tema .versao-badge { margin-top: 0; }
 .header-actions { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
@@ -183,7 +184,7 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 .menu-acoes-dropdown .menu-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: none; border: none; border-radius: var(--radius-sm); font: inherit; font-size: 14px; color: var(--text); text-align: left; cursor: pointer; transition: background 0.15s; }
 .menu-acoes-dropdown .menu-item:hover { background: var(--accent-light); color: var(--accent); }
 .menu-acoes-dropdown .menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.menu-acoes-dropdown .menu-item-icon { font-size: 16px; width: 20px; flex-shrink: 0; text-align: center; color: var(--accent); }
+.menu-acoes-dropdown .menu-item-icon { font-size: 15px; font-weight: 700; width: 20px; flex-shrink: 0; text-align: center; color: var(--accent); font-variant-emoji: text; }
 
 /* Tabs */
 nav.tabs { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0 24px; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -450,6 +451,8 @@ button.btn-danger { color: var(--err); border-color: var(--err-light); }
 button.btn-danger:hover { background: var(--err-light); }
 button.btn-sm { padding: 4px 10px; font-size: 12px; }
 button.btn-icon { padding: 6px 10px; font-size: 13px; line-height: 1; }
+/* v4.7.4: botão de tema 30% menor */
+#btn-dark-toggle { padding: 4px 6px; font-size: 11px; }
 button.btn-ghost { border-color: transparent; background: transparent; }
 button.btn-ghost:hover { background: var(--surface-2); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -746,15 +749,14 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   <div class="header-top">
     <div class="header-brand">
       <div class="brand-logo" aria-hidden="true">
-        <img src="icon-72.png" alt="Monitor RIC" width="47" height="47" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
+        <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1>Monitor RIC<small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.4</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
         <button class="cloud-status cloud-local" id="cloud-status-indicator" title="Clique para sincronizar agora" aria-label="Sincronizar agora"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Local</span></button>
         <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
-        <span class="versao-badge" title="Versão atual">v4.7</span>
       </div>
     </div>
   </div>
@@ -762,13 +764,14 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="menu-acoes" id="menu-acoes">
       <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
       <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
-        <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sincronizar API</button>
-        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">☁</span>Sincronização na nuvem</button>
-        <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">➕</span>Incluir requerimento</button>
-        <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✏️</span>Edição em lote</button>
-        <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">⬆</span>Atualizar via XLSX</button>
-        <button class="menu-item" id="btn-open-export-xlsx" role="menuitem"><span class="menu-item-icon">📤</span>Exportar XLSX</button>
+        <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sync API Congresso</button>
+        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">⤓</span>Sync base na nuvem</button>
+        <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">＋</span>Incluir requerimento</button>
+        <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✎</span>Edição em lote</button>
+        <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">↥</span>Atualizar via Controle RICs.xlsx</button>
+        <button class="menu-item" id="btn-open-export-xlsx" role="menuitem"><span class="menu-item-icon">↧</span>Exportar Controle RICs.xlsx</button>
         <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
+        <button class="menu-item" id="btn-open-sobre" role="menuitem"><span class="menu-item-icon">ⓘ</span>Sobre</button>
       </div>
     </div>
     <div class="statusbar-item" style="margin-left:auto;flex-direction:row;gap:8px;align-items:center;cursor:default" title="Última sincronização">
@@ -844,11 +847,17 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 
   <!-- Gráficos -->
   <div class="charts-grid">
-    <div class="chart-card">
+    <div class="chart-card" id="chart-card-etapas">
       <div class="chart-header">
         <div class="chart-title">Etapas — em andamento na Casa Civil</div>
       </div>
       <div id="chart-etapas" class="chart-area"></div>
+    </div>
+    <div class="chart-card" id="chart-card-prazocn">
+      <div class="chart-header">
+        <div class="chart-title">Prazo final CN — em andamento na Casa Civil</div>
+      </div>
+      <div id="chart-prazocn" class="chart-area"></div>
     </div>
     <div class="chart-card">
       <div class="chart-header">
@@ -924,7 +933,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
   </div>
 
-  <h2 class="painel-titulo" data-grupo="acompanhamento">Requerimentos sob acompanhamento</h2>
+  <h2 class="painel-titulo" data-grupo="acompanhamento">RICs em andamento na Casa Civil</h2>
   <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento" style="grid-template-columns:1fr;margin-bottom:22px">
     <div class="painel-coluna attention">
       <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
@@ -963,6 +972,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="form-row">
         <div><label>Aprovado de</label><input type="date" id="filter-aprov-de"></div>
         <div><label>Aprovado até</label><input type="date" id="filter-aprov-ate"></div>
+        <div><label>Prazo final CN</label><select id="filter-prazo-cn"><option value="">Todos</option></select></div>
         <div><button class="btn" id="btn-clear-filters" style="margin-top:18px">Limpar filtros</button></div>
       </div>
     </div>
@@ -1087,6 +1097,10 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         </div>
       </div>
       <div class="xlsx-diff-list" id="xlsx-diff-list"></div>
+      <div id="xlsx-ausentes-box" style="margin-top:10px;display:none">
+        <p class="text-small text-muted" style="margin:0 0 6px"><b id="xlsx-ausentes-cnt">0</b> RIC(s) estão na base mas <b>não constam</b> neste XLSX.</p>
+        <button class="btn btn-sm" id="btn-xlsx-export-ausentes">↧ Exportar lista (TXT) dos ausentes</button>
+      </div>
       <div class="xlsx-actions" style="margin-top:16px;justify-content:flex-end;gap:8px">
         <button class="btn" id="btn-xlsx-cancelar">Cancelar</button>
         <button class="btn btn-primary" id="btn-xlsx-aplicar">Aplicar mudanças</button>
@@ -1156,6 +1170,32 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 </div>
 
+<div class="modal-bg" id="modal-sobre">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>ⓘ Sobre o Monitor RIC</h2>
+      <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
+    </div>
+    <div class="card">
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.4</span></span></p>
+      <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
+      <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
+      <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
+        <li><b>Sincronização com as APIs do Congresso</b> (Câmara e Senado), com enriquecimento automático de ementa, autoria, tramitação e inteiro teor.</li>
+        <li><b>Triagem e análise</b> de cada RIC: objeto, resumo, temática, relevância, observações e unidades consultadas.</li>
+        <li><b>Controle de prazos</b> conforme art. 50 §2º da CF e arts. 224/231 do CPC, com cálculo automático das etapas internas.</li>
+        <li><b>Painéis gerenciais</b> com gráficos de situação legislativa, etapas e prazos.</li>
+        <li><b>Relatórios</b> em Word/PDF com campos e formatação configuráveis, e presets de usuário.</li>
+        <li><b>Importação e exportação</b> no formato da planilha <i>Controle RICs.xlsx</i>.</li>
+        <li><b>Edição em lote</b> e <b>inclusão manual</b> de requerimentos.</li>
+        <li><b>Sincronização da base na nuvem</b> (GitHub Gist privado, cifrada com AES-GCM 256).</li>
+        <li>Análise assistida por <b>IA (Google Gemini)</b> do inteiro teor.</li>
+      </ul>
+      <p class="text-small text-muted" style="margin:0">Dados legislativos: Dados Abertos da Câmara dos Deputados e do Senado Federal. Uso institucional interno.</p>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-export-xlsx">
   <div class="modal modal-wide">
     <div class="modal-header">
@@ -1204,6 +1244,17 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <option value="senado">Senado</option>
           <option value="cn">Congresso Nacional</option>
           <option value="cldf">CLDF</option>
+        </select></div>
+        <div><label>Prazo de resposta (CN)</label><select id="lote-f-prazo"><option value="">Todos</option></select></div>
+        <div><label>Etapa atual</label><select id="lote-f-etapa">
+          <option value="">Todas</option>
+          <option value="recebimento">Recebimento</option>
+          <option value="admissibilidade">Admissibilidade</option>
+          <option value="subsidios">Coleta de subsídios</option>
+          <option value="conformidade">Análise de conformidade</option>
+          <option value="validacao_ssgp">Validação SSGP</option>
+          <option value="aprovacao_se">Aprovação SE</option>
+          <option value="validacao_gm_expedicao">Validação GM / Expedição</option>
         </select></div>
         <div style="display:flex;align-items:flex-end;gap:6px">
           <button class="btn btn-sm" id="lote-select-all">Marcar todos</button>
@@ -1291,7 +1342,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <div class="modal-bg" id="modal-cloudsync">
   <div class="modal">
     <div class="modal-header">
-      <h2>☁ Sincronização na nuvem</h2>
+      <h2>⤓ Sync base na nuvem</h2>
       <button class="modal-close" data-close-modal="modal-cloudsync">&times;</button>
     </div>
     <div class="card">
@@ -2757,6 +2808,37 @@ async function sincronizarIncremental(numdias) {
   } catch (e) { log.add(`Senado: ERRO — ${e.message}`, "err"); }
 
   if (proposicoesParaSalvar.length) await DB.bulkPut("proposicoes", proposicoesParaSalvar);
+
+  // v4.7.4: além da descoberta por regex, reenriquece TODAS as proposições já na base
+  // (inclusive as adicionadas via XLSX que não atendem ao regex de Casa Civil), para que
+  // tenham situação legislativa, datas e inteiro teor atualizados. Pula apenas as que
+  // estão em estado final e dentro da janela de cache (a menos que forçado em outro fluxo).
+  const idsJaProcessados = new Set(proposicoesParaSalvar.map(p => p.id));
+  const todasBase = await DB.getAll("proposicoes");
+  const aReenriquecer = todasBase.filter(p => {
+    if (idsJaProcessados.has(p.id)) return false;          // já tratado acima
+    if (p.sintetico) return false;                          // manual sintético sem id real na API
+    if (String(p.id || "").startsWith("manual-")) return false;
+    return p.origem === "camara" || p.origem === "senado";  // só o que tem API
+  });
+  if (aReenriquecer.length) {
+    log.add(`Reenriquecendo ${aReenriquecer.length} RIC(s) já na base (inclusive fora do regex)...`, "info");
+    let rc = 0, rpul = 0;
+    const atualizados = [];
+    for (const p of aReenriquecer) {
+      if (podeUsarCacheStatus(p, false)) { rpul++; continue; }
+      try {
+        await enriquecerProposicao(p, { log, forcar: true });
+        atualizados.push(p);
+        await sleep(THROTTLE_MS);
+      } catch (e) { log.add(`${p.identificacao}: falha — ${e.message}`, "warn"); }
+      rc++;
+      if (rc % 10 === 0) log.add(`...${rc}/${aReenriquecer.length}`, "dim");
+    }
+    if (atualizados.length) await DB.bulkPut("proposicoes", atualizados);
+    log.add(`Reenriquecimento concluído: ${rc} processados, ${rpul} pulados (cache).`, "ok");
+  }
+
   await setConfig("ultimaSync", new Date().toISOString());
   log.add(`---`, "dim");
   log.add(`Concluído. Consultados: ${totalCons}. Casa Civil: ${totalMat}. Novos: ${novos.length}.`, "ok");
@@ -2909,6 +2991,7 @@ async function renderLista() {
   popularSelects();
   await carregarLista();
   popularFiltroAno();
+  popularFiltroPrazoCN();
   aplicarFiltros();
   ordenar();
   renderTabela();
@@ -2919,6 +3002,22 @@ function popularFiltroAno() {
   const cur = sel.value;
   const anos = [...new Set(listaEstado.itens.map(p => p.ano).filter(Boolean))].sort((a, b) => b - a);
   sel.innerHTML = `<option value="">Todos</option>` + anos.map(a => `<option value="${a}"${a == cur ? " selected" : ""}>${a}</option>`).join("");
+}
+
+// v4.7.4: popula o filtro "Prazo final CN" com as datas distintas existentes nesse campo
+function popularFiltroPrazoCN() {
+  const sel = document.getElementById("filter-prazo-cn");
+  if (!sel) return;
+  const cur = sel.value;
+  const datas = [...new Set(
+    [...listaEstado.marcacoes.values()]
+      .map(m => (m.prazoFinalCN || "").substring(0, 10))
+      .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  )].sort(); // ordem cronológica ascendente
+  sel.innerHTML = `<option value="">Todas</option>` + datas.map(d => {
+    const [y, mo, dd] = d.split("-");
+    return `<option value="${d}"${d === cur ? " selected" : ""}>${dd}/${mo}/${y}</option>`;
+  }).join("");
 }
 
 function aplicarFiltros() {
@@ -2934,6 +3033,7 @@ function aplicarFiltros() {
   const prazo = document.getElementById("filter-prazo").value;
   const aprovDe = document.getElementById("filter-aprov-de").value;
   const aprovAte = document.getElementById("filter-aprov-ate").value;
+  const prazoCnSel = document.getElementById("filter-prazo-cn") ? document.getElementById("filter-prazo-cn").value : "";
   const hoje = isoHoje();
   const proximo7 = addDiasIso(hoje, 7);
 
@@ -2969,6 +3069,9 @@ function aplicarFiltros() {
       if (!p.dataAprovacao) return false;
       if (aprovDe && p.dataAprovacao < aprovDe) return false;
       if (aprovAte && p.dataAprovacao > aprovAte) return false;
+    }
+    if (prazoCnSel) {
+      if ((m.prazoFinalCN || "").substring(0, 10) !== prazoCnSel) return false;
     }
     if (busca) {
       const blob = normalizar([
@@ -3155,12 +3258,12 @@ document.querySelectorAll("th[data-sort]").forEach(th => {
   });
 });
 
-["filter-busca","filter-casa","filter-sigla","filter-ano","filter-relevante","filter-leg","filter-status-int","filter-etapa","filter-tematica","filter-prazo","filter-aprov-de","filter-aprov-ate"].forEach(id => {
+["filter-busca","filter-casa","filter-sigla","filter-ano","filter-relevante","filter-leg","filter-status-int","filter-etapa","filter-tematica","filter-prazo","filter-prazo-cn","filter-aprov-de","filter-aprov-ate"].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener("input", () => { aplicarFiltros(); ordenar(); renderTabela(); });
 });
 document.getElementById("btn-clear-filters").addEventListener("click", () => {
-  ["filter-busca","filter-casa","filter-sigla","filter-ano","filter-relevante","filter-leg","filter-status-int","filter-etapa","filter-tematica","filter-prazo","filter-aprov-de","filter-aprov-ate"].forEach(id => {
+  ["filter-busca","filter-casa","filter-sigla","filter-ano","filter-relevante","filter-leg","filter-status-int","filter-etapa","filter-tematica","filter-prazo","filter-prazo-cn","filter-aprov-de","filter-aprov-ate"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   aplicarFiltros(); ordenar(); renderTabela();
@@ -4138,9 +4241,18 @@ async function renderDashboard() {
   const marcs = marcsTodas.filter(m => !ocultosIds.has(m.proposicaoId));
   renderStatsCards(props, marcs);
   renderChartEtapas(marcs);
-  renderChartSituacao(props);
+  renderChartPrazoCN(props, marcs);
+  renderChartSituacao(props, marcs);
   renderChartCasa(props);
   renderChartEvolucao(marcs);
+
+  // v4.7.4: oculta os cards "Etapas" e "Prazo final CN" (ambos restritos a "em andamento na CC")
+  // quando não houver nenhum RIC em andamento na Casa Civil.
+  const temEmAndamento = marcs.some(m => m.statusInterno === "andamento_cc");
+  const cardEtapas = document.getElementById("chart-card-etapas");
+  const cardPrazoCN = document.getElementById("chart-card-prazocn");
+  if (cardEtapas) cardEtapas.style.display = temEmAndamento ? "" : "none";
+  if (cardPrazoCN) cardPrazoCN.style.display = temEmAndamento ? "" : "none";
 }
 
 // ----- Cards de indicadores -----
@@ -4353,32 +4465,111 @@ function renderDonut(containerId, dados, opts) {
 }
 
 // ----- Gráfico 2: ROSCA — Situação legislativa -----
-function renderChartSituacao(props) {
-  // Desconsiderar respondido, retirado e pendente — só situações ativas do trâmite
-  const ordem = ["aprovado", "aguardando_resposta", "aguardando_aprovacao", "tramitacao_inicial"];
+function renderChartSituacao(props, marcs) {
+  const marcMap = new Map((marcs || []).map(m => [m.proposicaoId, m]));
+  // v4.7.4:
+  //  - "Apresentados na última semana" vira categoria própria (independe da situação)
+  //  - RICs com Data de resposta preenchida (na marcação) são contados como "Respondido",
+  //    corrigindo registros do CN que ainda constam como aguardando resposta.
+  const ordem = ["apresentado_semana", "aprovado", "aguardando_resposta", "aguardando_aprovacao", "tramitacao_inicial", "respondido"];
   const labels = {
+    "apresentado_semana": "Apresentados (últ. 7 dias)",
     "tramitacao_inicial": "Tramitação inicial",
     "aguardando_aprovacao": "Aguardando aprovação",
     "aprovado": "Aprovado",
-    "aguardando_resposta": "Aguardando resposta"
+    "aguardando_resposta": "Aguardando resposta",
+    "respondido": "Respondido"
   };
   const cores = {
+    "apresentado_semana": "#F4A259",
     "aprovado": "#1F5F63",
     "aguardando_resposta": "#5DD9D2",
     "aguardando_aprovacao": "#3D5A80",
-    "tramitacao_inicial": "#6BE4DC"
+    "tramitacao_inicial": "#6BE4DC",
+    "respondido": "#9FB8AD"
   };
+  const hoje = new Date();
+  const lim7 = new Date(hoje.getTime() - 7 * 86400 * 1000).toISOString().substring(0, 10);
   const buckets = {};
   for (const p of props) {
-    const k = p.situacaoLegislativa || "pendente";
-    if (!ordem.includes(k)) continue; // descarta respondido/retirado/pendente
+    // Categoria especial: apresentado nos últimos 7 dias (tem prioridade visual própria)
+    if (p.dataApresentacao && p.dataApresentacao >= lim7) {
+      buckets["apresentado_semana"] = (buckets["apresentado_semana"] || 0) + 1;
+      continue;
+    }
+    const m = marcMap.get(p.id) || {};
+    // Correção: se tem data de resposta, conta como respondido (mesmo que a API diga outra coisa)
+    let k = p.situacaoLegislativa || "pendente";
+    if (m.dataResposta) k = "respondido";
+    if (!ordem.includes(k)) continue; // descarta retirado/pendente
     buckets[k] = (buckets[k] || 0) + 1;
   }
-  const dados = ordem.filter(k => buckets[k]).map(k => ({ label: labels[k], valor: buckets[k], cor: cores[k], filtro: { leg: k } }));
+  const dados = ordem.filter(k => buckets[k]).map(k => {
+    const filtro = k === "apresentado_semana" ? { novos7d: true } : (k === "respondido" ? { leg: "respondido" } : { leg: k });
+    return { label: labels[k], valor: buckets[k], cor: cores[k], filtro };
+  });
   renderDonut("chart-situacao", dados, { empty: "Sem RICs em situação ativa." });
 }
 
-// ----- Gráfico 3: ROSCA — Casa parlamentar -----
+// ----- Gráfico: BARRAS HORIZONTAIS — Prazo final CN (em andamento na Casa Civil) -----
+function renderChartPrazoCN(props, marcs) {
+  const cont = document.getElementById("chart-prazocn");
+  if (!cont) return;
+  const marcMap = new Map((marcs || []).map(m => [m.proposicaoId, m]));
+  // Apenas RICs em andamento na Casa Civil com prazo final CN definido
+  const buckets = {};
+  for (const p of props) {
+    const m = marcMap.get(p.id) || {};
+    if (m.statusInterno !== "andamento_cc") continue;
+    const prazo = (m.prazoFinalCN || "").substring(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(prazo)) continue;
+    buckets[prazo] = (buckets[prazo] || 0) + 1;
+  }
+  const datas = Object.keys(buckets).sort(); // cronológico
+  if (datas.length === 0) { return emptyChart("chart-prazocn", "Nenhum RIC em andamento na CC com prazo final CN."); }
+  const dados = datas.map(d => {
+    const [y, mo, dd] = d.split("-");
+    return { key: d, label: `${dd}/${mo}/${y}`, valor: buckets[d] };
+  });
+
+  const hojeISO = isoHoje();
+  const w = 480, rowH = 26, padT = 12, padB = 12, padL = 78, padR = 40;
+  const h = padT + padB + dados.length * rowH;
+  const plotW = w - padL - padR;
+  const max = Math.max(...dados.map(d => d.valor)) || 1;
+
+  const bars = dados.map((d, i) => {
+    const y = padT + i * rowH;
+    const len = Math.max(2, (d.valor / max) * plotW);
+    const vencido = d.key < hojeISO;
+    const cor = vencido ? "#C0564B" : "url(#chart-bar-gradient-h)";
+    const filtro = { _prazoCn: d.key, statusInterno: "andamento_cc" };
+    return `
+      <text x="${padL - 6}" y="${y + rowH/2}" text-anchor="end" dominant-baseline="middle" class="chart-axis-label">${escapeHtml(d.label)}</text>
+      <rect x="${padL}" y="${y + 4}" width="${len}" height="${rowH - 10}" rx="3" fill="${cor}" class="chart-bar" data-chart-filtro='${escapeAttr(JSON.stringify(filtro))}' style="cursor:pointer">
+        <title>${d.label}: ${d.valor} RIC(s)${vencido ? " — prazo vencido" : ""} — clique para filtrar</title>
+      </rect>
+      <text x="${padL + len + 6}" y="${y + rowH/2}" dominant-baseline="middle" class="chart-value-label">${d.valor}</text>`;
+  }).join("");
+
+  cont.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" role="img">
+    <defs>
+      <linearGradient id="chart-bar-gradient-h" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#2C7A7E"/>
+        <stop offset="100%" stop-color="#5DD9D2"/>
+      </linearGradient>
+    </defs>
+    ${bars}
+  </svg>`;
+  cont.querySelectorAll("[data-chart-filtro]").forEach(el => {
+    el.addEventListener("click", () => {
+      try {
+        const f = JSON.parse(el.dataset.chartFiltro);
+        aplicarFiltrosViaPaineis(f);
+      } catch (e) {}
+    });
+  });
+}
 function renderChartCasa(props) {
   const labels = { "camara": "Câmara dos Deputados", "senado": "Senado Federal", "cn": "Congresso Nacional", "cldf": "CLDF", "congresso": "Congresso Nacional" };
   const cores = { "camara": "#1F5F63", "senado": "#5DD9D2", "cn": "#2C7A7E", "congresso": "#2C7A7E", "cldf": "#C5D9E6" };
@@ -4516,7 +4707,7 @@ function aplicarFiltrosViaPaineis(filtros) {
   const tabBtn = document.querySelector('nav.tabs button[data-pane="lista"]');
   if (tabBtn) tabBtn.click();
   // Limpa filtros primeiro
-  ["filter-busca","filter-casa","filter-sigla","filter-ano","filter-relevante","filter-leg","filter-status-int","filter-etapa","filter-tematica","filter-prazo","filter-aprov-de","filter-aprov-ate"].forEach(id => {
+  ["filter-busca","filter-casa","filter-sigla","filter-ano","filter-relevante","filter-leg","filter-status-int","filter-etapa","filter-tematica","filter-prazo","filter-prazo-cn","filter-aprov-de","filter-aprov-ate"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   // Aplica os pedidos
@@ -4527,6 +4718,18 @@ function aplicarFiltrosViaPaineis(filtros) {
   if (filtros.etapa && document.getElementById("filter-etapa")) document.getElementById("filter-etapa").value = filtros.etapa;
   if (filtros.casa && document.getElementById("filter-casa")) document.getElementById("filter-casa").value = filtros.casa;
   if (filtros.tematica && document.getElementById("filter-tematica")) document.getElementById("filter-tematica").value = filtros.tematica;
+  // v4.7.4: filtro por Prazo final CN (clique no gráfico de barras)
+  if (filtros._prazoCn && document.getElementById("filter-prazo-cn")) {
+    const sel = document.getElementById("filter-prazo-cn");
+    // garante que a opção exista (popula se necessário)
+    if (![...sel.options].some(o => o.value === filtros._prazoCn)) {
+      const [y, mo, dd] = filtros._prazoCn.split("-");
+      const opt = document.createElement("option");
+      opt.value = filtros._prazoCn; opt.textContent = `${dd}/${mo}/${y}`;
+      sel.appendChild(opt);
+    }
+    sel.value = filtros._prazoCn;
+  }
   // Novos (últimos 7 dias) — mesma regra do pill: dataApresentacao >= hoje-7
   listaEstado.filtroNovos7d = !!filtros.novos7d;
   setTimeout(() => { aplicarFiltros(); ordenar(); renderTabela(); }, 50);
@@ -5021,11 +5224,10 @@ document.getElementById("btn-sync-rapida").addEventListener("click", async () =>
 });
 
 // ===== DARK MODE =====
-async function inicializarTema() {
-  const saved = await getConfig("tema", null);
-  let dark;
-  if (saved !== null) dark = saved === "dark";
-  else dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+// v4.7.4: tema é LOCAL por navegador (localStorage), não sincroniza na nuvem. Padrão: claro.
+function inicializarTema() {
+  const saved = localStorage.getItem("monitor-ric-tema");
+  const dark = saved === "dark"; // padrão claro quando não há preferência salva
   aplicarTema(dark);
 }
 function aplicarTema(dark) {
@@ -5033,10 +5235,10 @@ function aplicarTema(dark) {
   const btn = document.getElementById("btn-dark-toggle");
   if (btn) btn.textContent = dark ? "🌙" : "☀️";
 }
-document.getElementById("btn-dark-toggle").addEventListener("click", async () => {
+document.getElementById("btn-dark-toggle").addEventListener("click", () => {
   const isDark = document.documentElement.classList.contains("dark");
   aplicarTema(!isDark);
-  await setConfig("tema", !isDark ? "dark" : "light");
+  localStorage.setItem("monitor-ric-tema", !isDark ? "dark" : "light");
 });
 
 // ===== HISTORY API: setup dos handlers dos botões abrir-modal =====
@@ -5099,6 +5301,7 @@ function abrirModalCloudSync() {
 }
 
 document.getElementById("btn-open-cloudsync").onclick = () => { fecharMenuAcoes(); abrirModalCloudSync(); };
+document.getElementById("btn-open-sobre").onclick = () => { fecharMenuAcoes(); abrirModal("modal-sobre"); };
 
 // v4.7.1: o clique no badge dispara "Sincronizar agora" (não abre mais o modal).
 // Se não estiver configurado, abre o modal para o usuário configurar.
@@ -5178,14 +5381,32 @@ const EXP_CASA_TXT = { camara: "Câmara dos Deputados", senado: "Senado Federal"
 let expSelecionados = new Set();
 let loteSelecionados = new Set();
 
+// Helper: etapa atual de uma marcação (primeira não concluída do fluxo)
+function _etapaAtualDe(m) {
+  if (!m || !m.etapasFluxo) return m && m.etapa ? m.etapa : "";
+  for (const e of ETAPAS_FLUXO_COMPLETO) {
+    const d = m.etapasFluxo[e.id];
+    if (!d || !d.concluida) return e.id;
+  }
+  return ETAPAS_FLUXO_COMPLETO[ETAPAS_FLUXO_COMPLETO.length - 1].id;
+}
+
 // Helper: lista de RICs filtrada para os seletores
-function _listaRicsParaSelecao(termo, casa) {
+// opts: { prazoCn, etapa } — filtros opcionais (usados no modal de edição em lote)
+function _listaRicsParaSelecao(termo, casa, opts) {
+  opts = opts || {};
   const t = (termo || "").toLowerCase().trim();
   const props = (listaEstado.itens || []).filter(p => !p.oculto);
   return props.filter(p => {
     if (casa && p.origem !== casa) return false;
-    if (!t) return true;
     const m = listaEstado.marcacoes.get(p.id) || {};
+    if (opts.prazoCn) {
+      if ((m.prazoFinalCN || "").substring(0, 10) !== opts.prazoCn) return false;
+    }
+    if (opts.etapa) {
+      if (_etapaAtualDe(m) !== opts.etapa) return false;
+    }
+    if (!t) return true;
     const blob = `${p.identificacao} ${p.autor || ""} ${m.apelido || ""} ${p.ementa || ""} ${p.origem || ""}`.toLowerCase();
     return blob.includes(t);
   }).sort((a, b) => (b.dataApresentacao || "").localeCompare(a.dataApresentacao || ""));
@@ -5311,10 +5532,17 @@ document.getElementById("btn-export-xlsx-gerar").onclick = gerarXLSXExport;
 // ============================================================
 // EDIÇÃO EM LOTE — v4.7.3
 // ============================================================
+function _loteFiltrosAtuais() {
+  return {
+    termo: document.getElementById("lote-busca").value,
+    casa: document.getElementById("lote-casa").value,
+    prazoCn: document.getElementById("lote-f-prazo") ? document.getElementById("lote-f-prazo").value : "",
+    etapa: document.getElementById("lote-f-etapa") ? document.getElementById("lote-f-etapa").value : "",
+  };
+}
 function renderLoteLista() {
-  const termo = document.getElementById("lote-busca").value;
-  const casa = document.getElementById("lote-casa").value;
-  const lista = _listaRicsParaSelecao(termo, casa);
+  const f = _loteFiltrosAtuais();
+  const lista = _listaRicsParaSelecao(f.termo, f.casa, { prazoCn: f.prazoCn, etapa: f.etapa });
   const cont = document.getElementById("lote-lista");
   cont.innerHTML = lista.map(p => {
     const checked = loteSelecionados.has(p.id) ? "checked" : "";
@@ -5330,6 +5558,19 @@ function renderLoteLista() {
     });
   });
   atualizarLoteContador();
+}
+// Popula o select de prazo de resposta (CN) do modal de lote
+function popularLoteFiltroPrazo() {
+  const sel = document.getElementById("lote-f-prazo");
+  if (!sel) return;
+  const cur = sel.value;
+  const datas = [...new Set(
+    [...listaEstado.marcacoes.values()].map(m => (m.prazoFinalCN || "").substring(0, 10)).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
+  )].sort();
+  sel.innerHTML = `<option value="">Todos</option>` + datas.map(d => {
+    const [y, mo, dd] = d.split("-");
+    return `<option value="${d}"${d === cur ? " selected" : ""}>${dd}/${mo}/${y}</option>`;
+  }).join("");
 }
 function atualizarLoteContador() {
   document.getElementById("lote-contador").textContent = `${loteSelecionados.size} RIC(s) selecionado(s)`;
@@ -5375,8 +5616,11 @@ document.getElementById("btn-open-edicao-lote").onclick = () => {
   loteSelecionados = new Set();
   document.getElementById("lote-busca").value = "";
   document.getElementById("lote-casa").value = "";
+  if (document.getElementById("lote-f-prazo")) document.getElementById("lote-f-prazo").value = "";
+  if (document.getElementById("lote-f-etapa")) document.getElementById("lote-f-etapa").value = "";
   document.getElementById("lote-feedback").innerHTML = "";
   popularSelectsLote();
+  popularLoteFiltroPrazo();
   bindLoteCampos();
   // Reseta os checkboxes de campos
   ["lote-ck-etapa","lote-ck-prazoetapa","lote-ck-tematica","lote-ck-nuprec","lote-ck-dataresp","lote-ck-tiporesp"].forEach(id => {
@@ -5390,10 +5634,11 @@ document.getElementById("btn-open-edicao-lote").onclick = () => {
 };
 document.getElementById("lote-busca").addEventListener("input", renderLoteLista);
 document.getElementById("lote-casa").addEventListener("change", renderLoteLista);
+document.getElementById("lote-f-prazo").addEventListener("change", renderLoteLista);
+document.getElementById("lote-f-etapa").addEventListener("change", renderLoteLista);
 document.getElementById("lote-select-all").onclick = () => {
-  const termo = document.getElementById("lote-busca").value;
-  const casa = document.getElementById("lote-casa").value;
-  _listaRicsParaSelecao(termo, casa).forEach(p => loteSelecionados.add(p.id));
+  const f = _loteFiltrosAtuais();
+  _listaRicsParaSelecao(f.termo, f.casa, { prazoCn: f.prazoCn, etapa: f.etapa }).forEach(p => loteSelecionados.add(p.id));
   renderLoteLista();
 };
 document.getElementById("lote-select-none").onclick = () => { loteSelecionados = new Set(); renderLoteLista(); };
@@ -5964,26 +6209,16 @@ const XLSX_MERGE = (() => {
       propsAtualizadasParaUrl: [],
       ricsAfetados: [],
       mesclagens: [], // novo: registros de REQ-CPI/CPMI do XLSX mesclados com REQ do banco
+      ausentes: [],   // v4.7.4: RICs no banco que NÃO constam no XLSX
     };
+    const idsNoXlsx = new Set();
 
     for (const l of linhas) {
       // Tenta primeiro pelo identificador (já normalizado: REQ-CPI/CPMI viraram REQ)
       let propExistente = propsPorIdentificacao.get(l.identificacao) || propsPorId.get(l.propXlsx.id);
-      // Se não achou e a identificação original era REQ-CPI/CPMI, tenta busca por num+ano+origem em cn/cldf
-      if (!propExistente && l.identificacaoOriginal && l.identificacaoOriginal !== l.identificacao) {
-        const cands = [
-          `${l.propXlsx.numero}-${l.propXlsx.ano}-cn`,
-          `${l.propXlsx.numero}-${l.propXlsx.ano}-congresso`,
-          `${l.propXlsx.numero}-${l.propXlsx.ano}-cldf`,
-        ];
-        for (const k of cands) {
-          if (propsPorReqNumAnoOrigem.has(k)) {
-            propExistente = propsPorReqNumAnoOrigem.get(k);
-            diff.mesclagens.push({ original: l.identificacaoOriginal, mesclou_em: propExistente.identificacao, id: propExistente.id });
-            break;
-          }
-        }
-      }
+      // v4.7.4: a fusão heurística REQ-CPI/CPMI → REQ foi DESATIVADA para "manter duplicidades"
+      // na base. Cada entrada do XLSX é casada apenas por identificação/id exatos; quando não
+      // houver correspondência exata, cria-se uma nova proposição (mesmo que pareça duplicata).
       let propId, isNovo;
 
       if (propExistente) {
@@ -6029,9 +6264,18 @@ const XLSX_MERGE = (() => {
       }
 
       // Ajustar proposicaoId da marcação para o id real (caso a proposição existente tenha id diferente)
-      const marcXlsxAjustada = { ...l.marcXlsx, proposicaoId: propId, atualizadoEm: new Date().toISOString() };
+      // v4.7.4: preserva palavrasChave existente — esse campo não tem correspondência no XLSX,
+      // então a importação NUNCA deve mexer nele.
+      const marcExistentePrev = marcsPorId.get(propId);
+      const marcXlsxAjustada = {
+        ...l.marcXlsx,
+        proposicaoId: propId,
+        palavrasChave: (marcExistentePrev && marcExistentePrev.palavrasChave) || "",
+        atualizadoEm: new Date().toISOString()
+      };
 
-      const marcExistente = marcsPorId.get(propId);
+      const marcExistente = marcExistentePrev;
+      if (propId) idsNoXlsx.add(propId);
       const ricInfo = { id: propId, identificacao: l.identificacao, tipo: isNovo ? "novo" : "atualizado", mudancas: [] };
 
       if (marcExistente) {
@@ -6069,6 +6313,13 @@ const XLSX_MERGE = (() => {
         }
         ricInfo.tipo = isNovo ? "novo" : "atualizado";
         diff.ricsAfetados.push(ricInfo);
+      }
+    }
+    // v4.7.4: RICs presentes na base mas ausentes do XLSX (apenas número/ano)
+    for (const p of propsAtuais) {
+      if (p.oculto) continue;
+      if (!idsNoXlsx.has(p.id)) {
+        diff.ausentes.push({ numero: p.numero, ano: p.ano, identificacao: p.identificacao });
       }
     }
     return diff;
@@ -6400,6 +6651,18 @@ function renderXlsxPreview() {
 
   renderXlsxDiffList("todos");
   document.querySelectorAll(".xlsx-diff-filtro").forEach(b => b.classList.toggle("active", b.dataset.tipo === "todos"));
+
+  // v4.7.4: box de RICs ausentes do XLSX
+  const ausentes = diff.ausentes || [];
+  const boxAus = document.getElementById("xlsx-ausentes-box");
+  if (boxAus) {
+    if (ausentes.length) {
+      boxAus.style.display = "block";
+      document.getElementById("xlsx-ausentes-cnt").textContent = ausentes.length;
+    } else {
+      boxAus.style.display = "none";
+    }
+  }
 }
 
 function renderXlsxDiffList(filtroTipo) {
@@ -6454,6 +6717,22 @@ document.querySelectorAll(".xlsx-diff-filtro").forEach(b => b.addEventListener("
 }));
 
 // Cancelar
+document.getElementById("btn-xlsx-export-ausentes").addEventListener("click", () => {
+  if (!xlsxStateEmMemoria || !xlsxStateEmMemoria.diff.ausentes) return;
+  const aus = xlsxStateEmMemoria.diff.ausentes;
+  // Ordena por ano e número
+  const ordenadas = [...aus].sort((a, b) => (a.ano - b.ano) || ((parseInt(a.numero,10)||0) - (parseInt(b.numero,10)||0)));
+  const linhas = ordenadas.map(a => `${a.numero}/${a.ano}`);
+  const conteudo = linhas.join("\r\n");
+  const blob = new Blob([conteudo], { type: "text/plain;charset=utf-8" });
+  const ts = new Date().toISOString().substring(0, 10);
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `RICs_ausentes_no_xlsx_${ts}.txt`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+});
+
 document.getElementById("btn-xlsx-cancelar").addEventListener("click", () => {
   if (!confirm("Descartar as mudanças e fechar?")) return;
   xlsxResetEstado();
@@ -6795,13 +7074,18 @@ const CloudSync = (() => {
       DB.getAll("proposicoes"), DB.getAll("marcacoes"), DB.getAll("naomapeadas"),
       DB.getAll("tombstones"), DB.getAll("config")
     ]);
-    // Não sincroniza credenciais de nuvem nem chave Gemini (sensíveis e específicas do dispositivo)
-    const configFiltrada = config.filter(c => !["cloudPat", "cloudGistId", "geminiKey"].includes(c.key));
+    // Não sincroniza: credenciais de nuvem, chave Gemini (sensíveis) nem o tema (local por navegador)
+    const NAO_SINCRONIZAR = ["cloudPat", "cloudGistId", "geminiKey", "tema"];
+    const configFiltrada = config.filter(c => !NAO_SINCRONIZAR.includes(c.key));
+    // v4.7.4: inclui os presets de relatório do usuário (ficam em localStorage)
+    let relatorioPresets = [];
+    try { relatorioPresets = JSON.parse(localStorage.getItem("monitor-ric-relatorio-presets") || "[]"); } catch (e) {}
     return {
       schema: "monitor-ric-cloud-v1",
       exportadoEm: new Date().toISOString(),
       proposicoes, marcacoes, naomapeadas, tombstones,
-      config: configFiltrada
+      config: configFiltrada,
+      relatorioPresets,
     };
   }
 
@@ -6852,12 +7136,25 @@ const CloudSync = (() => {
     if (proposicoes.length) await DB.bulkPut("proposicoes", proposicoes, { sync: false });
     if (marcacoes.length) await DB.bulkPut("marcacoes", marcacoes, { sync: false });
     if (naomapeadas.length) await DB.bulkPut("naomapeadas", naomapeadas, { sync: false });
-    // Config compartilhada (last-write-wins simples)
+    // Config compartilhada (last-write-wins simples) — exceto credenciais, Gemini e tema (local)
     if (remoto.config) {
       for (const c of remoto.config) {
-        if (["cloudPat", "cloudGistId", "geminiKey"].includes(c.key)) continue;
+        if (["cloudPat", "cloudGistId", "geminiKey", "tema"].includes(c.key)) continue;
         await DB.put("config", c, { sync: false });
       }
+    }
+    // v4.7.4: restaura presets de relatório do usuário (localStorage)
+    if (Array.isArray(remoto.relatorioPresets)) {
+      try {
+        const locais = JSON.parse(localStorage.getItem("monitor-ric-relatorio-presets") || "[]");
+        // Merge por id, preferindo o mais recente (salvoEm)
+        const mapa = new Map();
+        for (const p of [...locais, ...remoto.relatorioPresets]) {
+          const ex = mapa.get(p.id);
+          if (!ex || (p.criadoEm || "") > (ex.criadoEm || "")) mapa.set(p.id, p);
+        }
+        localStorage.setItem("monitor-ric-relatorio-presets", JSON.stringify([...mapa.values()].slice(0, 30)));
+      } catch (e) { console.warn("Falha ao mesclar presets de relatório:", e); }
     }
   }
 
@@ -8703,6 +9000,7 @@ document.querySelectorAll("[data-rel-painel]").forEach(b => b.addEventListener("
 async function recarregarTudo() {
   try {
     await carregarLista();
+    popularFiltroPrazoCN();
     aplicarFiltros();
     ordenar();
     renderTabela();

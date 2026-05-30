@@ -1,6 +1,6 @@
-// Monitor RIC — Service Worker v4.7
+// Monitor RIC — Service Worker v4.7.4
 // Cache-first do shell. Não cacheia chamadas a APIs externas.
-const CACHE_NAME = "monitor-ric-v4-7";
+const CACHE_NAME = "monitor-ric-v4-7-4";
 const SHELL = [
   "./",
   "./index.html",
