@@ -751,7 +751,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.4</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.6</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -1177,7 +1177,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.4</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.6</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -1445,11 +1445,24 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="card">
       <h2>Backup e dados</h2>
       <p class="text-small text-muted" style="margin-bottom:12px">Dados ficam no navegador (IndexedDB). Faça backup periodicamente.</p>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px">
+        <input type="checkbox" id="cfg-backup-incluir-credenciais">
+        Incluir credenciais no backup (PAT do GitHub e chave Gemini)
+      </label>
+      <p class="text-small text-muted" style="margin:-4px 0 12px"><b>Por segurança</b>, o backup é exportado <b>sem</b> as credenciais por padrão. Marque a opção acima apenas se for guardar o arquivo em local seguro e não compartilhá-lo.</p>
       <div class="toolbar">
         <button class="btn" id="btn-export-backup">Exportar backup (JSON)</button>
         <label class="btn" style="cursor:pointer">Importar backup<input type="file" id="btn-import-backup" accept=".json" style="display:none"></label>
         <button class="btn btn-danger" id="btn-clear">Limpar todos os dados</button>
       </div>
+    </div>
+    <div class="card">
+      <h2>🔧 Manutenção de dados</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Rotinas de correção idempotentes (podem ser executadas várias vezes sem efeito colateral). Não alteram a nuvem diretamente — as mudanças sincronizam normalmente depois.</p>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+        <button class="btn btn-sm" id="btn-manut-tudo">Executar manutenção completa</button>
+      </div>
+      <div id="manut-log" class="text-small" style="margin-top:10px;white-space:pre-wrap;font-family:monospace"></div>
     </div>
     <div class="card">
       <h2>RICs ocultos e excluídos</h2>
@@ -1555,6 +1568,9 @@ const MAP_SIT_CAMARA = {
   "aguardando envio ao poder executivo": "aprovado",
   // Aguardando resposta
   "aguardando resposta": "aguardando_resposta",
+  // v4.7.6: situações que apareciam em naomapeadas apenas por trailing space / ausência no dicionário
+  "aguardando encaminhamento": "tramitacao_inicial",
+  "aguardando recebimento": "tramitacao_inicial",
   // Respondido
   "aguardando remessa ao arquivo": "respondido",
   "prejudicialidade": "respondido",
@@ -1833,9 +1849,119 @@ async function migrarDados() {
   await setConfig("schemaVersaoDados", SCHEMA_VERSAO_DADOS);
 }
 
+// v4.7.6: modelo de marcação vazia (em triagem) para uma proposição
+function marcacaoVaziaPara(proposicaoId) {
+  return {
+    proposicaoId,
+    apelido: "", tematica: "", relevante: false, palavrasChave: "",
+    resumo: "", comentarios: "", unidadesConsultadas: [],
+    statusInterno: "novo", etapa: "", prazoEtapa: "", etapasFluxo: {},
+    dataRecebimentoSEI: "", prazoFinalCN: "", dataResposta: "",
+    nupRecebimento: "", nupResposta: "", tipoResposta: "",
+    analogos: [], analogosCalculadoEm: "",
+    atualizadoEm: new Date().toISOString(),
+    criadaAutomaticamente: true
+  };
+}
+
+// v4.7.6: garante o invariante 1:1 (toda proposição tem uma marcação).
+// Idempotente e com {sync: false} — não dispara escrita na nuvem. Retorna nº de marcações criadas.
+async function garantirMarcacoes1a1() {
+  const [props, marcs] = await Promise.all([DB.getAll("proposicoes"), DB.getAll("marcacoes")]);
+  const comMarcacao = new Set(marcs.map(m => m.proposicaoId));
+  const faltantes = props.filter(p => !comMarcacao.has(p.id));
+  if (faltantes.length === 0) return 0;
+  const novas = faltantes.map(p => marcacaoVaziaPara(p.id));
+  await DB.bulkPut("marcacoes", novas, { sync: false });
+  return novas.length;
+}
+
+// v4.7.6: normaliza unidadesConsultadas para os valores canônicos configurados.
+// Idempotente, {sync:false}. Mapeia variantes conhecidas (caixa/abreviação) e descarta "-"/vazios.
+// Valores SEM mapeamento óbvio são preservados e devolvidos num log para decisão manual
+// (não inventa destino). Retorna { alteradas, semMapeamento: {valor: count} }.
+const UNIDADES_NORMALIZACAO = {
+  // variantes (lower) → canônico configurado
+  "sepac": "SEPAC",
+  "secop": "SECOP30", "secop30": "SECOP30",
+  "secep": "SECEP",
+  "abin": "ABIN",
+  "ascom": "Ascom",
+  "saj": "SAJ", "sa": "SA", "sam": "SAM", "sag": "SAG", "in": "IN",
+  "gppr": "GPPR", "seppi": "SEPPI", "ciset": "CISET", "se": "SE", "gm": "GM", "ssgp": "SSGP",
+};
+async function normalizarUnidadesConsultadas() {
+  const canonicos = new Set(await (async () => {
+    const cfg = await getConfig("unidades", UNIDADES_PADRAO.join("\n"));
+    return cfg.split("\n").map(u => u.trim()).filter(Boolean);
+  })());
+  const marcs = await DB.getAll("marcacoes");
+  const semMapeamento = {};
+  const atualizadas = [];
+  for (const m of marcs) {
+    const orig = Array.isArray(m.unidadesConsultadas) ? m.unidadesConsultadas : [];
+    if (orig.length === 0) continue;
+    const novo = [];
+    let mudou = false;
+    for (const u of orig) {
+      const bruto = String(u || "").trim();
+      if (!bruto || bruto === "-") { mudou = true; continue; } // descarta vazio e "-"
+      // Já é canônico?
+      if (canonicos.has(bruto)) { if (!novo.includes(bruto)) novo.push(bruto); continue; }
+      // Variante conhecida?
+      const mapeado = UNIDADES_NORMALIZACAO[bruto.toLowerCase()];
+      if (mapeado && canonicos.has(mapeado)) {
+        if (!novo.includes(mapeado)) novo.push(mapeado);
+        mudou = true;
+        continue;
+      }
+      // Sem mapeamento óbvio: PRESERVA o valor original e registra no log
+      if (!novo.includes(bruto)) novo.push(bruto);
+      semMapeamento[bruto] = (semMapeamento[bruto] || 0) + 1;
+    }
+    // Detecta mudança real (conteúdo ou ordem dedup)
+    if (mudou || novo.length !== orig.length || novo.some((v, i) => v !== orig[i])) {
+      m.unidadesConsultadas = novo;
+      m.atualizadoEm = new Date().toISOString();
+      atualizadas.push(m);
+    }
+  }
+  if (atualizadas.length) await DB.bulkPut("marcacoes", atualizadas, { sync: false });
+  return { alteradas: atualizadas.length, semMapeamento };
+}
+
+// v4.7.6: recalcula o campo legado "etapa" a partir do etapasFluxo (primeira não concluída).
+// Idempotente, {sync:false}. Corrige marcações com etapa vazia+status preenchido ou etapa
+// incoerente (ex.: etapa="retirado"). Retorna nº de marcações corrigidas.
+async function recalcularEtapasInconsistentes() {
+  const marcs = await DB.getAll("marcacoes");
+  const atualizadas = [];
+  const idsEtapas = ETAPAS_FLUXO_COMPLETO.map(e => e.id);
+  for (const m of marcs) {
+    const ef = m.etapasFluxo || {};
+    let etapaCalc = "";
+    for (const e of ETAPAS_FLUXO_COMPLETO) {
+      if (!ef[e.id] || !ef[e.id].concluida) { etapaCalc = e.id === "recebimento" ? "" : e.id; break; }
+    }
+    // etapa válida = vazia ou um id do fluxo
+    const etapaAtual = m.etapa || "";
+    const etapaInvalida = etapaAtual && !idsEtapas.includes(etapaAtual);
+    if (etapaAtual !== etapaCalc && (etapaInvalida || etapaAtual === "" || etapaCalc !== "")) {
+      // Só sobrescreve se o valor calculado for derivável; preserva quando ambos vazios
+      if (etapaAtual !== etapaCalc) {
+        m.etapa = etapaCalc;
+        m.atualizadoEm = new Date().toISOString();
+        atualizadas.push(m);
+      }
+    }
+  }
+  if (atualizadas.length) await DB.bulkPut("marcacoes", atualizadas, { sync: false });
+  return atualizadas.length;
+}
+
 // ===== Helpers =====
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function normalizar(s) { if (!s) return ""; return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+function normalizar(s) { if (!s) return ""; return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
 function escapeHtml(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function escapeAttr(s) { return escapeHtml(s); }
 function formatarData(s) {
@@ -2137,6 +2263,9 @@ function buscarRicsAnalogos(idCorrente, todosRics, marcMap, opts = {}) {
 
 async function registrarSituacaoNaoMapeada(situacao, origem) {
   if (!situacao) return;
+  // v4.7.6: trim para não criar entradas duplicadas por espaços nas pontas/internos
+  situacao = String(situacao).replace(/\s+/g, " ").trim();
+  if (!situacao) return;
   const k = origem + ": " + situacao;
   const exist = await DB.get("naomapeadas", k);
   if (exist) {
@@ -2247,8 +2376,14 @@ async function detectarSituacaoCamara(prop) {
   hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
   det.ultimaMovimentacaoData = (hist[hist.length - 1].dataHora || hist[hist.length - 1].data || "").substring(0, 10);
 
-  // Procurar evento de aprovação (codTipo=240 ou descricao "Aprovação")
-  const aprovEvento = hist.find(t => t.codTipo === COD_APROVACAO_CAMARA || /^aprovac[ãa]o$/i.test(normalizar(t.descricao || "")));
+  // Procurar evento de aprovação (codTipo=240, descricao "Aprovação", OU despacho que
+  // case com a regra de aprovação — ex.: "Aprovação pelo Presidente ... ad referendum",
+  // que costuma vir numa entrada de "Distribuição", não numa entrada "Aprovação").
+  let aprovEvento = hist.find(t => t.codTipo === COD_APROVACAO_CAMARA || /^aprovac[ãa]o$/i.test(normalizar(t.descricao || "")));
+  if (!aprovEvento) {
+    // v4.7.6: varre o histórico por despacho/descrição de aprovação (pega o primeiro cronológico)
+    aprovEvento = hist.find(t => REGRA_DESPACHO_APROVADO_CAMARA.test((t.despacho || "") + " " + (t.descricao || "")));
+  }
   if (aprovEvento) {
     det.dataAprovacao = aprovEvento.data;
     det.despachoAprovacao = aprovEvento.despacho || aprovEvento.descricao;
@@ -2513,8 +2648,27 @@ function podeUsarCacheStatus(prop, forcar) {
 async function enriquecerProposicao(prop, opts = {}) {
   const { forcar = false, log = null } = opts;
   if (podeUsarCacheStatus(prop, forcar)) return;
+  // v4.7.5: proposições sem número/ano (registros incompletos) não têm como ser enriquecidas
+  if (!prop.numero || !prop.ano) {
+    if (log) log.add(`${prop.identificacao || "RIC s/n"}: sem número/ano — não enriquecido.`, "warn");
+    return;
+  }
   try {
     if (prop.origem === "camara") {
+      // v4.7.5: RICs importados via XLSX não têm idOriginal (a planilha só traz número/ano).
+      // Sem ele, as URLs /proposicoes/{id} ficam inválidas e a API responde 400/405.
+      // Resolve o id real da API por sigla+número+ano antes de prosseguir.
+      if (!_idOriginalValido(prop.idOriginal)) {
+        const achado = await camaraBuscarPorNumeroAno(prop.sigla || "RIC", prop.numero, prop.ano);
+        await sleep(THROTTLE_MS);
+        if (achado && achado.id) {
+          prop.idOriginal = achado.id;
+          // Mantém o id interno estável, mas registra o id da API
+        } else {
+          if (log) log.add(`${prop.identificacao}: não encontrado na API da Câmara (mantido sem enriquecer).`, "warn");
+          return;
+        }
+      }
       if (!prop.urlInteiroTeor) { await camaraEnriquecerDetalhe(prop); await sleep(THROTTLE_MS); }
       prop.historico = await camaraBuscarTramitacoes(prop);
       const det = await detectarSituacaoCamara(prop);
@@ -2524,6 +2678,11 @@ async function enriquecerProposicao(prop, opts = {}) {
       prop.ultimaMovimentacaoData = det.ultimaMovimentacaoData;
       prop.prazoFinalCNSugerido = det.prazoFinalCNSugerido || "";
     } else {
+      // Senado: idOriginal = Codigo da matéria. Se ausente (XLSX), não há busca confiável → pula.
+      if (!_idOriginalValido(prop.idOriginal)) {
+        if (log) log.add(`${prop.identificacao}: sem código do Senado (importado via XLSX) — não enriquecido.`, "warn");
+        return;
+      }
       if (!prop.urlInteiroTeor) { await senadoBuscarInteiroTeor(prop); await sleep(THROTTLE_MS); }
       try { prop.historico = await senadoBuscarMovimentacoes(prop); }
       catch (e) { prop.historico = []; if (log) log.add(`Senado ${prop.identificacao}: falha em movimentações — ${e.message}`, "warn"); }
@@ -2538,6 +2697,13 @@ async function enriquecerProposicao(prop, opts = {}) {
   } catch (e) {
     if (log) log.add(`${prop.identificacao}: falha no enriquecimento — ${e.message}`, "warn");
   }
+}
+
+// idOriginal válido = número/string não vazia que não seja "null"/"undefined"
+function _idOriginalValido(idOriginal) {
+  if (idOriginal === null || idOriginal === undefined) return false;
+  const s = String(idOriginal).trim();
+  return s !== "" && s !== "null" && s !== "undefined" && s !== "0";
 }
 
 // ===== Inclusão manual de requerimento (v4.7) =====
@@ -2747,6 +2913,12 @@ async function sincronizar({ casa, ano, enriquecer }) {
   }
   progress(95);
   if (proposicoesParaSalvar.length) await DB.bulkPut("proposicoes", proposicoesParaSalvar);
+  // v4.7.6: garante marcação inicial (em triagem) para toda proposição nova
+  if (novos.length) {
+    const marcsExist = new Set((await DB.getAll("marcacoes")).map(m => m.proposicaoId));
+    const novasMarc = novos.filter(p => !marcsExist.has(p.id)).map(p => marcacaoVaziaPara(p.id));
+    if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
+  }
   await setConfig("ultimaSync", new Date().toISOString());
   log.add(`---`, "dim");
   log.add(`Concluído. Câmara: ${total.camara}. Senado: ${total.senado}. Casa Civil: ${total.filtrados}. Novos: ${novos.length}.`, "ok");
@@ -2808,6 +2980,12 @@ async function sincronizarIncremental(numdias) {
   } catch (e) { log.add(`Senado: ERRO — ${e.message}`, "err"); }
 
   if (proposicoesParaSalvar.length) await DB.bulkPut("proposicoes", proposicoesParaSalvar);
+  // v4.7.6: garante marcação inicial para toda proposição nova descoberta no incremental
+  if (novos.length) {
+    const marcsExist = new Set((await DB.getAll("marcacoes")).map(m => m.proposicaoId));
+    const novasMarc = novos.filter(p => !marcsExist.has(p.id)).map(p => marcacaoVaziaPara(p.id));
+    if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
+  }
 
   // v4.7.4: além da descoberta por regex, reenriquece TODAS as proposições já na base
   // (inclusive as adicionadas via XLSX que não atendem ao regex de Casa Civil), para que
@@ -3970,7 +4148,10 @@ async function abrirDetalhe(id) {
     // Detecta se o usuário mudou MANUALMENTE o select (form != valor anterior do BD)
     // Se mudou manualmente, respeita a escolha. Se manteve, aplica automações.
     const usuarioMudouManualmente = stForm !== stAnterior;
-    if (!usuarioMudouManualmente) {
+    // v4.7.5: "retirado/não enviado" é tramitação FINALIZADA (mesmo efeito de "respondido").
+    // Uma vez retirado, nenhuma automação altera o status.
+    const jaFinalizado = stForm === "retirado" || stForm === "respondido";
+    if (!usuarioMudouManualmente && !jaFinalizado) {
       let st = stForm || "novo";
       // Regra 1: objeto salvo → tramitação CN (eleva a partir de "novo")
       if (novoM.apelido && (st === "novo" || st === "")) {
@@ -4467,18 +4648,18 @@ function renderDonut(containerId, dados, opts) {
 // ----- Gráfico 2: ROSCA — Situação legislativa -----
 function renderChartSituacao(props, marcs) {
   const marcMap = new Map((marcs || []).map(m => [m.proposicaoId, m]));
-  // v4.7.4:
+  // v4.7.4/4.7.5:
   //  - "Apresentados na última semana" vira categoria própria (independe da situação)
-  //  - RICs com Data de resposta preenchida (na marcação) são contados como "Respondido",
-  //    corrigindo registros do CN que ainda constam como aguardando resposta.
-  const ordem = ["apresentado_semana", "aprovado", "aguardando_resposta", "aguardando_aprovacao", "tramitacao_inicial", "respondido"];
+  //  - RICs com Data de resposta preenchida são contados como "Respondido" (corrige a API)
+  //  - "Retirado/não enviado" é tramitação finalizada — agregado com Respondido em "Finalizado"
+  const ordem = ["apresentado_semana", "aprovado", "aguardando_resposta", "aguardando_aprovacao", "tramitacao_inicial", "finalizado"];
   const labels = {
     "apresentado_semana": "Apresentados (últ. 7 dias)",
     "tramitacao_inicial": "Tramitação inicial",
     "aguardando_aprovacao": "Aguardando aprovação",
     "aprovado": "Aprovado",
     "aguardando_resposta": "Aguardando resposta",
-    "respondido": "Respondido"
+    "finalizado": "Finalizado (resp./retirado)"
   };
   const cores = {
     "apresentado_semana": "#F4A259",
@@ -4486,7 +4667,7 @@ function renderChartSituacao(props, marcs) {
     "aguardando_resposta": "#5DD9D2",
     "aguardando_aprovacao": "#3D5A80",
     "tramitacao_inicial": "#6BE4DC",
-    "respondido": "#9FB8AD"
+    "finalizado": "#9FB8AD"
   };
   const hoje = new Date();
   const lim7 = new Date(hoje.getTime() - 7 * 86400 * 1000).toISOString().substring(0, 10);
@@ -4498,14 +4679,16 @@ function renderChartSituacao(props, marcs) {
       continue;
     }
     const m = marcMap.get(p.id) || {};
-    // Correção: se tem data de resposta, conta como respondido (mesmo que a API diga outra coisa)
     let k = p.situacaoLegislativa || "pendente";
-    if (m.dataResposta) k = "respondido";
-    if (!ordem.includes(k)) continue; // descarta retirado/pendente
+    // Tramitação finalizada: data de resposta, status respondido OU retirado
+    if (m.dataResposta || m.statusInterno === "respondido" || m.statusInterno === "retirado" || k === "respondido" || k === "retirado") {
+      k = "finalizado";
+    }
+    if (!ordem.includes(k)) continue; // descarta pendente
     buckets[k] = (buckets[k] || 0) + 1;
   }
   const dados = ordem.filter(k => buckets[k]).map(k => {
-    const filtro = k === "apresentado_semana" ? { novos7d: true } : (k === "respondido" ? { leg: "respondido" } : { leg: k });
+    const filtro = k === "apresentado_semana" ? { novos7d: true } : (k === "finalizado" ? { leg: "respondido" } : { leg: k });
     return { label: labels[k], valor: buckets[k], cor: cores[k], filtro };
   });
   renderDonut("chart-situacao", dados, { empty: "Sem RICs em situação ativa." });
@@ -5049,19 +5232,65 @@ document.getElementById("btn-listar-excluidos").addEventListener("click", () => 
   }));
 });
 
+document.getElementById("btn-manut-tudo").addEventListener("click", async () => {
+  const logEl = document.getElementById("manut-log");
+  const btn = document.getElementById("btn-manut-tudo");
+  btn.disabled = true;
+  logEl.textContent = "Executando manutenção...\n";
+  const linhas = [];
+  try {
+    const nMarc = await garantirMarcacoes1a1();
+    linhas.push(`• Marcações criadas (proposições sem marcação): ${nMarc}`);
+
+    const un = await normalizarUnidadesConsultadas();
+    linhas.push(`• Unidades normalizadas em ${un.alteradas} marcação(ões).`);
+    const sem = Object.entries(un.semMapeamento || {});
+    if (sem.length) {
+      linhas.push(`• Unidades SEM mapeamento (preservadas — decidir manualmente):`);
+      sem.sort((a, b) => b[1] - a[1]).forEach(([v, c]) => linhas.push(`    - "${v}" (${c}x)`));
+    } else {
+      linhas.push(`• Nenhuma unidade fora da lista canônica.`);
+    }
+
+    const nEt = await recalcularEtapasInconsistentes();
+    linhas.push(`• Etapas recalculadas: ${nEt} marcação(ões).`);
+
+    linhas.push(`\nConcluído. Recarregando dados...`);
+    logEl.textContent = linhas.join("\n");
+    await carregarLista();
+    aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
+    // Dispara sync se configurado (as mudanças foram {sync:false}, então força um push)
+    if (CloudSync.estaConfigurado()) CloudSync.sincronizarAgora({ silencioso: true }).catch(() => {});
+  } catch (e) {
+    linhas.push(`\nERRO: ${e.message}`);
+    logEl.textContent = linhas.join("\n");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 document.getElementById("btn-export-backup").addEventListener("click", async () => {
+  const incluirCred = document.getElementById("cfg-backup-incluir-credenciais") && document.getElementById("cfg-backup-incluir-credenciais").checked;
+  let config = await DB.getAll("config");
+  if (!incluirCred) {
+    // v4.7.6: por segurança, remove credenciais sensíveis do backup por padrão
+    const SENSIVEIS = ["cloudPat", "geminiKey"];
+    config = config.map(c => SENSIVEIS.includes(c.key) ? { ...c, value: "" } : c);
+  }
   const data = {
     schema: SCHEMA_VERSAO_DADOS,
     exportadoEm: new Date().toISOString(),
+    credenciaisIncluidas: !!incluirCred,
     proposicoes: await DB.getAll("proposicoes"),
     marcacoes: await DB.getAll("marcacoes"),
-    config: await DB.getAll("config"),
+    config,
     naomapeadas: await DB.getAll("naomapeadas")
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `monitor-ric-backup-${new Date().toISOString().substring(0, 10)}.json`;
+  const sufixo = incluirCred ? "-com-credenciais" : "";
+  a.download = `monitor-ric-backup-${new Date().toISOString().substring(0, 10)}${sufixo}.json`;
   a.click();
 });
 
@@ -5071,7 +5300,14 @@ document.getElementById("btn-import-backup").addEventListener("change", async e 
     const data = JSON.parse(await f.text());
     if (data.proposicoes) await DB.bulkPut("proposicoes", data.proposicoes);
     if (data.marcacoes) await DB.bulkPut("marcacoes", data.marcacoes);
-    if (data.config) for (const c of data.config) await DB.put("config", c);
+    if (data.config) {
+      // v4.7.6: não sobrescreve credenciais locais com valores vazios vindos de um backup mascarado
+      const SENSIVEIS = ["cloudPat", "geminiKey"];
+      for (const c of data.config) {
+        if (SENSIVEIS.includes(c.key) && (!c.value || c.value === "")) continue;
+        await DB.put("config", c);
+      }
+    }
     if (data.naomapeadas) await DB.bulkPut("naomapeadas", data.naomapeadas);
     await migrarDados();
     await renderHeaderStats();
@@ -6264,13 +6500,15 @@ const XLSX_MERGE = (() => {
       }
 
       // Ajustar proposicaoId da marcação para o id real (caso a proposição existente tenha id diferente)
-      // v4.7.4: preserva palavrasChave existente — esse campo não tem correspondência no XLSX,
-      // então a importação NUNCA deve mexer nele.
+      // v4.7.4/4.7.5: preserva campos sem correspondência no XLSX — a importação NUNCA mexe
+      // em palavras-chave nem nos RICs análogos já calculados.
       const marcExistentePrev = marcsPorId.get(propId);
       const marcXlsxAjustada = {
         ...l.marcXlsx,
         proposicaoId: propId,
         palavrasChave: (marcExistentePrev && marcExistentePrev.palavrasChave) || "",
+        analogos: (marcExistentePrev && marcExistentePrev.analogos) || [],
+        analogosCalculadoEm: (marcExistentePrev && marcExistentePrev.analogosCalculadoEm) || "",
         atualizadoEm: new Date().toISOString()
       };
 
@@ -7074,18 +7312,23 @@ const CloudSync = (() => {
       DB.getAll("proposicoes"), DB.getAll("marcacoes"), DB.getAll("naomapeadas"),
       DB.getAll("tombstones"), DB.getAll("config")
     ]);
-    // Não sincroniza: credenciais de nuvem, chave Gemini (sensíveis) nem o tema (local por navegador)
+    // Só NÃO sincroniza: credenciais do próprio CloudSync e a chave do Gemini (sensíveis e
+    // específicas do dispositivo) e o tema (preferência local por navegador). Todo o resto
+    // das configurações e dados é sincronizado.
     const NAO_SINCRONIZAR = ["cloudPat", "cloudGistId", "geminiKey", "tema"];
     const configFiltrada = config.filter(c => !NAO_SINCRONIZAR.includes(c.key));
-    // v4.7.4: inclui os presets de relatório do usuário (ficam em localStorage)
-    let relatorioPresets = [];
+    // Inclui dados guardados em localStorage que fazem parte do estado do usuário:
+    // presets de relatório e snapshots de RICs excluídos (para recuperação em qualquer dispositivo).
+    let relatorioPresets = [], exclusaoSnapshots = [];
     try { relatorioPresets = JSON.parse(localStorage.getItem("monitor-ric-relatorio-presets") || "[]"); } catch (e) {}
+    try { exclusaoSnapshots = JSON.parse(localStorage.getItem("monitor-ric-exclusao-snapshots") || "[]"); } catch (e) {}
     return {
       schema: "monitor-ric-cloud-v1",
       exportadoEm: new Date().toISOString(),
       proposicoes, marcacoes, naomapeadas, tombstones,
       config: configFiltrada,
       relatorioPresets,
+      exclusaoSnapshots,
     };
   }
 
@@ -7155,6 +7398,19 @@ const CloudSync = (() => {
         }
         localStorage.setItem("monitor-ric-relatorio-presets", JSON.stringify([...mapa.values()].slice(0, 30)));
       } catch (e) { console.warn("Falha ao mesclar presets de relatório:", e); }
+    }
+    // v4.7.5: mescla snapshots de RICs excluídos (para recuperação em qualquer dispositivo)
+    if (Array.isArray(remoto.exclusaoSnapshots)) {
+      try {
+        const locais = JSON.parse(localStorage.getItem("monitor-ric-exclusao-snapshots") || "[]");
+        const mapa = new Map();
+        for (const s of [...locais, ...remoto.exclusaoSnapshots]) {
+          if (s && s.id) mapa.set(s.id, s);
+        }
+        // Ordena por data de exclusão desc e limita a 50
+        const merged = [...mapa.values()].sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || "")).slice(0, 50);
+        localStorage.setItem("monitor-ric-exclusao-snapshots", JSON.stringify(merged));
+      } catch (e) { console.warn("Falha ao mesclar snapshots de exclusão:", e); }
     }
   }
 
@@ -9014,6 +9270,8 @@ async function recarregarTudo() {
     await DB.open();
     await migrarBancoLegado();
     await migrarDados();
+    // v4.7.6: garante o invariante 1:1 (toda proposição tem marcação) — idempotente, sem sync
+    try { const n = await garantirMarcacoes1a1(); if (n) console.info(`${n} marcação(ões) criada(s) para proposições sem marcação.`); } catch (e) { console.error("garantirMarcacoes1a1:", e); }
     await inicializarTema();
     popularAnos();
     popularSelects();
