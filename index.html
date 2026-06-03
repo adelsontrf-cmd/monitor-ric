@@ -751,7 +751,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.6</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.7</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -1099,7 +1099,11 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="xlsx-diff-list" id="xlsx-diff-list"></div>
       <div id="xlsx-ausentes-box" style="margin-top:10px;display:none">
         <p class="text-small text-muted" style="margin:0 0 6px"><b id="xlsx-ausentes-cnt">0</b> RIC(s) estão na base mas <b>não constam</b> neste XLSX.</p>
-        <button class="btn btn-sm" id="btn-xlsx-export-ausentes">↧ Exportar lista (TXT) dos ausentes</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" id="btn-xlsx-export-ausentes">↧ Exportar lista (TXT) dos ausentes</button>
+          <button class="btn btn-sm" id="btn-xlsx-ocultar-ausentes">🙈 Ocultar os ausentes da base</button>
+        </div>
+        <div class="text-small" id="xlsx-ocultar-feedback" style="margin-top:6px"></div>
       </div>
       <div class="xlsx-actions" style="margin-top:16px;justify-content:flex-end;gap:8px">
         <button class="btn" id="btn-xlsx-cancelar">Cancelar</button>
@@ -1177,7 +1181,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.6</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.7</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -1516,6 +1520,7 @@ const STATUS_INTERNO = [
 const ETAPAS = [
   { v: "", t: "—" },
   { v: "admissibilidade", t: "Análise de competência / Admissibilidade" },
+<<<<<<< HEAD
   { v: "subsidios", t: "Coleta de subsídios à resposta" },
   { v: "validacao_ssgp", t: "Validação SSGP" },
   { v: "validacao_se", t: "Validação SE" },
@@ -6171,6 +6176,64 @@ const XLSX_MERGE = (() => {
     "validacao gm": "validacao_gm_expedicao",
     "validacao gm / expedicao": "validacao_gm_expedicao",
   };
+
+  // v4.7.7: correlação da coluna "Etapa" do XLSX com as etapas internas do app (etapasFluxo).
+  // Ordem oficial do fluxo interno (após o recebimento na Casa Civil):
+  const ETAPAS_FLUXO_IDS = ["recebimento", "admissibilidade", "subsidios", "conformidade", "validacao_ssgp", "aprovacao_se", "validacao_gm_expedicao"];
+  // Etapas do XLSX que correspondem DIRETAMENTE a uma etapa interna (atual)
+  const ETAPA_XLSX_PARA_FLUXO = {
+    "admissibilidade": "admissibilidade",
+    "subsidios": "subsidios",
+    "conformidade": "conformidade",
+    "validacao ssgp": "validacao_ssgp",
+  };
+  // Etapas do XLSX que significam tramitação FINALIZADA (todas as etapas concluídas)
+  const ETAPA_XLSX_FINALIZADA = new Set(["respondido", "cancelado/retirado"]);
+  // "No Congresso" / "No Congresso - Novo" são ANTERIORES ao recebimento na CC → fluxo vazio.
+
+  // Constrói o objeto etapasFluxo a partir da etapa do XLSX, recebimento e prazo da etapa.
+  // - dataRecebISO: data de recebimento (Protocolo PR) em ISO, ou ""
+  // - prazoEtapaISO: "Prazo da etapa" do XLSX em ISO, ou ""
+  // Retorna { etapasFluxo, etapaAtual } ou null se a etapa não entra no fluxo interno.
+  function construirEtapasFluxoDoXlsx(etapaXlsxNorm, dataRecebISO, prazoEtapaISO) {
+    function novoFluxo() {
+      const ef = {};
+      for (const id of ETAPAS_FLUXO_IDS) ef[id] = { concluida: false, prazoSugerido: "", prazoReal: "" };
+      return ef;
+    }
+    // Caso 1: finalizada → todas concluídas
+    if (ETAPA_XLSX_FINALIZADA.has(etapaXlsxNorm)) {
+      const ef = novoFluxo();
+      for (const id of ETAPAS_FLUXO_IDS) ef[id].concluida = true;
+      if (dataRecebISO) ef.recebimento.prazoReal = dataRecebISO;
+      return { etapasFluxo: ef, etapaAtual: "validacao_gm_expedicao" };
+    }
+    // Caso 2: corresponde a uma etapa interna (vira a etapa atual)
+    const alvo = ETAPA_XLSX_PARA_FLUXO[etapaXlsxNorm];
+    if (alvo) {
+      const ef = novoFluxo();
+      const idxAlvo = ETAPAS_FLUXO_IDS.indexOf(alvo);
+      // Recebimento + anteriores à etapa-alvo = concluídas (sem prazoReal, opção A — não inventa datas)
+      for (let i = 0; i < idxAlvo; i++) ef[ETAPAS_FLUXO_IDS[i]].concluida = true;
+      // Recebimento concluído com a data real, se houver
+      if (dataRecebISO) { ef.recebimento.concluida = true; ef.recebimento.prazoReal = dataRecebISO; }
+      // Prazo do XLSX vai no prazoReal da etapa-alvo (atual)
+      if (prazoEtapaISO) ef[alvo].prazoReal = prazoEtapaISO;
+      // Se houver recebimento, calcula prazos SUGERIDOS das demais etapas (não sobrescreve reais)
+      if (dataRecebISO && typeof calcularPrazosSugeridos === "function") {
+        const calc = calcularPrazosSugeridos(dataRecebISO);
+        if (calc && calc.prazos) {
+          for (const id of ETAPAS_FLUXO_IDS) {
+            if (id === "recebimento") continue;
+            if (calc.prazos[id]) ef[id].prazoSugerido = calc.prazos[id];
+          }
+        }
+      }
+      return { etapasFluxo: ef, etapaAtual: alvo };
+    }
+    // Caso 3: "No Congresso"/"No Congresso - Novo" ou desconhecida → não entra no fluxo interno
+    return null;
+  }
   const CASA_MAP = {
     "camara dos deputados": "camara",
     "senado federal": "senado",
@@ -6392,6 +6455,13 @@ const XLSX_MERGE = (() => {
       };
 
       // Marcação completa (XLSX sempre prevalece, inclusive sobrescrevendo com "")
+      const prazoEtapaIso = dataParaIso(get("Prazo da etapa"));
+      const dataRecebIso = dataParaIso(get("Protocolo PR (DATA)"));
+      // v4.7.7: correlaciona a etapa do XLSX com o fluxo interno do app (etapasFluxo).
+      // Só popula quando a etapa corresponde a uma etapa interna ou a uma situação finalizada;
+      // "No Congresso"/"No Congresso - Novo" (anteriores ao recebimento na CC) não geram fluxo.
+      const etapaXlsxNorm = norm(etapaRaw);
+      const fluxoCalc = construirEtapasFluxoDoXlsx(etapaXlsxNorm, dataRecebIso, prazoEtapaIso);
       const marcXlsx = {
         proposicaoId: id,
         apelido: gets("Objeto"),
@@ -6402,9 +6472,10 @@ const XLSX_MERGE = (() => {
         comentarios: gets("Observação"),
         unidadesConsultadas: unidades,
         statusInterno,
-        etapa,
-        prazoEtapa: dataParaIso(get("Prazo da etapa")),
-        dataRecebimentoSEI: dataParaIso(get("Protocolo PR (DATA)")),
+        etapa: fluxoCalc ? fluxoCalc.etapaAtual : etapa,
+        prazoEtapa: prazoEtapaIso,
+        etapasFluxo: fluxoCalc ? fluxoCalc.etapasFluxo : undefined,
+        dataRecebimentoSEI: dataRecebIso,
         prazoFinalCN: dataParaIso(get("Prazo final")),
         dataResposta: dataParaIso(get("Data da resposta")),
         nupRecebimento: gets("Processo de envio"),
@@ -6503,12 +6574,19 @@ const XLSX_MERGE = (() => {
       // v4.7.4/4.7.5: preserva campos sem correspondência no XLSX — a importação NUNCA mexe
       // em palavras-chave nem nos RICs análogos já calculados.
       const marcExistentePrev = marcsPorId.get(propId);
+      // v4.7.7: etapasFluxo correlacionado do XLSX prevalece quando a etapa entra no fluxo interno.
+      // Quando o XLSX não define fluxo (ex.: "No Congresso", anterior ao recebimento na CC),
+      // preserva o etapasFluxo já existente na marcação (não destrói o que o usuário tinha).
+      const etapasFluxoFinal = (l.marcXlsx.etapasFluxo !== undefined)
+        ? l.marcXlsx.etapasFluxo
+        : ((marcExistentePrev && marcExistentePrev.etapasFluxo) || {});
       const marcXlsxAjustada = {
         ...l.marcXlsx,
         proposicaoId: propId,
         palavrasChave: (marcExistentePrev && marcExistentePrev.palavrasChave) || "",
         analogos: (marcExistentePrev && marcExistentePrev.analogos) || [],
         analogosCalculadoEm: (marcExistentePrev && marcExistentePrev.analogosCalculadoEm) || "",
+        etapasFluxo: etapasFluxoFinal,
         atualizadoEm: new Date().toISOString()
       };
 
@@ -6553,11 +6631,11 @@ const XLSX_MERGE = (() => {
         diff.ricsAfetados.push(ricInfo);
       }
     }
-    // v4.7.4: RICs presentes na base mas ausentes do XLSX (apenas número/ano)
+    // v4.7.4: RICs presentes na base mas ausentes do XLSX (com id para permitir ocultar/exportar)
     for (const p of propsAtuais) {
       if (p.oculto) continue;
       if (!idsNoXlsx.has(p.id)) {
-        diff.ausentes.push({ numero: p.numero, ano: p.ano, identificacao: p.identificacao });
+        diff.ausentes.push({ id: p.id, numero: p.numero, ano: p.ano, identificacao: p.identificacao });
       }
     }
     return diff;
@@ -6897,6 +6975,11 @@ function renderXlsxPreview() {
     if (ausentes.length) {
       boxAus.style.display = "block";
       document.getElementById("xlsx-ausentes-cnt").textContent = ausentes.length;
+      // reseta estado do botão de ocultar (caso tenha sido usado numa importação anterior)
+      const btnOc = document.getElementById("btn-xlsx-ocultar-ausentes");
+      if (btnOc) btnOc.style.display = "";
+      const fbOc = document.getElementById("xlsx-ocultar-feedback");
+      if (fbOc) fbOc.innerHTML = "";
     } else {
       boxAus.style.display = "none";
     }
@@ -6969,6 +7052,40 @@ document.getElementById("btn-xlsx-export-ausentes").addEventListener("click", ()
   link.download = `RICs_ausentes_no_xlsx_${ts}.txt`;
   document.body.appendChild(link); link.click(); document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+});
+
+// v4.7.7: oculta da base (sem apagar) os RICs ausentes do XLSX — ação manual e reversível
+document.getElementById("btn-xlsx-ocultar-ausentes").addEventListener("click", async () => {
+  if (!xlsxStateEmMemoria || !xlsxStateEmMemoria.diff.ausentes) return;
+  const aus = xlsxStateEmMemoria.diff.ausentes.filter(a => a.id);
+  const fb = document.getElementById("xlsx-ocultar-feedback");
+  if (aus.length === 0) { fb.innerHTML = '<span style="color:#b45309">Nada a ocultar.</span>'; return; }
+  if (!confirm(`Ocultar ${aus.length} RIC(s) que estão na base mas não constam neste XLSX?\n\nEles não serão apagados — apenas deixam de aparecer nas listas e painéis. Você pode reexibi-los individualmente depois.`)) return;
+  const btn = document.getElementById("btn-xlsx-ocultar-ausentes");
+  btn.disabled = true;
+  fb.textContent = "Ocultando…";
+  let n = 0;
+  try {
+    // Carrega todas as proposições uma vez e aplica oculto em lote
+    const props = await DB.getAll("proposicoes");
+    const mapa = new Map(props.map(p => [p.id, p]));
+    const aSalvar = [];
+    for (const a of aus) {
+      const p = mapa.get(a.id);
+      if (p && !p.oculto) { p.oculto = true; aSalvar.push(p); n++; }
+    }
+    if (aSalvar.length) await DB.bulkPut("proposicoes", aSalvar);
+    fb.innerHTML = `<span style="color:#047857">✓ ${n} RIC(s) ocultado(s). Eles saíram das listas e painéis.</span>`;
+    // Atualiza as telas
+    await carregarLista();
+    aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
+    // Some o botão para evitar reclique (já ocultados)
+    btn.style.display = "none";
+  } catch (e) {
+    fb.innerHTML = `<span style="color:#b91c1c">Falha: ${escapeHtml(e.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 document.getElementById("btn-xlsx-cancelar").addEventListener("click", () => {
@@ -9296,3 +9413,6 @@ async function recarregarTudo() {
 </script>
 </body>
 </html>
+=======
+  { v: "subsidios", t: "Coleta de subsídios 
+>>>>>>> 6efbe53859a05cb6bb6826aa8b39497bfe3e0e02

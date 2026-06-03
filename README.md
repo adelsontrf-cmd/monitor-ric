@@ -1,206 +1,160 @@
-# Monitor RIC v4.2
+# Monitor RIC
 
-App PWA para monitoramento de Requerimentos de Informação do Congresso
-Nacional com menção à Casa Civil. Consome as APIs públicas da Câmara
-dos Deputados e do Senado Federal.
+Aplicativo PWA (Progressive Web App) da SSGP/SE/Casa Civil para monitorar os **Requerimentos de Informação** (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Consome as APIs públicas de Dados Abertos da Câmara dos Deputados e do Senado Federal. Funciona offline e é instalável como app.
+
+**Versão atual: 4.7.7**
 
 ## Arquivos do pacote
 
 ```
-monitor-ric-v4.2/
-├── index.html               ← o app
+monitor-ric-v4.7.7/
+├── index.html               ← o app (arquivo único)
 ├── manifest.json            ← metadata PWA
 ├── sw.js                    ← service worker
+├── icon-72.png              ← ícone 72x72
 ├── icon-192.png             ← ícone 192x192
 ├── icon-512.png             ← ícone 512x512
 └── icon-512-maskable.png    ← ícone maskable Android
 ```
 
-Os 6 arquivos precisam estar na mesma pasta e ser servidos via HTTPS.
+Os 7 arquivos precisam estar na mesma pasta e ser servidos via HTTPS.
 
-## Novidades da v4.2
+## Funcionalidades
 
-### Correções
+### Sincronização com o Congresso
 
-- **Detecção do Senado reescrita** — agora reconhece corretamente
-  aprovação pela Comissão Diretora ("Comissão Diretora do Senado
-  Federal deferiu"), resposta recebida ("contendo informações ao
-  Requerente"), arquivamento ("A matéria vai ao arquivo") e prazos
-  ("Prazo para resposta: DD/MM/YYYY").
-- **"Aguardando Envio ao Executivo" agora é detectado como Aprovado**
-  em todas as variações ("Aguardando Envio ao Poder Executivo",
-  "Ag. Envio ao Executivo").
-- **Prazo final CN extraído do histórico de tramitação** (em vez de
-  calcular como SEI+30). Câmara: "Prazo para Resposta Externas
-  (de DD/MM/YYYY a DD/MM/YYYY)". Senado: "Prazo para resposta:
-  DD/MM/YYYY". Sugerido editável no modal.
-- **Bugs da v4.1 corrigidos**: erro de inicialização ("Cannot set
-  properties of null"), regex não-definidas, painel zerado, click
-  no painel não abria modal, pills sumindo da barra de alertas.
+- Sincronização com as APIs da Câmara e do Senado, por ano completo ou incremental (até 180 dias).
+- Enriquecimento automático: ementa, autoria (com partido/UF), tramitação, situação legislativa, inteiro teor e prazo final CN extraído do histórico.
+- A sincronização incremental também reenriquece os RICs já existentes na base — inclusive os adicionados pela importação da planilha que não atendem ao filtro de menção à Casa Civil.
+- Inclusão manual de requerimentos por número/ano, com busca na API e preenchimento automático quando encontrado (ou criação em branco para completar à mão).
 
-### UX e fluxo
+### Triagem e análise
 
-- **Campo "Objeto (apelido)" unificado** (substitui Apelido + Objeto
-  separados, máx. 150 caracteres).
-- **Painel de acompanhamento simplificado**: 2 colunas — "Em andamento
-  CC / Aguardando resposta" (combinada) + "Aprovados" com seletor
-  7d/15d/30d/Todos.
-- **Lógica combinada precisa**: status interno tem precedência. Se
-  você marca "Em andamento CC", "Respondido" ou "Retirado/Não enviado",
-  o item sai da contagem de "Aguardando resposta" automaticamente —
-  mesmo que a API ainda mostre situação antiga.
-- **Bloco "Aprovados" → opção "Todos"** lista aprovados antigos que
-  ainda não passaram para Aguardando resposta nem para Em andamento
-  na CC (útil para identificar aprovados sem encaminhamento).
-- **Painéis sem ementa**. Mostram apenas o "Objeto (apelido)" quando
-  preenchido. Os demais dados (autor, prazo CN, identificação) ficam.
-- **Tabela com Prazo CN visível** ao lado do Prazo Etapa.
-- **Filtros ocultáveis na aba Requerimentos** (botão ▼ Filtros).
-  Persistente em localStorage. Default: ocultos em telas estreitas.
-- **Sync incremental até 180 dias** (era 60).
-- **Stat "Vencidos" e coluna "Prazo vencido" removidos** (filtro de
-  prazo na aba Requerimentos foi mantido).
+- Para cada RIC: objeto, resumo, temática, relevância, observações e unidades consultadas.
+- Mudança automática de status interno ao salvar: ao preencher o objeto, passa para "Em tramitação no Congresso Nacional"; ao registrar a data de recebimento, para "Em andamento na Casa Civil"; ao registrar a data da resposta, para "Respondido". O campo permanece editável (para casos de retirada).
+- Análise assistida por IA (Google Gemini) do inteiro teor, preenchendo objeto, resumo e palavras-chave.
+- Busca de RICs análogos por afinidade temática (TF-IDF, 100% no navegador).
+- Edição em lote: aplica etapa, prazo da etapa, temática, processo de recebimento, data e tipo de resposta a vários RICs de uma vez, com filtros de prazo de resposta e etapa atual no seletor.
 
-### Gemini
+### Controle de prazos
 
-- **Confirmação de sobrescrita** antes de chamar a API. Lista os
-  campos preenchidos que serão substituídos.
-- **Fallback para upload manual** quando o servidor bloqueia o
-  download automático por CORS. Aparece dropzone inline para
-  arrastar o PDF baixado manualmente — sem segundo clique, sem
-  modal extra.
-- **Prompt atualizado** com regras explícitas: apelido até 150
-  caracteres sem mencionar destinatário; resumo até 700 caracteres
-  com 20% reservados para alegações do autor; palavras-chave
-  3-6 termos.
-- Os campos preenchidos pela IA permanecem editáveis. Só ficam
-  salvos no banco ao clicar em "Salvar análise".
+- Cálculo automático dos prazos das etapas internas conforme o art. 50, § 2º da Constituição Federal e a regra de contagem dos arts. 224 e 231 do CPC (30 dias, excluído o dia inicial, prorrogando o vencimento em dia não útil).
+- Prazo da etapa atual refletido em campo dedicado no modal de detalhe, que acompanha a etapa em curso.
 
-### Buscar RICs análogos (TF-IDF)
+### Painéis e gráficos (aba Painel)
 
-- **Botão 🔍 no modal de detalhe** abaixo do histórico de tramitação.
-- Habilitado quando há palavras-chave ou objeto preenchidos.
-- Busca outros RICs com afinidade temática usando TF-IDF + cosseno.
-- Roda 100% no navegador (sem chamada à API). ~200ms para 1000 RICs.
-- Resultados em janela com scroll próprio: identificação, badge da
-  casa, score de similaridade. Clique abre o detalhe do análogo.
+- Cards de indicadores e gráficos: situação legislativa, etapas em andamento na Casa Civil, prazo final CN em andamento, casa parlamentar e evolução mensal.
+- Na situação legislativa, "Apresentados (últimos 7 dias)" é uma categoria própria, e RICs com data de resposta registrada são contabilizados como Respondidos (corrigindo registros defasados da API).
+- Os gráficos restritos a "em andamento na Casa Civil" ficam ocultos quando não há RICs nesse estado.
+- Gráficos clicáveis filtram a aba Requerimentos.
 
-### PWA Android
+### Relatórios
 
-- **Manifest com ícones PNG reais** (192, 512, 512-maskable).
-- `display: standalone` + `display_override` + `orientation:
-  portrait` + `id`: `/monitor-ric/`. Atende aos critérios do Chrome
-  para instalação como **WebAPK** (app Android nativo) — não como
-  atalho do Chrome.
-- **App não gira para paisagem** automaticamente quando instalado.
+- Geração em Word (.docx) e PDF, com seleção de campos, organização, presets nativos e presets de usuário.
+- Fonte sans-serif, orientação paisagem por padrão, links de inteiro teor e página oficial como URL ou botão clicável.
+
+### Importação e exportação
+
+- Importação da planilha `Controle_RICs.xlsx` (aba "Controle RI", 27 colunas) com merge inteligente: só marcações são atualizadas, nada é removido, e os campos sem correspondência na planilha (palavras-chave e RICs análogos) são preservados; duplicidades da base são mantidas.
+- Ao importar, é possível exportar um TXT com os RICs que estão na base mas não constam no XLSX, ou ocultá-los da base (sem apagar) com um clique.
+- A coluna "Etapa" da planilha é correlacionada com as etapas internas do app: Admissibilidade, Subsídios, Conformidade e Validação SSGP viram a etapa atual (com as anteriores marcadas como concluídas e o "Prazo da etapa" registrado); Respondido e Cancelado/Retirado fecham todo o fluxo; e "No Congresso"/"No Congresso - Novo", por serem anteriores ao recebimento na Casa Civil, não geram etapas internas.
+- Exportação para XLSX no mesmo formato do `Controle_RICs.xlsx`, com seleção de RICs.
+- Exportação CSV da aba Requerimentos.
+
+### Sincronização da base na nuvem (CloudSync)
+
+- Sincronização single-user via GitHub Gist privado, cifrada de ponta a ponta (AES-GCM 256, chave derivada por PBKDF2-SHA256 do PAT + Gist ID, com gzip antes de cifrar).
+- Indicador de estado no cabeçalho; sincronização automática em segundo plano e ao abrir; exportação/importação de configuração para ativar outros computadores com um único paste.
+- Sincroniza todos os dados (inclusive RICs ocultos e excluídos, para recuperação em qualquer dispositivo) e todas as configurações e presets de relatório, exceto as credenciais do próprio CloudSync, a chave do Gemini e o tema (local por navegador).
+- Requer que a rede permita acesso a `api.github.com`. Recomenda-se token clássico do GitHub com escopo `gist` (mais confiável que fine-grained para Gists).
+
+### PWA
+
+- Instalável como app (WebAPK no Android). Funciona offline via service worker (cache-first do shell, passthrough das APIs).
+- Tema claro/escuro, com preferência local por navegador (padrão claro).
 
 ## Deploy no GitHub Pages
 
 ### Pelo GitHub Desktop
 
-1. Abrir o GitHub Desktop. Clonar o repositório `monitor-ric` (se
-   já existe) ou criar um novo.
-2. Copiar os 6 arquivos para a pasta local do repositório,
-   substituindo as versões anteriores.
-3. No GitHub Desktop: **Summary** = "Atualização para v4.2",
-   **Commit to main**, depois **Push origin**.
-4. Aguardar 1–2 minutos. A URL `https://SEU-USUARIO.github.io/
-   monitor-ric/` estará atualizada.
+1. Abrir o GitHub Desktop e abrir o repositório `monitor-ric`.
+2. Copiar os 7 arquivos para a pasta local, substituindo as versões anteriores.
+3. **Summary** = "Atualização para v4.7.7", **Commit to main**, depois **Push origin**.
+4. Aguardar 1–2 minutos. A URL `https://SEU-USUARIO.github.io/monitor-ric/` estará atualizada.
 
 ### Pela linha de comando
 
 ```bash
 cd ~/seu-repo/monitor-ric
-# Copie os 6 arquivos para esta pasta
+# Copie os 7 arquivos para esta pasta
 git add index.html manifest.json sw.js icon-*.png
-git commit -m "v4.2"
+git commit -m "v4.7.7"
 git push
 ```
 
 ### Cache do PWA
 
-A v4.2 muda o nome do cache para `monitor-ric-v4-2`. O service
-worker invalida o cache anterior automaticamente quando atualiza.
-Em alguns dispositivos Android pode ser necessário:
-
-1. Abrir o app instalado.
-2. Configurações do Android → Apps → Monitor RIC → Armazenamento
-   → Limpar cache.
-3. Reabrir o app.
-
-Ou, mais simples: desinstalar e reinstalar pela URL.
+A v4.7.7 usa o cache `monitor-ric-v4-7-7`. O service worker invalida o cache anterior automaticamente ao atualizar. Se necessário no Android: Configurações → Apps → Monitor RIC → Armazenamento → Limpar cache, e reabrir. Ou desinstalar e reinstalar pela URL.
 
 ## Configuração inicial
 
+### Sincronização da base na nuvem (opcional)
+
+1. No GitHub: Settings → Developer settings → Personal access tokens → **Tokens (classic)** → Generate new token (classic), marcando apenas o escopo **gist**.
+2. No app: menu → **Sync base na nuvem** → cole o token → **Testar conexão** → **+ Criar novo Gist** → **Salvar configuração**.
+3. Em outros computadores, use **Exportar configuração** aqui e **Importar e ativar** lá.
+4. Em computador compartilhado, clique em **Desconectar** ao terminar.
+
+### Manutenção de dados
+
+Em **Configurações → Manutenção de dados**, o botão "Executar manutenção completa" roda rotinas idempotentes de correção: cria marcações para proposições que não tenham (invariante 1:1), normaliza as unidades consultadas para os valores canônicos (preservando e listando as que não tiverem correspondência) e recalcula a etapa a partir do fluxo. As mudanças sincronizam normalmente depois.
+
+### Backup seguro
+
+O backup é exportado **sem credenciais** por padrão (PAT do GitHub e chave Gemini ficam de fora), para poder ser compartilhado com segurança. Há uma opção para incluí-las quando o arquivo for guardado em local seguro.
+
 ### Chave Gemini (opcional)
 
-Para análise automática de PDFs:
-1. Gere chave em https://aistudio.google.com/apikey
-2. **⚙ Configurações → 🤖 API Gemini**
-3. Cole a chave, escolha o modelo (recomendado: `gemini-2.5-flash`)
+1. Gere a chave em https://aistudio.google.com/apikey
+2. Menu → **Configurações → API Gemini**, cole a chave e escolha o modelo (recomendado `gemini-2.5-flash`).
 
-A chave fica apenas no IndexedDB do navegador. Nunca é enviada a
-servidores além do próprio Google.
+A chave fica apenas no navegador (IndexedDB) e não é sincronizada na nuvem.
 
 ### Proxy CORS (opcional)
 
-Se sua rede bloquear chamadas diretas às APIs do Congresso, em
-**⚙ Configurações → Proxy CORS**:
+Se a rede bloquear chamadas diretas às APIs do Congresso, em **Configurações → Proxy CORS**:
+
 ```
 https://corsproxy.io/?url={url}
 ```
 
-## Migração das versões anteriores
-
-Automática:
-- Banco antigo `monitor-sic` → `monitor-ric` (cópia automática
-  na primeira abertura).
-- Schema sobe de v3 → v4: campo `objeto` é movido para `apelido`
-  (preservando o conteúdo) e zerado.
-- Campo `prazoFinalCNSugerido` adicionado às proposições. Será
-  preenchido na próxima sincronização ou no reenriquecimento.
-
-**Recomendação**: após primeira abertura da v4.2, vá em
-**⟳ Sincronizar → Reenriquecer existentes** para reclassificar
-todos os itens com a nova lógica do INFOCO + extrair prazos do
-histórico.
-
 ## Uso recomendado
 
-1. **Sincronização inicial**: ⟳ Sincronizar → ano corrente →
-   "Enriquecer" → aguarde 1–3 min.
-2. **Triagem diária**: clique nos pills da barra de alertas no
-   Painel.
-3. **Análise rápida**: ★ na tabela para marcar relevantes;
-   🤖 Gemini no detalhe para preencher Objeto/Resumo/Palavras-chave.
-4. **Buscar análogos**: no detalhe de um RIC, depois de preencher
-   palavras-chave e objeto, clique em 🔍 Buscar análogos.
-5. **Exportação**: Aba Requerimentos → filtre → CSV ou XLSX.
-
-## Limitações conhecidas
-
-- Detecção do Senado por regex textuais ainda pode não cobrir
-  100% dos casos. Situações novas que aparecerem ficam
-  registradas em **Configurações → Situações não-mapeadas**
-  para revisão.
-- PDF Gemini limitado a ~18 MB. RICs muito longos podem falhar.
-- Endpoint legado `/materia/pesquisa/lista` do Senado continua
-  respondendo apesar de marcado como descontinuado.
-- Busca de análogos depende da qualidade do preenchimento de
-  palavras-chave e objeto. É busca léxica (TF-IDF), não
-  semântica — sinônimos e paráfrases não batem perfeitamente.
-  v5 trará embeddings semânticos via Gemini.
+1. **Sincronização inicial**: menu → Sync API Congresso → ano corrente → "Enriquecer".
+2. **Triagem**: aba Gerencial e aba Requerimentos com os filtros (incluindo Prazo final CN).
+3. **Análise**: no detalhe de um RIC, preencha objeto/resumo (ou use o Gemini) e salve.
+4. **Relatórios**: aba Requerimentos → filtre → gere o relatório em Word/PDF.
+5. **Backup/multi-dispositivo**: configure a Sync base na nuvem.
 
 ## APIs consumidas
 
 - Câmara: `dadosabertos.camara.leg.br/api/v2/proposicoes`
 - Senado: `legis.senado.leg.br/dadosabertos/materia/...`
+- GitHub Gist (CloudSync): `api.github.com/gists`
 - Gemini (opcional): `generativelanguage.googleapis.com/v1beta`
 
 ## Arquitetura
 
-- HTML/CSS/JS puro, ~157 KB.
-- IndexedDB: `monitor-ric` (schema v4).
-- SheetJS via CDN para XLSX.
-- Service Worker: cache-first do shell, passthrough das APIs.
-- TF-IDF: ~150 linhas de JS puro, sem dependências.
+- HTML/CSS/JS puro, arquivo único (~478 KB).
+- IndexedDB: `monitor-ric` (schema/DB_VERSION 2, com store de tombstones para o CloudSync).
+- SheetJS (CDN) para XLSX; docx via biblioteca para relatórios Word.
+- Web Crypto API (AES-GCM, PBKDF2) para a criptografia do CloudSync.
+- Service Worker: cache-first do shell, passthrough das APIs externas.
+- Busca de análogos em TF-IDF, sem dependências externas.
+
+## Limitações conhecidas
+
+- A detecção da situação legislativa por regras textuais pode não cobrir 100% dos casos; situações novas ficam registradas em Configurações → Situações não-mapeadas.
+- A busca por número/ano na inclusão manual é limitada no Senado; quando não há correspondência, o RIC é criado em branco para preenchimento manual.
+- O CloudSync depende de acesso a `api.github.com`; redes corporativas que bloqueiam esse domínio impedem a sincronização (o site `github.com` abrir não garante que a API esteja liberada).
+- A análise por Gemini tem limite de tamanho de PDF; RICs muito longos podem falhar.
