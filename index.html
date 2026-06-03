@@ -228,6 +228,13 @@ main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
 .painel-titulo:hover { color: var(--text); }
 .painel-titulo::before { content: "▼"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
 .painel-titulo.collapsed::before { transform: rotate(-90deg); }
+/* Destaque temporário ao navegar de um indicador para o quadro */
+.quadro-destaque { animation: quadroPulse 1.6s ease; }
+@keyframes quadroPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(93, 217, 210, 0); }
+  20% { box-shadow: 0 0 0 3px rgba(93, 217, 210, 0.55); }
+  60% { box-shadow: 0 0 0 3px rgba(93, 217, 210, 0.3); }
+}
 .painel-grupo { transition: max-height 0.3s ease, opacity 0.2s, margin 0.2s; max-height: 2000px; opacity: 1; overflow: hidden; }
 .painel-grupo.collapsed { max-height: 0; opacity: 0; margin: 0 !important; }
 .grid-3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); margin-bottom: 22px; }
@@ -272,6 +279,10 @@ html.dark .stat-card {
 }
 .stat-card:hover::before { opacity: 1; }
 .stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Card estático (não-clicável) — ex.: Todos */
+.stat-card.stat-card-static { cursor: default; }
+.stat-card.stat-card-static:hover { transform: none; box-shadow: 0 2px 4px rgba(13, 17, 23, 0.06); border-color: var(--border); }
+.stat-card.stat-card-static:hover::before { opacity: 0; }
 /* Variante warn (Em atraso) — destaque em vermelho/âmbar */
 .stat-card.stat-card-warn .stat-card-number { color: var(--err); }
 .stat-card.stat-card-warn::before { background: linear-gradient(90deg, var(--err), var(--warn)); }
@@ -751,7 +762,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.7</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.8</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -801,7 +812,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 
   <!-- Cards de indicadores -->
   <div class="stats-grid" role="region" aria-label="Cards de indicadores">
-    <div class="stat-card" data-stat-card="todos" role="button" tabindex="0" aria-label="Total de RICs (clique para filtrar)">
+    <div class="stat-card stat-card-static" data-stat-card="todos" aria-label="Total de RICs">
       <div class="stat-card-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
       </div>
@@ -892,7 +903,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <section class="pane" id="pane-gerencial">
   <h2 class="painel-titulo" data-grupo="congresso">Requerimentos no Congresso</h2>
   <div class="grid-3 painel-grupo" data-grupo-content="congresso">
-    <div class="painel-coluna">
+    <div class="painel-coluna" id="quadro-apresentados">
       <div class="painel-coluna-header">
         <h3>Apresentados <span class="count" id="cnt-apresentados">—</span></h3>
         <div class="painel-segmented" id="seg-apres-dias">
@@ -905,20 +916,14 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
       <div class="painel-coluna-body" id="lst-apresentados"></div>
     </div>
-    <div class="painel-coluna">
+    <div class="painel-coluna" id="quadro-aguardando-aprov">
       <div class="painel-coluna-header">
-        <h3>Sofreram movimentação <span class="count" id="cnt-movimentados">—</span></h3>
-        <div class="painel-segmented" id="seg-mov-dias">
-          <button data-d="7" class="active">7d</button>
-          <button data-d="15">15d</button>
-          <button data-d="30">30d</button>
-          <button data-d="todos">Todos</button>
-        </div>
-        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="movimentados">📄</button>
+        <h3>Aguardando aprovação <span class="count" id="cnt-ag-aprov">—</span></h3>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="aguardando_aprov">📄</button>
       </div>
-      <div class="painel-coluna-body" id="lst-movimentados"></div>
+      <div class="painel-coluna-body" id="lst-ag-aprov"></div>
     </div>
-    <div class="painel-coluna">
+    <div class="painel-coluna" id="quadro-aprovados">
       <div class="painel-coluna-header">
         <h3>Aprovados <span class="count" id="cnt-aprovados">—</span></h3>
         <div class="painel-segmented" id="seg-aprov-dias">
@@ -934,10 +939,17 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 
   <h2 class="painel-titulo" data-grupo="acompanhamento">RICs em andamento na Casa Civil</h2>
-  <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento" style="grid-template-columns:1fr;margin-bottom:22px">
-    <div class="painel-coluna attention">
+  <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento" style="grid-template-columns:1fr 1fr;margin-bottom:22px">
+    <div class="painel-coluna attention" id="quadro-andamento">
       <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
+    </div>
+    <div class="painel-coluna" id="quadro-atraso">
+      <div class="painel-coluna-header">
+        <h3>Em atraso <span class="count" id="cnt-atraso">—</span></h3>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="atraso">📄</button>
+      </div>
+      <div class="painel-coluna-body" id="lst-atraso"></div>
     </div>
   </div>
 </section>
@@ -1181,7 +1193,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.7</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.8</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -3057,7 +3069,7 @@ document.querySelectorAll("nav.tabs button").forEach(btn => {
     btn.classList.add("active");
     btn.setAttribute("aria-selected", "true");
     document.getElementById(`pane-${btn.dataset.pane}`).classList.add("active");
-    if (btn.dataset.pane === "lista") renderLista();
+    if (btn.dataset.pane === "lista") { aplicarEstadoFiltros(false); renderLista(); }
     else if (btn.dataset.pane === "gerencial") renderPainel();
     else if (btn.dataset.pane === "painel") renderDashboard();
   });
@@ -3098,7 +3110,7 @@ let listaEstado = {
   unidades: UNIDADES_PADRAO.slice(),
   mostrarOcultos: false
 };
-let painelEstado = { apresPeriodo: "7", movPeriodo: "7", aprovPeriodo: "7" };
+let painelEstado = { apresPeriodo: "7", aprovPeriodo: "7" };
 
 async function carregarLista() {
   listaEstado.itens = await DB.getAll("proposicoes");
@@ -4358,12 +4370,6 @@ async function renderPainel() {
   const apresentados = filtrarPorPeriodo(all, painelEstado.apresPeriodo, "dataApresentacao")
     .sort((a, b) => (b.dataApresentacao || "").localeCompare(a.dataApresentacao || ""));
 
-  // Sofreram movimentação (período configurável)
-  // Exclui itens cuja última movimentação coincide com a data de apresentação (ou seja, sem movimentação real além da entrada)
-  const movimentados = filtrarPorPeriodo(all, painelEstado.movPeriodo, "ultimaMovimentacaoData")
-    .filter(p => p.ultimaMovimentacaoData !== p.dataApresentacao)
-    .sort((a, b) => (b.ultimaMovimentacaoData || "").localeCompare(a.ultimaMovimentacaoData || ""));
-
   // Aprovados — MESMO critério do indicador "Aprovados" da aba Painel:
   //   p.situacaoLegislativa === "aprovado"
   // Adicionalmente, filtra pelo período de aprovação selecionado (7/15/30/Todos).
@@ -4382,12 +4388,17 @@ async function renderPainel() {
   }
   aprovados.sort((a, b) => ((b.dataAprovacao || b.ultimaMovimentacaoData) || "").localeCompare((a.dataAprovacao || a.ultimaMovimentacaoData) || ""));
 
+  // Aguardando aprovação — MESMO critério do indicador "Ag. aprovação" da aba Painel:
+  //   p.situacaoLegislativa === "aguardando_aprovacao"
+  const aguardandoAprov = all.filter(p => p.situacaoLegislativa === "aguardando_aprovacao")
+    .sort((a, b) => (b.ultimaMovimentacaoData || b.dataApresentacao || "").localeCompare(a.ultimaMovimentacaoData || a.dataApresentacao || ""));
+
   document.getElementById("cnt-apresentados").textContent = apresentados.length;
-  document.getElementById("cnt-movimentados").textContent = movimentados.length;
   document.getElementById("cnt-aprovados").textContent = aprovados.length;
+  document.getElementById("cnt-ag-aprov").textContent = aguardandoAprov.length;
   document.getElementById("lst-apresentados").innerHTML = renderPainelLista(apresentados, "dataApresentacao");
-  document.getElementById("lst-movimentados").innerHTML = renderPainelLista(movimentados, "ultimaMovimentacaoData");
   document.getElementById("lst-aprovados").innerHTML = renderPainelLista(aprovados, "dataAprovacao");
+  document.getElementById("lst-ag-aprov").innerHTML = renderPainelLista(aguardandoAprov, "ultimaMovimentacaoData");
 
   // Coluna 1 — Em andamento CC / Aguardando resposta (combinada)
   // Regra:
@@ -4408,6 +4419,20 @@ async function renderPainel() {
 
   document.getElementById("cnt-andamento").textContent = ccAguardando.length;
   document.getElementById("lst-andamento").innerHTML = renderPainelListaAcomp(ccAguardando);
+
+  // Em atraso — MESMO critério do indicador "Em atraso" da aba Painel:
+  //   marcação com prazoEtapa vencido (< hoje) e status diferente de respondido/retirado
+  const emAtraso = all.filter(p => {
+    const m = marcMap.get(p.id) || {};
+    if (!m.prazoEtapa) return false;
+    if (m.statusInterno === "respondido" || m.statusInterno === "retirado") return false;
+    return m.prazoEtapa < hoje;
+  }).sort((a, b) => {
+    const ma = marcMap.get(a.id) || {}, mb = marcMap.get(b.id) || {};
+    return (ma.prazoEtapa || "").localeCompare(mb.prazoEtapa || "");
+  });
+  document.getElementById("cnt-atraso").textContent = emAtraso.length;
+  document.getElementById("lst-atraso").innerHTML = renderPainelListaAcomp(emAtraso);
 
   // Bind clicks no painel (DEVE rodar APÓS atualizar todos os innerHTML)
   bindarPainelClicks();
@@ -4970,7 +4995,6 @@ function bindSegmented(seletor, campoEstado) {
   }));
 }
 bindSegmented("seg-apres-dias", "apresPeriodo");
-bindSegmented("seg-mov-dias", "movPeriodo");
 bindSegmented("seg-aprov-dias", "aprovPeriodo");
 
 // Painéis colapsáveis — toggle + persistência em localStorage
@@ -6051,15 +6075,42 @@ document.querySelectorAll(".modal-bg").forEach(bg => {
 });
 
 // Handler dos stat-cards da aba Painel — clique abre Requerimentos com filtro aplicado
+// v4.7.8: os indicadores clicáveis da aba Painel levam ao quadro correspondente na aba Gerencial.
+// (O card "Todos" é estático — não tem data-stat-card clicável vinculado aqui.)
+function irParaQuadroGerencial(quadroId, ajuste) {
+  // Ajuste opcional (ex.: forçar seletor de período) ANTES de renderizar o painel
+  if (typeof ajuste === "function") ajuste();
+  // Troca para a aba Gerencial (dispara renderPainel)
+  const btnGer = document.querySelector('nav.tabs button[data-pane="gerencial"]');
+  if (btnGer) btnGer.click();
+  // Após o render, rola até o quadro e destaca
+  setTimeout(() => {
+    const alvo = document.getElementById(quadroId);
+    if (!alvo) return;
+    alvo.scrollIntoView({ behavior: "smooth", block: "center" });
+    alvo.classList.add("quadro-destaque");
+    setTimeout(() => alvo.classList.remove("quadro-destaque"), 1600);
+  }, 120);
+}
+
 document.querySelectorAll(".stat-card[data-stat-card]").forEach(el => {
+  // Card estático (Todos) não recebe interação
+  if (el.classList.contains("stat-card-static")) return;
+  // Acessibilidade: marca como botão
+  el.setAttribute("role", "button");
+  el.setAttribute("tabindex", "0");
   function ativar() {
     const k = el.dataset.statCard;
-    if (k === "todos") aplicarFiltrosViaPaineis({});
-    else if (k === "andamento") aplicarFiltrosViaPaineis({ statusInterno: "andamento_cc" });
-    else if (k === "aprovados") aplicarFiltrosViaPaineis({ leg: "aprovado" });
-    else if (k === "novos") aplicarFiltrosViaPaineis({ novos7d: true });
-    else if (k === "aguardando_aprov") aplicarFiltrosViaPaineis({ leg: "aguardando_aprovacao" });
-    else if (k === "atrasados") aplicarFiltrosViaPaineis({ prazo: "vencido" });
+    if (k === "andamento") irParaQuadroGerencial("quadro-andamento");
+    else if (k === "aprovados") irParaQuadroGerencial("quadro-aprovados");
+    else if (k === "novos") irParaQuadroGerencial("quadro-apresentados", () => {
+      // força o seletor de Apresentados em 7d para o número bater com o indicador
+      painelEstado.apresPeriodo = "7";
+      const seg = document.getElementById("seg-apres-dias");
+      if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.d === "7"));
+    });
+    else if (k === "aguardando_aprov") irParaQuadroGerencial("quadro-aguardando-aprov");
+    else if (k === "atrasados") irParaQuadroGerencial("quadro-atraso");
   }
   el.addEventListener("click", ativar);
   el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ativar(); } });
@@ -6114,16 +6165,13 @@ function aplicarEstadoFiltros(visivel) {
 (function inicializarFiltrosToggle() {
   const btn = document.getElementById("btn-toggle-filtros");
   if (!btn) return;
-  const saved = localStorage.getItem("filtros-visiveis");
-  let visivel;
-  if (saved !== null) visivel = saved === "1";
-  else visivel = window.innerWidth >= 768; // padrão: visível em telas largas
-  aplicarEstadoFiltros(visivel);
+  // v4.7.8: o acordeon de filtros SEMPRE inicia fechado. A abertura é manual (clique).
+  // Não há persistência: a cada acesso à aba Requerimentos ele volta a ficar fechado.
+  aplicarEstadoFiltros(false);
   btn.addEventListener("click", () => {
     const cont = document.getElementById("filtros-container");
     const novoEstado = cont.classList.contains("collapsed");
     aplicarEstadoFiltros(novoEstado);
-    localStorage.setItem("filtros-visiveis", novoEstado ? "1" : "0");
   });
 })();
 
@@ -7930,7 +7978,8 @@ const RELATORIO_PRESETS_NATIVOS = [
   { id: "personalizado", nome: "Personalizado", aplicar: () => ({}) },
   { id: "aprovados-30d", nome: "Aprovados nos últimos 30 dias", aplicar: () => ({ leg: "aprovado", aprovDe: addDiasIso(isoHoje(), -30), aprovAte: isoHoje() }) },
   { id: "apresentados-7d", nome: "Apresentados nos últimos 7 dias", aplicar: () => ({ novos7d: true }) },
-  { id: "movimentacao-7d", nome: "Sofreram movimentação nos últimos 7 dias", aplicar: () => ({ movDias: 7 }) },
+  { id: "aguardando-aprovacao", nome: "Aguardando aprovação no Congresso", aplicar: () => ({ leg: "aguardando_aprovacao" }) },
+  { id: "em-atraso", nome: "Em atraso (prazo de etapa vencido)", aplicar: () => ({ prazo: "vencido", statusInternoExcl: "respondido" }) },
   { id: "andamento-cc", nome: "Em andamento na Casa Civil", aplicar: () => ({ statusInterno: "andamento_cc" }) },
   { id: "tramitacao-cn", nome: "Em tramitação no Congresso", aplicar: () => ({ statusInterno: "tramitacao_cn" }) },
   { id: "respondidos-30d", nome: "Respondidos nos últimos 30 dias", aplicar: () => ({ statusInterno: "respondido", respDe: addDiasIso(isoHoje(), -30), respAte: isoHoje() }) },
@@ -9362,7 +9411,8 @@ document.querySelectorAll("[data-rel-painel]").forEach(b => b.addEventListener("
   const tipo = b.dataset.relPainel;
   let preset = "personalizado";
   if (tipo === "apresentados") preset = "apresentados-7d";
-  else if (tipo === "movimentados") preset = "movimentacao-7d";
+  else if (tipo === "aguardando_aprov") preset = "aguardando-aprovacao";
+  else if (tipo === "atraso") preset = "em-atraso";
   else if (tipo === "aprovados") preset = "aprovados-30d";
   relatorioAbrirModal(preset);
 }));
