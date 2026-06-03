@@ -762,7 +762,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.8</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.9</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -885,6 +885,17 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="chart-card">
       <div class="chart-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
         <div>
+          <div class="chart-title">Principais autores (top 10)</div>
+        </div>
+        <select id="seg-autores-ano" class="chart-ano-select" style="font-size:12px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
+          <option value="todos">Todos os anos</option>
+        </select>
+      </div>
+      <div id="chart-autores" class="chart-area"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <div>
           <div class="chart-title">Evolução — RICs recebidos na Casa Civil</div>
         </div>
         <div class="painel-segmented" id="seg-chart-periodo" style="margin:0">
@@ -929,7 +940,6 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <div class="painel-segmented" id="seg-aprov-dias">
           <button data-d="7" class="active">7d</button>
           <button data-d="15">15d</button>
-          <button data-d="30">30d</button>
           <button data-d="todos">Todos</button>
         </div>
         <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="aprovados">📄</button>
@@ -939,7 +949,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 
   <h2 class="painel-titulo" data-grupo="acompanhamento">RICs em andamento na Casa Civil</h2>
-  <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento" style="grid-template-columns:1fr 1fr;margin-bottom:22px">
+  <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento">
     <div class="painel-coluna attention" id="quadro-andamento">
       <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
       <div class="painel-coluna-body" id="lst-andamento"></div>
@@ -1193,7 +1203,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.8</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.9</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -4454,6 +4464,8 @@ async function renderDashboard() {
   renderChartPrazoCN(props, marcs);
   renderChartSituacao(props, marcs);
   renderChartCasa(props);
+  popularChartAutoresAno(props);
+  renderChartAutores(props);
   renderChartEvolucao(marcs);
 
   // v4.7.4: oculta os cards "Etapas" e "Prazo final CN" (ambos restritos a "em andamento na CC")
@@ -4791,6 +4803,85 @@ function renderChartCasa(props) {
   renderDonut("chart-casa", dados, { empty: "Sem dados de origem." });
 }
 
+// ----- Gráfico: BARRAS HORIZONTAIS — Principais autores (top 10), com filtro de ano -----
+let chartAutoresAno = "todos";
+function renderChartAutores(props) {
+  const cont = document.getElementById("chart-autores");
+  if (!cont) return;
+  // Filtro de ano (por ano do RIC)
+  let base = props;
+  if (chartAutoresAno !== "todos") {
+    base = props.filter(p => String(p.ano) === String(chartAutoresAno));
+  }
+  // Agrupa por autor formatado "Dep. Fulano (Partido/UF)"
+  const buckets = new Map();
+  for (const p of base) {
+    const label = formatarAutor(p);
+    if (!label) continue;
+    buckets.set(label, (buckets.get(label) || 0) + 1);
+  }
+  const dados = [...buckets.entries()]
+    .map(([label, valor]) => ({ label, valor }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 10);
+  if (dados.length === 0) { return emptyChart("chart-autores", "Sem dados de autoria para o período."); }
+
+  const w = 480, rowH = 28, padT = 12, padB = 12, padL = 220, padR = 36;
+  const h = padT + padB + dados.length * rowH;
+  const plotW = w - padL - padR;
+  const max = Math.max(...dados.map(d => d.valor)) || 1;
+  // Trunca rótulos muito longos para caber na coluna de rótulos
+  function truncar(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+  const bars = dados.map((d, i) => {
+    const y = padT + i * rowH;
+    const len = Math.max(2, (d.valor / max) * plotW);
+    const filtro = { _autor: d.label };
+    return `
+      <text x="${padL - 6}" y="${y + rowH/2}" text-anchor="end" dominant-baseline="middle" class="chart-axis-label">${escapeHtml(truncar(d.label, 34))}</text>
+      <rect x="${padL}" y="${y + 4}" width="${len}" height="${rowH - 10}" rx="3" fill="url(#chart-bar-gradient-aut)" class="chart-bar" data-chart-autor="${escapeAttr(d.label)}" style="cursor:pointer">
+        <title>${escapeHtml(d.label)}: ${d.valor} RIC(s) — clique para filtrar</title>
+      </rect>
+      <text x="${padL + len + 6}" y="${y + rowH/2}" dominant-baseline="middle" class="chart-value-label">${d.valor}</text>`;
+  }).join("");
+
+  cont.innerHTML = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" role="img">
+    <defs>
+      <linearGradient id="chart-bar-gradient-aut" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#3D5A80"/>
+        <stop offset="100%" stop-color="#5DD9D2"/>
+      </linearGradient>
+    </defs>
+    ${bars}
+  </svg>`;
+  cont.querySelectorAll("[data-chart-autor]").forEach(el => {
+    el.addEventListener("click", () => {
+      // Filtra a aba Requerimentos pela busca do nome do autor (sem o sufixo de partido/UF)
+      const label = el.dataset.chartAutor || "";
+      const nome = label.replace(/\s*\([^()]*\)\s*$/, "").replace(/^(Dep\.|Sen\.)\s*/, "").trim();
+      aplicarFiltrosViaPaineis({ busca: nome });
+    });
+  });
+}
+
+// Popula o seletor de ano do gráfico de autores e liga o evento
+function popularChartAutoresAno(props) {
+  const sel = document.getElementById("seg-autores-ano");
+  if (!sel) return;
+  const anos = [...new Set(props.map(p => p.ano).filter(Boolean))].sort((a, b) => b - a);
+  const cur = chartAutoresAno;
+  sel.innerHTML = `<option value="todos">Todos os anos</option>` +
+    anos.map(a => `<option value="${a}"${String(a) === String(cur) ? " selected" : ""}>${a}</option>`).join("");
+  if (!sel.dataset.bound) {
+    sel.addEventListener("change", async () => {
+      chartAutoresAno = sel.value;
+      const propsTodas = (await DB.getAll("proposicoes")).filter(p => !p.oculto);
+      renderChartAutores(propsTodas);
+    });
+    sel.dataset.bound = "1";
+  }
+}
+
 // ----- Gráfico 4: LINHA com área — Evolução de RICs recebidos na CC -----
 let chartEvolucaoPeriodo = "6";
 function renderChartEvolucao(marcs) {
@@ -4930,6 +5021,8 @@ function aplicarFiltrosViaPaineis(filtros) {
   if (filtros.etapa && document.getElementById("filter-etapa")) document.getElementById("filter-etapa").value = filtros.etapa;
   if (filtros.casa && document.getElementById("filter-casa")) document.getElementById("filter-casa").value = filtros.casa;
   if (filtros.tematica && document.getElementById("filter-tematica")) document.getElementById("filter-tematica").value = filtros.tematica;
+  // v4.7.9: busca livre (clique no gráfico de autores)
+  if (filtros.busca && document.getElementById("filter-busca")) document.getElementById("filter-busca").value = filtros.busca;
   // v4.7.4: filtro por Prazo final CN (clique no gráfico de barras)
   if (filtros._prazoCn && document.getElementById("filter-prazo-cn")) {
     const sel = document.getElementById("filter-prazo-cn");
@@ -6102,7 +6195,12 @@ document.querySelectorAll(".stat-card[data-stat-card]").forEach(el => {
   function ativar() {
     const k = el.dataset.statCard;
     if (k === "andamento") irParaQuadroGerencial("quadro-andamento");
-    else if (k === "aprovados") irParaQuadroGerencial("quadro-aprovados");
+    else if (k === "aprovados") irParaQuadroGerencial("quadro-aprovados", () => {
+      // força o seletor de Aprovados em "Todos" para refletir o indicador (que conta todos os aprovados)
+      painelEstado.aprovPeriodo = "todos";
+      const seg = document.getElementById("seg-aprov-dias");
+      if (seg) seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.d === "todos"));
+    });
     else if (k === "novos") irParaQuadroGerencial("quadro-apresentados", () => {
       // força o seletor de Apresentados em 7d para o número bater com o indicador
       painelEstado.apresPeriodo = "7";

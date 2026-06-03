@@ -2,12 +2,12 @@
 
 Aplicativo PWA (Progressive Web App) da SSGP/SE/Casa Civil para monitorar os **Requerimentos de Informação** (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Consome as APIs públicas de Dados Abertos da Câmara dos Deputados e do Senado Federal. Funciona offline e é instalável como app.
 
-**Versão atual: 4.7.8**
+**Versão atual: 4.7.9**
 
 ## Arquivos do pacote
 
 ```
-monitor-ric-v4.7.8/
+monitor-ric-v4.7.9/
 ├── index.html               ← o app (arquivo único)
 ├── manifest.json            ← metadata PWA
 ├── sw.js                    ← service worker
@@ -79,7 +79,7 @@ Os 7 arquivos precisam estar na mesma pasta e ser servidos via HTTPS.
 
 1. Abrir o GitHub Desktop e abrir o repositório `monitor-ric`.
 2. Copiar os 7 arquivos para a pasta local, substituindo as versões anteriores.
-3. **Summary** = "Atualização para v4.7.8", **Commit to main**, depois **Push origin**.
+3. **Summary** = "Atualização para v4.7.9", **Commit to main**, depois **Push origin**.
 4. Aguardar 1–2 minutos. A URL `https://SEU-USUARIO.github.io/monitor-ric/` estará atualizada.
 
 ### Pela linha de comando
@@ -88,13 +88,13 @@ Os 7 arquivos precisam estar na mesma pasta e ser servidos via HTTPS.
 cd ~/seu-repo/monitor-ric
 # Copie os 7 arquivos para esta pasta
 git add index.html manifest.json sw.js icon-*.png
-git commit -m "v4.7.8"
+git commit -m "v4.7.9"
 git push
 ```
 
 ### Cache do PWA
 
-A v4.7.8 usa o cache `monitor-ric-v4-7-8`. O service worker invalida o cache anterior automaticamente ao atualizar. Se necessário no Android: Configurações → Apps → Monitor RIC → Armazenamento → Limpar cache, e reabrir. Ou desinstalar e reinstalar pela URL.
+A v4.7.9 usa o cache `monitor-ric-v4-7-9`. O service worker invalida o cache anterior automaticamente ao atualizar. Se necessário no Android: Configurações → Apps → Monitor RIC → Armazenamento → Limpar cache, e reabrir. Ou desinstalar e reinstalar pela URL.
 
 ## Configuração inicial
 
