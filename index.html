@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Monitor RIC">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-512.png">
+<title>Monitor RIC — Requerimentos de Informação do Congresso Nacional</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* Paleta v4.5 — modo claro (azul muito claro + ciano escurecido) */
+  /* v4.6: fundo azul-claro 30% mais escuro para melhor contraste com cards */
+  --bg: #A7BFD0;
+  --bg-body: #97AFC0;
+  --bg-header: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-2: #D9E5EE;
+  --border: #C5D9E6;
+  --border-strong: #1F5F63;
+  --text: #0D1117;
+  --text-2: #2C4A6B;
+  --muted: #3D5A80;
+  --muted-2: #6B7F94;
+  --accent: #1F5F63;
+  --accent-hover: #2C7A7E;
+  --accent-light: rgba(31, 95, 99, 0.12);
+  --accent-strong: #1F5F63;
+  /* Cores semânticas — preservadas */
+  --warn: #b45309;
+  --warn-light: #fef3c7;
+  --warn-strong: #92400e;
+  --ok: #15803d;
+  --ok-light: #dcfce7;
+  --ok-strong: #14532d;
+  --err: #b91c1c;
+  --err-light: #fee2e2;
+  --err-strong: #7f1d1d;
+  --info: #2C7A7E;
+  --info-light: #d4eaeb;
+  --info-strong: #1F5F63;
+  --neutral: #3D5A80;
+  --neutral-light: #F7FBFD;
+  --gold: #b45309;
+  --gold-light: #fef3c7;
+  --purple: #7c3aed;
+  --purple-light: #ede9fe;
+  --amber: #d97706;
+  --amber-light: #fef3c7;
+  /* Cores específicas das situações legislativas */
+  --leg-tramitacao: #3D5A80;
+  --leg-tramitacao-bg: #F7FBFD;
+  --leg-aguard-aprov: #2563eb;
+  --leg-aguard-aprov-bg: #dbeafe;
+  --leg-aprovado: #15803d;
+  --leg-aprovado-bg: #dcfce7;
+  --leg-aguard-resp: #d97706;
+  --leg-aguard-resp-bg: #fef3c7;
+  --leg-respondido: #1F5F63;
+  --leg-respondido-bg: #d4eaeb;
+  --leg-retirado: #57534e;
+  --leg-retirado-bg: #f5f5f4;
+  --shadow-sm: 0 1px 2px rgba(13, 17, 23, 0.04);
+  --shadow: 0 2px 4px rgba(13, 17, 23, 0.06);
+  --shadow-md: 0 8px 24px rgba(31, 95, 99, 0.18);
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+}
+html.dark {
+  /* Paleta v4.5 — modo escuro (azul profundo + ciano vivo) */
+  --bg: #151D28;
+  --bg-body: #0D1117;
+  --bg-header: #0D1117;
+  --surface: #1E3A52;
+  --surface-2: #2A4A68;
+  --border: rgba(93, 217, 210, 0.2);
+  --border-strong: rgba(93, 217, 210, 0.5);
+  --text: #F0F6FC;
+  --text-2: #B1BFDD;
+  --muted: #8B9DC3;
+  --muted-2: #6B7F94;
+  --accent: #5DD9D2;
+  --accent-hover: #6BE4DC;
+  --accent-light: rgba(93, 217, 210, 0.15);
+  --accent-strong: #6BE4DC;
+  /* Cores semânticas — preservadas (tons escuros) */
+  --warn: #fbbf24;
+  --warn-light: #422006;
+  --warn-strong: #fde68a;
+  --ok: #4ade80;
+  --ok-light: #052e16;
+  --ok-strong: #86efac;
+  --err: #f87171;
+  --err-light: #450a0a;
+  --err-strong: #fca5a5;
+  --info: #5DD9D2;
+  --info-light: rgba(93, 217, 210, 0.1);
+  --info-strong: #6BE4DC;
+  --neutral: #B1BFDD;
+  --neutral-light: #1E3A52;
+  --gold: #fbbf24;
+  --gold-light: #422006;
+  --purple: #a78bfa;
+  --purple-light: #4c1d95;
+  --amber: #fbbf24;
+  --amber-light: #422006;
+  --leg-tramitacao: #B1BFDD;
+  --leg-tramitacao-bg: #2A4A68;
+  --leg-aguard-aprov: #93c5fd;
+  --leg-aguard-aprov-bg: #1e3a8a;
+  --leg-aprovado: #86efac;
+  --leg-aprovado-bg: #052e16;
+  --leg-aguard-resp: #fbbf24;
+  --leg-aguard-resp-bg: #422006;
+  --leg-respondido: #5DD9D2;
+  --leg-respondido-bg: rgba(93, 217, 210, 0.1);
+  --leg-retirado: #d6d3d1;
+  --leg-retirado-bg: #292524;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(93, 217, 210, 0.25);
+}
+html, body { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; font-size: 14px; font-feature-settings: "cv02","cv03","cv04","cv11"; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Header */
+header.app-header { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0; }
+html.dark header.app-header { border-bottom: 1px solid var(--border); }
+.header-top { padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 12px; }
+.header-brand { display: flex; align-items: center; gap: 10px; flex: 1 1 auto; min-width: 0; }
+.brand-logo { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent; transition: box-shadow 0.2s ease; }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; display: block; filter: contrast(1.1); }
+.brand-logo.fallback { background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 700; font-size: 23px; }
+html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
+@media (max-width: 640px) {
+  .brand-logo { width: 48px; height: 48px; flex: 0 0 48px; }
+}
+.header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; min-width: 0; }
+.header-brand h1 .h1-titulo { display: inline-flex; align-items: baseline; gap: 6px; }
+.header-brand h1 small { display: block; font-size: 9.9px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; opacity: 0.7; }
+/* v4.7: indicador de status CloudSync */
+.cloud-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; transition: all 0.2s; }
+.cloud-status:hover { filter: brightness(0.97); }
+.cloud-status-icon { font-size: 12px; line-height: 1; }
+.cloud-status.cloud-local { color: var(--muted); }
+.cloud-status.cloud-syncing { color: #2563eb; border-color: #93c5fd; background: rgba(37,99,235,0.08); }
+.cloud-status.cloud-syncing .cloud-status-icon { animation: cloud-spin 1s linear infinite; }
+.cloud-status.cloud-ok { color: #047857; border-color: #6ee7b7; background: rgba(4,120,87,0.08); }
+.cloud-status.cloud-pending { color: #b45309; border-color: #fcd34d; background: rgba(180,83,9,0.08); }
+.cloud-status.cloud-error { color: #b91c1c; border-color: #fca5a5; background: rgba(185,28,28,0.08); }
+.cloud-status.cloud-offline { color: var(--muted); border-color: var(--border); }
+@keyframes cloud-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@media (max-width: 600px) { .cloud-status-txt { display: none; } }
+.versao-badge { display: inline-flex; align-items: baseline; padding: 0; border: none; border-radius: 0; font-size: 8px; font-weight: 600; background: transparent; color: var(--muted); letter-spacing: 0.03em; margin: 0; line-height: 1; opacity: 0.7; }
+.header-actions-tema { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.header-actions-tema .versao-badge { margin-top: 0; }
+.header-actions { display: flex; gap: 6px; align-items: center; flex: 0 0 auto; }
+.header-statusbar { padding: 10px 24px; background: var(--surface-2); border-top: 1px solid var(--border); display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.statusbar-item { display: flex; flex-direction: column; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); transition: background 0.15s; }
+.statusbar-item:hover { background: var(--surface); }
+.statusbar-item .label { font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.statusbar-item .value { font-size: 18px; font-weight: 600; color: var(--text); line-height: 1.2; }
+.statusbar-item.alert .value { color: var(--err); }
+.btn-sync-rapida { width: 32px; height: 32px; padding: 0; font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+.btn-sync-rapida.spinning { animation: spin 0.8s linear infinite; pointer-events: none; }
+.gemini-campos-seletor { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.gemini-campos-seletor label { display: inline-flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text); margin: 0; padding: 0 4px; user-select: none; }
+.gemini-campos-seletor input[type=checkbox] { margin: 0; width: 14px; height: 14px; cursor: pointer; }
+.statusbar-item.warn .value { color: var(--warn); }
+.statusbar-item .small-label { font-size: 11px; color: var(--muted-2); margin-top: 2px; }
+
+/* Menu de ações (v4.6) */
+.menu-acoes { position: relative; display: inline-block; }
+.menu-acoes-dropdown { display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 220px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-md); z-index: 100; padding: 6px; overflow: hidden; }
+.menu-acoes.open .menu-acoes-dropdown { display: block; }
+.menu-acoes-dropdown .menu-item { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: none; border: none; border-radius: var(--radius-sm); font: inherit; font-size: 14px; color: var(--text); text-align: left; cursor: pointer; transition: background 0.15s; }
+.menu-acoes-dropdown .menu-item:hover { background: var(--accent-light); color: var(--accent); }
+.menu-acoes-dropdown .menu-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.menu-acoes-dropdown .menu-item-icon { font-size: 15px; font-weight: 700; width: 20px; flex-shrink: 0; text-align: center; color: var(--accent); font-variant-emoji: text; }
+
+/* Tabs */
+nav.tabs { background: var(--bg-header); border-bottom: 2px solid var(--border); padding: 0 24px; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+html.dark nav.tabs { border-bottom: 1px solid var(--border); }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs button { background: none; border: none; padding: 14px 18px; font: inherit; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; font-weight: 500; transition: color 0.2s ease, border-bottom-color 0.2s ease; flex-shrink: 0; }
+nav.tabs button:hover:not(.active) { color: var(--text); }
+nav.tabs button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+nav.tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 4px; }
+@media (max-width: 640px) {
+  nav.tabs { padding: 0 12px; }
+  nav.tabs button { padding: 12px 14px; font-size: 13px; }
+}
+
+main { padding: 20px 24px; max-width: 1500px; margin: 0 auto; }
+.pane { display: none; } .pane.active { display: block; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.card h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+.card h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+
+/* Alertas do painel */
+.alertas-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.alerta-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 500; border: 1px solid transparent; transition: all 0.15s; box-shadow: var(--shadow-sm); }
+.alerta-pill:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.alerta-pill .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+.alerta-pill .num { font-weight: 700; font-size: 15px; }
+.alerta-pill.critical { background: var(--err-light); color: var(--err-strong); }
+.alerta-pill.critical .dot { background: var(--err); }
+.alerta-pill.warning { background: var(--warn-light); color: var(--warn-strong); }
+.alerta-pill.warning .dot { background: var(--warn); }
+.alerta-pill.info { background: var(--info-light); color: var(--info-strong); }
+.alerta-pill.info .dot { background: var(--info); }
+.alerta-pill.purple-pill { background: var(--purple-light); color: var(--purple); }
+.alerta-pill.purple-pill .dot { background: var(--purple); }
+.alerta-pill.zero { opacity: 0.5; }
+
+/* Painel — colunas */
+.painel-titulo { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 4px 0; transition: color 0.15s; }
+.painel-titulo:hover { color: var(--text); }
+.painel-titulo::before { content: "▼"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.painel-titulo.collapsed::before { transform: rotate(-90deg); }
+.painel-grupo { transition: max-height 0.3s ease, opacity 0.2s, margin 0.2s; max-height: 2000px; opacity: 1; overflow: hidden; }
+.painel-grupo.collapsed { max-height: 0; opacity: 0; margin: 0 !important; }
+.grid-3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); margin-bottom: 22px; }
+.grid-2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+.grafico-grid { margin-bottom: 0; }
+
+/* ===== Stat Cards (v4.5 — aba Painel) ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 20px; }
+@media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; } }
+@media (min-width: 900px) { .stats-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; } }
+@media (min-width: 1200px) { .stats-grid { gap: 12px; } }
+.stat-card {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 12px 10px;
+  border: 2px solid var(--border);
+  box-shadow: 0 2px 4px rgba(13, 17, 23, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+html.dark .stat-card {
+  background: linear-gradient(145deg, #1E3A52 0%, #2A4A68 100%);
+  border: 1px solid var(--border);
+}
+@media (min-width: 768px) { .stat-card { padding: 14px 12px; } }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
+}
+.stat-card:hover::before { opacity: 1; }
+.stat-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Variante warn (Em atraso) — destaque em vermelho/âmbar */
+.stat-card.stat-card-warn .stat-card-number { color: var(--err); }
+.stat-card.stat-card-warn::before { background: linear-gradient(90deg, var(--err), var(--warn)); }
+.stat-card.stat-card-warn:hover { border-color: var(--err); }
+.stat-card-icon {
+  width: 16px; height: 16px;
+  color: rgba(61, 90, 128, 0.4);
+  margin-bottom: 5px;
+}
+html.dark .stat-card-icon { color: rgba(107, 228, 220, 0.5); }
+.stat-card-icon svg { width: 100%; height: 100%; }
+.stat-card-number {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+@media (min-width: 768px) { .stat-card-number { font-size: 26px; margin-bottom: 6px; } }
+.stat-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  line-height: 1.2;
+}
+@media (min-width: 768px) { .stat-card-label { font-size: 11px; } }
+
+/* ===== Chart Cards (v4.5 — aba Painel) ===== */
+.charts-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
+@media (min-width: 768px) { .charts-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
+.chart-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 14px;
+  border: 2px solid var(--border);
+  box-shadow: 0 2px 4px rgba(13, 17, 23, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+html.dark .chart-card { border: 1px solid var(--border); }
+@media (min-width: 768px) { .chart-card { padding: 18px 16px; } }
+.chart-header { margin-bottom: 10px; }
+.chart-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.chart-subtitle { display: none; }
+.chart-area {
+  width: 100%;
+  flex: 1;
+  position: relative;
+  min-height: 180px;
+  max-height: 280px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+.chart-area svg { width: 100%; height: 100%; display: block; max-width: 100%; max-height: 100%; }
+.chart-area .empty { display: flex; align-items: center; justify-content: center; width: 100%; color: var(--muted); font-style: italic; font-size: 13px; text-align: center; padding: 16px; }
+.chart-donut { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.chart-donut > div { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; gap: 6px; }
+/* v4.6: gráficos de rosca 30% maiores (180 → 234) */
+.chart-donut svg { flex: 0 1 auto; max-width: min(234px, 100%); max-height: 78%; }
+/* Cores do gráfico de barras (com gradiente) */
+.chart-bar { transition: opacity 0.15s; }
+.chart-bar:hover { opacity: 0.85; }
+.chart-axis-label { fill: var(--muted); font-size: 10px; font-family: inherit; }
+.chart-axis-line { stroke: var(--border-strong); stroke-width: 1; opacity: 0.5; }
+.chart-grid-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,3; opacity: 0.5; }
+.chart-value-label { fill: var(--text); font-size: 11px; font-weight: 600; font-family: inherit; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 10px; font-size: 11px; color: var(--text-2); }
+.chart-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.donut-center { font-size: 18px; font-weight: 600; fill: var(--text); }
+.donut-center-sub { font-size: 10px; fill: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ===== Modal XLSX (v4.5) ===== */
+.xlsx-dropzone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 36px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface-2);
+  transition: all 0.15s;
+  user-select: none;
+}
+.xlsx-dropzone:hover, .xlsx-dropzone.dragover { border-color: var(--accent); background: var(--accent-light); }
+.xlsx-dropzone-icon { font-size: 36px; margin-bottom: 8px; }
+.xlsx-dropzone-text { font-size: 14px; }
+.xlsx-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.xlsx-progress-bar { width: 100%; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.xlsx-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-hover)); width: 0%; transition: width 0.2s ease; }
+.xlsx-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.xlsx-resumo-item { background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px; border: 1px solid var(--border); }
+.xlsx-resumo-item.attention { background: var(--warn-light); border-color: var(--warn); }
+.xlsx-resumo-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.xlsx-resumo-value { font-size: 22px; font-weight: 700; color: var(--accent); }
+.xlsx-resumo-item.attention .xlsx-resumo-value { color: var(--warn-strong); }
+.xlsx-slugs-novos { background: var(--warn-light); border: 1px solid var(--warn); border-radius: var(--radius-sm); padding: 10px 12px; margin: 12px 0 0 0; font-size: 13px; color: var(--warn-strong); }
+.xlsx-diff-filtros { display: flex; gap: 4px; }
+.xlsx-diff-filtros .btn { font-size: 12px; padding: 4px 10px; }
+.xlsx-diff-filtros .btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.xlsx-diff-list { max-height: 360px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.xlsx-diff-item { border-bottom: 1px solid var(--border); }
+.xlsx-diff-item:last-child { border-bottom: none; }
+.xlsx-diff-item-header { padding: 10px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; user-select: none; transition: background 0.15s; }
+.xlsx-diff-item-header:hover { background: var(--surface); }
+.xlsx-diff-item-title { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; }
+.xlsx-diff-item-title b { color: var(--text); }
+.xlsx-diff-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0; }
+.xlsx-diff-badge.novo { background: var(--ok-light); color: var(--ok-strong); }
+.xlsx-diff-badge.atualizado { background: var(--info-light); color: var(--info-strong); }
+.xlsx-diff-content { display: none; padding: 0 12px 12px 12px; font-size: 12px; }
+.xlsx-diff-item.open .xlsx-diff-content { display: block; }
+.xlsx-diff-item.open .xlsx-diff-arrow { transform: rotate(90deg); }
+.xlsx-diff-arrow { font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.xlsx-diff-row { display: grid; grid-template-columns: 130px 1fr 1fr; gap: 8px; padding: 4px 0; align-items: start; border-bottom: 1px dashed var(--border); }
+.xlsx-diff-row:last-child { border-bottom: none; }
+.xlsx-diff-row-campo { font-weight: 500; color: var(--text-2); font-size: 11px; padding-top: 2px; }
+.xlsx-diff-row-antigo { background: var(--err-light); color: var(--err-strong); padding: 3px 6px; border-radius: 3px; text-decoration: line-through; word-break: break-word; }
+.xlsx-diff-row-novo { background: var(--ok-light); color: var(--ok-strong); padding: 3px 6px; border-radius: 3px; word-break: break-word; }
+.xlsx-diff-row.criacao .xlsx-diff-row-antigo { display: none; }
+.xlsx-diff-row.criacao { grid-template-columns: 130px 1fr; }
+.xlsx-historico-item { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; background: var(--surface-2); }
+.xlsx-historico-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.xlsx-historico-item-arquivo { font-weight: 500; font-size: 13px; }
+.xlsx-historico-item-data { font-size: 11px; color: var(--muted); }
+.xlsx-historico-item-stats { font-size: 12px; color: var(--text-2); }
+.xlsx-historico-item-acoes { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.grafico-card h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 4px 0; }
+.grafico-card p { margin-bottom: 12px; }
+.graf-container { width: 100%; overflow: visible; }
+.graf-container svg { width: 100%; height: auto; display: block; }
+.graf-container .empty { color: var(--muted); font-style: italic; padding: 20px; text-align: center; font-size: 13px; }
+.graf-bar { fill: var(--primary); transition: opacity 0.15s; }
+.graf-bar:hover { opacity: 0.8; }
+.graf-label { fill: var(--text); font-size: 11px; font-family: inherit; }
+.graf-value { fill: var(--text); font-size: 11px; font-weight: 600; font-family: inherit; }
+.graf-axis { stroke: var(--border-strong); stroke-width: 1; }
+.graf-grid-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,2; }
+.graf-line-path { fill: none; stroke: var(--primary); stroke-width: 2; }
+.graf-line-area { fill: var(--primary); opacity: 0.1; }
+.graf-line-dot { fill: var(--primary); }
+.graf-tick { fill: var(--muted); font-size: 10px; font-family: inherit; }
+.grid-4 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 22px; }
+.painel-coluna { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; max-height: 460px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.painel-coluna-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--surface); }
+.painel-coluna-header h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 0; text-transform: none; letter-spacing: 0; display: flex; align-items: center; gap: 6px; }
+.painel-coluna-header h3::before { content: ""; width: 3px; height: 14px; background: var(--neutral); border-radius: 2px; }
+.painel-coluna.attention .painel-coluna-header h3::before { background: var(--amber); }
+.painel-coluna.urgent .painel-coluna-header h3::before { background: var(--err); }
+.painel-coluna.purple .painel-coluna-header h3::before { background: var(--purple); }
+.painel-coluna-header .count { color: var(--muted); font-size: 12px; font-weight: 500; padding: 2px 8px; background: var(--surface-2); border-radius: 10px; }
+.painel-coluna-body { overflow-y: auto; flex: 1; }
+.painel-segmented { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); }
+.painel-segmented button { padding: 4px 10px; font-size: 11px; background: transparent; border: none; cursor: pointer; color: var(--muted); font-weight: 500; }
+.painel-segmented button:hover { color: var(--text); }
+.painel-segmented button.active { background: var(--accent); color: white; }
+.painel-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.painel-item:hover { background: var(--surface-2); }
+.painel-item:last-child { border-bottom: none; }
+.painel-item-titulo { font-weight: 500; font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--text); }
+.painel-item-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
+.painel-item-ementa { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+.relevante-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 500; background: var(--gold-light); color: var(--gold); }
+
+/* Botões */
+button.btn, .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); font: inherit; cursor: pointer; color: var(--text); text-decoration: none; font-weight: 500; transition: all 0.15s; }
+button.btn:hover, .btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+button.btn-primary, .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+button.btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+button.btn-danger { color: var(--err); border-color: var(--err-light); }
+button.btn-danger:hover { background: var(--err-light); }
+button.btn-sm { padding: 4px 10px; font-size: 12px; }
+button.btn-icon { padding: 6px 10px; font-size: 13px; line-height: 1; }
+/* v4.7.4: botão de tema 30% menor */
+#btn-dark-toggle { padding: 4px 6px; font-size: 11px; }
+button.btn-ghost { border-color: transparent; background: transparent; }
+button.btn-ghost:hover { background: var(--surface-2); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Forms */
+label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+input[type="text"], input[type="number"], input[type="date"], input[type="password"], select, textarea {
+  width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text);
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+.form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+.form-row > div { flex: 1; min-width: 140px; }
+.form-row > .actions { flex: 0 0 auto; min-width: auto; }
+
+/* Tabela */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+th.sortable:hover { background: var(--accent-light); color: var(--accent); }
+th.sorted { color: var(--accent); }
+tr.expandable { cursor: pointer; }
+tr:hover td { background: var(--surface-2); }
+tr.expanded td { background: var(--accent-light); }
+tr.row-detail td { padding: 12px 16px; background: var(--surface-2); border-bottom: 2px solid var(--border-strong); }
+tr.row-detail .detail-grid { display: grid; gap: 10px 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); font-size: 12px; }
+tr.row-detail .detail-grid > div { background: var(--surface); padding: 8px 10px; border-radius: var(--radius-sm); }
+tr.row-detail .detail-grid label { font-size: 10px; }
+tr.row-detail .detail-grid .v { font-size: 13px; color: var(--text); word-break: break-word; }
+
+td.col-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; white-space: nowrap; color: var(--text); font-weight: 500; }
+td.col-data { white-space: nowrap; font-size: 12px; color: var(--muted); }
+td.col-ementa { max-width: 380px; }
+td.col-objeto, th.col-objeto { min-width: 480px; width: 100%; max-width: 720px; }
+td.col-identificacao, th.col-identificacao { white-space: nowrap; min-width: 130px; max-width: 160px; }
+td.col-identificacao .cell-ident-2linhas { display: flex; flex-direction: column; gap: 4px; }
+td.col-identificacao .ident-linha-id { white-space: nowrap; }
+td.col-identificacao .ident-linha-meta { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+td.col-identificacao .ident-id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; font-weight: 600; color: var(--text); }
+td.col-identificacao .icon-btn { width: 22px; height: 22px; }
+td.col-acoes { white-space: nowrap; }
+/* Tabela com layout fixo para Objeto ser sempre o mais largo */
+#tbl-lista { table-layout: auto; width: 100%; }
+#tbl-lista th, #tbl-lista td { vertical-align: top; }
+
+/* Badges */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; line-height: 1.4; }
+.badge-camara { background: var(--info-light); color: var(--info-strong); }
+.badge-senado { background: var(--amber-light); color: var(--amber); }
+.badge-tematica { background: var(--surface-2); color: var(--text-2); font-size: 10px; padding: 1px 6px; border: 1px solid var(--border); }
+.badge-novo { background: var(--accent-light); color: var(--accent-strong); }
+.badge-tramitacao_cn { background: var(--info-light); color: var(--info-strong); }
+.badge-andamento_cc { background: var(--warn-light); color: var(--warn-strong); }
+.badge-respondido { background: var(--ok-light); color: var(--ok-strong); }
+.badge-retirado { background: var(--leg-retirado-bg); color: var(--leg-retirado); }
+/* Sit. legislativa */
+.badge-leg-tramitacao_inicial { background: var(--leg-tramitacao-bg); color: var(--leg-tramitacao); }
+.badge-leg-aguardando_aprovacao { background: var(--leg-aguard-aprov-bg); color: var(--leg-aguard-aprov); }
+.badge-leg-aprovado { background: var(--leg-aprovado-bg); color: var(--leg-aprovado); }
+.badge-leg-aguardando_resposta { background: var(--leg-aguard-resp-bg); color: var(--leg-aguard-resp); }
+.badge-leg-respondido { background: var(--leg-respondido-bg); color: var(--leg-respondido); }
+.badge-leg-retirado { background: var(--leg-retirado-bg); color: var(--leg-retirado); }
+.badge-leg-pendente { background: var(--surface-2); color: var(--muted); border: 1px dashed var(--border-strong); }
+.badge-leg-data { font-size: 10px; display: block; margin-top: 2px; color: var(--muted); }
+.badge-vencido { background: var(--err-light); color: var(--err-strong); }
+.badge-hoje { background: var(--warn-light); color: var(--warn-strong); }
+.badge-prazo-ok { background: var(--ok-light); color: var(--ok-strong); }
+.badge-prazo-cn { background: var(--surface-2); color: var(--text-2); border: 1px solid var(--border-strong); }
+.badge-prazo-ok { background: var(--ok-light); color: var(--ok-strong); }
+
+/* Star */
+.star { cursor: pointer; font-size: 18px; color: var(--muted-2); user-select: none; line-height: 1; }
+.star.on { color: var(--gold); }
+
+/* Icon button */
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); cursor: pointer; padding: 0; color: var(--muted); margin-right: 4px; text-decoration: none; transition: all 0.15s; }
+.icon-btn:hover { background: var(--surface-2); color: var(--accent); border-color: var(--accent); }
+.icon-btn svg { width: 14px; height: 14px; }
+
+/* Log */
+.log { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: var(--radius-sm); font-family: ui-monospace, monospace; font-size: 12px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+html.dark .log { background: #020617; }
+.log .ok { color: #4ade80; } .log .warn { color: #fbbf24; } .log .err { color: #f87171; } .log .info { color: #60a5fa; } .log .dim { color: #94a3b8; }
+
+/* Alerts */
+.alert { padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 13px; }
+.alert-info { background: var(--accent-light); color: var(--accent-strong); border: 1px solid var(--accent); }
+.alert-ok { background: var(--ok-light); color: var(--ok-strong); border: 1px solid var(--ok); }
+.alert-err { background: var(--err-light); color: var(--err-strong); border: 1px solid var(--err); }
+.alert-warn { background: var(--warn-light); color: var(--warn-strong); border: 1px solid var(--warn); }
+
+/* Modais */
+.modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: none; align-items: flex-start; justify-content: center; padding: 30px 20px; z-index: 100; overflow-y: auto; backdrop-filter: blur(4px); }
+.modal-bg.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); max-width: 950px; width: 100%; padding: 24px; box-shadow: var(--shadow-md); }
+.modal-wide { max-width: 1100px; }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; gap: 12px; position: sticky; top: -24px; background: var(--surface); padding-top: 0; padding-bottom: 8px; border-bottom: 1px solid var(--border); z-index: 1; margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; padding-top: 8px; }
+.modal-header h2 { font-size: 16px; font-weight: 600; }
+.modal-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--muted); padding: 0 4px; line-height: 1; }
+.modal-close:hover { color: var(--text); }
+.modal dl { display: grid; grid-template-columns: 160px 1fr; gap: 8px 16px; font-size: 13px; margin-bottom: 16px; }
+.modal dt { color: var(--muted); font-weight: 500; }
+.modal dd { word-break: break-word; }
+.modal .ementa-full { background: var(--surface-2); padding: 12px; border-radius: var(--radius-sm); font-size: 13px; line-height: 1.5; margin-bottom: 16px; white-space: pre-wrap; border-left: 3px solid var(--accent); }
+.modal-section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.modal-section:last-child { border-bottom: none; }
+.modal-section h3 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+/* Modal sections colapsáveis */
+/* v4.7: acordeão do modal de configurações */
+.cfg-acordeao { transition: all 0.2s; }
+.cfg-acordeao-header { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 8px; }
+.cfg-acordeao-header::before { content: "\25BC"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.cfg-acordeao.cfg-collapsed .cfg-acordeao-header::before { transform: rotate(-90deg); }
+.cfg-acordeao.cfg-collapsed > *:not(.cfg-acordeao-header) { display: none !important; }
+.cfg-acordeao.cfg-collapsed { padding-bottom: 12px; }
+.modal-section.collapsible > .section-header { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; padding: 4px 0; margin-bottom: 0; }.modal-section.collapsible > .section-header h3 { margin: 0; flex: 1; }
+.modal-section.collapsible > .section-header::before { content: "▼"; font-size: 9px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+.modal-section.collapsible.collapsed > .section-header::before { transform: rotate(-90deg); }
+.modal-section.collapsible.collapsed > .section-header { margin-bottom: 0; padding-bottom: 4px; }
+.modal-section.collapsible > .section-content { overflow: hidden; transition: max-height 0.3s ease, opacity 0.2s; max-height: none; opacity: 1; padding-top: 10px; }
+.modal-section.collapsible.collapsed > .section-content { max-height: 0; opacity: 0; padding-top: 0; }
+
+/* Modal header actions (v4.6: botão Salvar sempre visível) */
+.modal-header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.modal-header-actions .btn-sm { padding: 4px 12px; font-size: 12px; min-height: 28px; line-height: 1; }
+.modal-header-actions .save-feedback { font-size: 11px; color: var(--success, #10b981); opacity: 0; transition: opacity 0.3s; }
+.modal-header-actions .save-feedback.show { opacity: 1; }
+
+/* Modal header — variante do modal de detalhe (v4.6):
+   - Botão X no canto superior direito
+   - Botão Salvar 50% menor, posicionado ABAIXO do X (também no canto direito)
+   - Título estende-se por TODA a largura do header (quebra de linha conforme necessário)
+   - Em telas estreitas, o título naturalmente cai abaixo dos botões */
+.modal-header-detalhe { position: sticky; top: -24px; z-index: 10; background: var(--surface); display: block; padding: 12px 60px 12px 18px; min-height: 64px; margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 60px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.modal-header-detalhe .modal-close { position: absolute; top: 8px; right: 12px; margin: 0; }
+.modal-header-detalhe .btn-salvar-mini { position: absolute; top: 38px; right: 12px; padding: 2px 8px; font-size: 10px; min-height: 18px; height: 18px; line-height: 1; border-radius: 4px; }
+.modal-header-detalhe .save-feedback-mini { position: absolute; top: 40px; right: 60px; font-size: 9px; color: var(--success, #10b981); opacity: 0; transition: opacity 0.3s; }
+.modal-header-detalhe .save-feedback-mini.show { opacity: 1; }
+.modal-header-detalhe h2 { margin: 0; padding-right: 0; font-size: 16px; font-weight: 600; line-height: 1.3; word-wrap: break-word; overflow-wrap: anywhere; }
+
+/* Modal footer (v4.6: Ocultar/Limpar/Excluir) */
+.modal-footer-detalhe { display: flex; align-items: center; gap: 10px; padding: 12px 0 4px; margin-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+/* Modal Relatório (v4.6) */
+#modal-relatorio .rel-bloco { margin-bottom: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+#modal-relatorio .rel-bloco-summary { padding: 10px 14px; cursor: pointer; user-select: none; font-size: 13px; color: var(--text); border-radius: var(--radius); }
+#modal-relatorio .rel-bloco-summary:hover { background: var(--surface-2); }
+#modal-relatorio .rel-bloco[open] .rel-bloco-summary { border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; }
+#modal-relatorio .rel-bloco-conteudo { padding: 12px 14px 14px; }
+#modal-relatorio .rel-bloco-resumo { font-size: 11px; color: var(--muted); font-weight: 400; }
+#modal-relatorio .rel-contador { margin-top: 12px; padding: 8px 10px; background: var(--surface-2); border-radius: 6px; font-size: 12px; color: var(--text); border-left: 3px solid var(--accent); }
+#modal-relatorio .rel-aviso-info { padding: 10px 12px; background: rgba(31,95,99,0.08); border-left: 3px solid var(--accent); border-radius: 4px; margin-bottom: 12px; font-size: 13px; }
+#modal-relatorio .rel-aviso-preview { padding: 8px 12px; background: var(--warn-light, #FEF3C7); color: var(--warn-strong, #92400E); border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
+#modal-relatorio .rel-grupo-campos { padding: 8px 0; border-bottom: 1px dashed var(--border); }
+#modal-relatorio .rel-grupo-campos:last-child { border-bottom: none; }
+#modal-relatorio .rel-grupo-campos-disabled { opacity: 0.55; pointer-events: none; }
+#modal-relatorio .rel-grupo-pai { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; }
+#modal-relatorio .rel-grupo-filhos { display: grid; grid-template-columns: 1fr; gap: 4px 12px; padding-left: 22px; }
+@media (min-width: 600px) { #modal-relatorio .rel-grupo-filhos { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { #modal-relatorio .rel-grupo-filhos { grid-template-columns: 1fr 1fr 1fr; } }
+#modal-relatorio .rel-grupo-filhos .rel-campo { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; padding: 3px 0; }
+#modal-relatorio .rel-grupo-filhos .rel-campo input { width: auto; margin: 0; }
+#modal-relatorio .rel-sumario { padding: 10px 12px; background: var(--surface-2); border-radius: 6px; font-size: 13px; color: var(--text); }
+#modal-relatorio .rel-bloco-preview { margin-top: 18px; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--surface); }
+#modal-relatorio .rel-bloco-preview-vazio { display: none; }
+#modal-relatorio .rel-preview-iframe { width: 100%; height: 600px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #fff; }
+
+/* Botão de relatório nos painéis */
+.btn-painel-relatorio { font-size: 14px; padding: 4px 8px; min-height: 28px; line-height: 1; }
+
+/* IDENTIFICAÇÃO API (v4.6): rótulo em cima, valor embaixo */
+.ident-api-grid { display: grid; grid-template-columns: 1fr; gap: 10px 16px; }
+@media (min-width: 600px) { .ident-api-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .ident-api-grid { grid-template-columns: 1fr 1fr 1fr; } }
+.ident-api-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ident-api-field-full { grid-column: 1 / -1; }
+.ident-api-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.ident-api-value { font-size: 13px; color: var(--text); word-wrap: break-word; overflow-wrap: anywhere; line-height: 1.4; }
+
+/* Unidades consultadas (v4.6: checkboxes ao invés de select multiple) */
+.unidades-checkboxes { display: grid; grid-template-columns: 1fr; gap: 6px 12px; max-height: 260px; overflow-y: auto; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+
+/* Etapas do fluxo (v4.6) — lista vertical com checkbox + prazos */
+.etapas-fluxo-bloco { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.etapas-fluxo-titulo { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.etapas-fluxo-lista { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.etapa-linha { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 10px 12px; border-radius: 6px; border-left: 3px solid var(--border); background: var(--surface-2); transition: all 0.2s; position: relative; }
+.etapa-linha-marker { display: flex; align-items: center; justify-content: center; padding-top: 2px; }
+.etapa-circulo { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); flex-shrink: 0; }
+/* Etapa concluída */
+.etapa-linha.etapa-concluida { border-left-color: var(--success, #10b981); opacity: 0.6; background: var(--surface-2); }
+.etapa-linha.etapa-concluida .etapa-circulo { background: var(--success, #10b981); border-color: var(--success, #10b981); }
+.etapa-linha.etapa-concluida .etapa-titulo { text-decoration: line-through; color: var(--muted); }
+.etapa-linha.etapa-concluida .etapa-prazo-real { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
+/* Etapa atual (próxima a ser feita) — destaque */
+.etapa-linha.etapa-atual { border-left-color: var(--accent); background: rgba(31,95,99,0.06); box-shadow: 0 1px 4px rgba(31,95,99,0.1); }
+.etapa-linha.etapa-atual .etapa-circulo { background: var(--accent); border-color: var(--accent); animation: etapa-pulse 2s ease-in-out infinite; }
+.etapa-linha.etapa-atual .etapa-titulo { font-weight: 700; color: var(--text); }
+@keyframes etapa-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31,95,99, 0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(31,95,99, 0); }
+}
+.etapa-linha-conteudo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.etapa-linha-cabecalho { display: flex; align-items: center; gap: 8px; }
+.etapa-checkbox-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1; }
+.etapa-checkbox-wrap input[type="checkbox"] { width: 16px; height: 16px; margin: 0; cursor: pointer; flex-shrink: 0; }
+.etapa-titulo { font-size: 13px; color: var(--text); }
+.etapa-linha-prazos { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; padding-left: 24px; }
+.etapa-prazo-row { display: flex; align-items: center; gap: 6px; }
+.etapa-prazo-info { font-size: 12px; padding-left: 0; }
+.etapa-prazo-label { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.etapa-prazo-sugerido { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.etapa-prazo-sugerido[data-vazio="1"] { color: var(--muted); font-weight: 400; }
+.etapa-prazo-valor { color: var(--text); font-weight: 600; }
+.etapa-prazo-real { padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; max-width: 140px; }
+.etapa-linha.etapa-inicio { background: rgba(31,95,99,0.04); }
+.etapa-linha.etapa-fim { background: rgba(201,161,74,0.06); border-left-color: #C9A14A; }
+.etapa-linha.etapa-fim.etapa-concluida { border-left-color: var(--success, #10b981); }
+@media (max-width: 600px) {
+  .etapa-linha-prazos { padding-left: 0; gap: 8px; }
+  .etapa-prazo-real { max-width: 130px; }
+}
+@media (min-width: 600px) { .unidades-checkboxes { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .unidades-checkboxes { grid-template-columns: 1fr 1fr 1fr; } }
+.unidades-checkboxes .unidade-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; padding: 4px 6px; border-radius: 4px; line-height: 1.3; }
+.unidades-checkboxes .unidade-check:hover { background: var(--surface); }
+.unidades-checkboxes .unidade-check input[type="checkbox"] { flex-shrink: 0; width: auto; margin: 0; }
+
+/* Pagination */
+.pagination { display: flex; gap: 4px; align-items: center; justify-content: center; margin-top: 16px; flex-wrap: wrap; padding: 12px; }
+.pagination button { padding: 4px 10px; min-width: 32px; }
+.pagination .info { padding: 0 12px; color: var(--muted); font-size: 12px; }
+
+/* Empty / details / toolbar */
+.empty { text-align: center; color: var(--muted); padding: 40px 20px; font-style: italic; font-size: 13px; }
+details > summary { cursor: pointer; padding: 4px 0; font-weight: 500; user-select: none; color: var(--text-2); }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+.toolbar .spacer { flex: 1; }
+.text-muted { color: var(--muted); } .text-small { font-size: 12px; }
+a { color: var(--accent); } a:hover { text-decoration: underline; }
+.progress { background: var(--surface-2); border-radius: var(--radius-sm); height: 6px; overflow: hidden; margin: 8px 0; }
+.progress-bar { background: var(--accent); height: 100%; transition: width 0.3s; }
+
+/* Histórico */
+.historico-tabela { font-size: 12px; max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.historico-tabela td { padding: 6px 8px; vertical-align: top; }
+.historico-tabela tr.aprovacao td { background: var(--leg-aprovado-bg); }
+.historico-tabela td:first-child { white-space: nowrap; color: var(--muted); width: 95px; }
+.historico-tabela td:nth-child(2) { white-space: nowrap; color: var(--muted); width: 80px; font-family: ui-monospace, monospace; }
+
+/* Save feedback */
+.save-feedback { display: inline-block; margin-left: 12px; font-size: 12px; opacity: 0; transition: opacity 0.3s; color: var(--ok); }
+.save-feedback.show { opacity: 1; }
+
+/* Unidades grid */
+.unidades-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.unidade-chk { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+.unidade-chk input { width: auto; }
+
+/* Field rows */
+.field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+@media (max-width: 700px) { .field-row-2, .field-row-3 { grid-template-columns: 1fr; } }
+
+/* Contador destacado */
+.contador-destaque { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--accent-light); color: var(--accent-strong); border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; margin-right: 8px; }
+.contador-destaque .num { font-size: 16px; font-weight: 700; }
+.contador-destaque.has-filter { background: var(--accent); color: white; }
+.filtros-ativos { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 11px; color: var(--muted); }
+#filtros-container { transition: max-height 0.3s ease, opacity 0.2s; overflow: hidden; max-height: 1200px; opacity: 1; }
+#filtros-container.collapsed { max-height: 0; opacity: 0; margin-top: 0 !important; }
+#btn-toggle-filtros.collapsed::before { content: "▶ "; }
+#btn-toggle-filtros.expanded::before { content: "▼ "; }
+.filtro-ativo-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--surface-2); border-radius: 999px; font-size: 11px; color: var(--text-2); border: 1px solid var(--border); }
+.filtro-ativo-chip .x { cursor: pointer; color: var(--muted); font-weight: 700; }
+.filtro-ativo-chip .x:hover { color: var(--err); }
+
+/* Banner PWA install */
+.pwa-banner { background: var(--accent-light); border: 1px solid var(--accent); padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pwa-banner-text { font-size: 13px; color: var(--accent-strong); }
+
+/* Spinner */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Gemini button */
+.btn-gemini { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; }
+.btn-gemini:hover { background: linear-gradient(135deg, #4338ca, #6d28d9); }
+html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); color: #1e1b4b; }
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="brand-logo" aria-hidden="true">
+        <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
+      </div>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.7</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+    </div>
+    <div class="header-actions">
+      <div class="header-actions-tema">
+        <button class="cloud-status cloud-local" id="cloud-status-indicator" title="Clique para sincronizar agora" aria-label="Sincronizar agora"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Local</span></button>
+        <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
+      </div>
+    </div>
+  </div>
+  <div class="header-statusbar">
+    <div class="menu-acoes" id="menu-acoes">
+      <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
+      <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
+        <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sync API Congresso</button>
+        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">⤓</span>Sync base na nuvem</button>
+        <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">＋</span>Incluir requerimento</button>
+        <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✎</span>Edição em lote</button>
+        <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">↥</span>Atualizar via Controle RICs.xlsx</button>
+        <button class="menu-item" id="btn-open-export-xlsx" role="menuitem"><span class="menu-item-icon">↧</span>Exportar Controle RICs.xlsx</button>
+        <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
+        <button class="menu-item" id="btn-open-sobre" role="menuitem"><span class="menu-item-icon">ⓘ</span>Sobre</button>
+      </div>
+    </div>
+    <div class="statusbar-item" style="margin-left:auto;flex-direction:row;gap:8px;align-items:center;cursor:default" title="Última sincronização">
+      <div style="display:flex;flex-direction:column">
+        <span class="label">Última sync API</span>
+        <span class="value tabular" style="font-size:13px" id="stat-sync">nunca</span>
+      </div>
+      <button class="btn btn-icon btn-ghost btn-sync-rapida" id="btn-sync-rapida" title="Sincronização incremental rápida (usa a quantidade de dias configurada)" aria-label="Sincronização incremental">⟳</button>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button data-pane="painel" class="active" role="tab" aria-selected="true">Painel</button>
+  <button data-pane="gerencial" role="tab" aria-selected="false">Gerencial</button>
+  <button data-pane="lista" role="tab" aria-selected="false">Requerimentos</button>
+</nav>
+
+<main>
+
+<!-- NOVA ABA PAINEL — Cards de indicadores + gráficos -->
+<section class="pane active" id="pane-painel">
+  <div id="pwa-install-banner" class="pwa-banner" style="display:none">
+    <div class="pwa-banner-text"><b>📱 Instalar como aplicativo</b><br>Instale o Monitor RIC no seu dispositivo para acesso rápido e funcionalidade offline.</div>
+    <div><button class="btn btn-primary btn-sm" id="btn-pwa-install">Instalar</button> <button class="btn btn-sm" id="btn-pwa-dismiss">Mais tarde</button></div>
+  </div>
+
+  <!-- Cards de indicadores -->
+  <div class="stats-grid" role="region" aria-label="Cards de indicadores">
+    <div class="stat-card" data-stat-card="todos" role="button" tabindex="0" aria-label="Total de RICs (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-todos">—</div>
+      <div class="stat-card-label">Todos</div>
+    </div>
+    <div class="stat-card" data-stat-card="andamento" role="button" tabindex="0" aria-label="Em andamento (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-andamento">—</div>
+      <div class="stat-card-label">Em andamento</div>
+    </div>
+    <div class="stat-card" data-stat-card="aprovados" role="button" tabindex="0" aria-label="Aprovados (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-aprovados">—</div>
+      <div class="stat-card-label">Aprovados</div>
+    </div>
+    <div class="stat-card" data-stat-card="novos" role="button" tabindex="0" aria-label="Novos (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-novos">—</div>
+      <div class="stat-card-label">Novos (7 dias)</div>
+    </div>
+    <div class="stat-card" data-stat-card="aguardando_aprov" role="button" tabindex="0" aria-label="Aguardando aprovação no Congresso (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-ag-aprov">—</div>
+      <div class="stat-card-label">Ag. aprovação</div>
+    </div>
+    <div class="stat-card stat-card-warn" data-stat-card="atrasados" role="button" tabindex="0" aria-label="Etapas em atraso (clique para filtrar)">
+      <div class="stat-card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </div>
+      <div class="stat-card-number tabular" id="stat-card-atrasados">—</div>
+      <div class="stat-card-label">Em atraso</div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="charts-grid">
+    <div class="chart-card" id="chart-card-etapas">
+      <div class="chart-header">
+        <div class="chart-title">Etapas — em andamento na Casa Civil</div>
+      </div>
+      <div id="chart-etapas" class="chart-area"></div>
+    </div>
+    <div class="chart-card" id="chart-card-prazocn">
+      <div class="chart-header">
+        <div class="chart-title">Prazo final CN — em andamento na Casa Civil</div>
+      </div>
+      <div id="chart-prazocn" class="chart-area"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Situação legislativa</div>
+      </div>
+      <div id="chart-situacao" class="chart-area chart-donut"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title">Casa parlamentar</div>
+      </div>
+      <div id="chart-casa" class="chart-area chart-donut"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <div>
+          <div class="chart-title">Evolução — RICs recebidos na Casa Civil</div>
+        </div>
+        <div class="painel-segmented" id="seg-chart-periodo" style="margin:0">
+          <button data-p="6" class="active">6m</button>
+          <button data-p="12">12m</button>
+          <button data-p="24">24m</button>
+          <button data-p="todos">Tudo</button>
+        </div>
+      </div>
+      <div id="chart-evolucao" class="chart-area chart-evolucao-area"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABA GERENCIAL — ex-conteúdo da aba Painel v4.4 (sem gráficos) -->
+<section class="pane" id="pane-gerencial">
+  <h2 class="painel-titulo" data-grupo="congresso">Requerimentos no Congresso</h2>
+  <div class="grid-3 painel-grupo" data-grupo-content="congresso">
+    <div class="painel-coluna">
+      <div class="painel-coluna-header">
+        <h3>Apresentados <span class="count" id="cnt-apresentados">—</span></h3>
+        <div class="painel-segmented" id="seg-apres-dias">
+          <button data-d="7" class="active">7d</button>
+          <button data-d="15">15d</button>
+          <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
+        </div>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="apresentados">📄</button>
+      </div>
+      <div class="painel-coluna-body" id="lst-apresentados"></div>
+    </div>
+    <div class="painel-coluna">
+      <div class="painel-coluna-header">
+        <h3>Sofreram movimentação <span class="count" id="cnt-movimentados">—</span></h3>
+        <div class="painel-segmented" id="seg-mov-dias">
+          <button data-d="7" class="active">7d</button>
+          <button data-d="15">15d</button>
+          <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
+        </div>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="movimentados">📄</button>
+      </div>
+      <div class="painel-coluna-body" id="lst-movimentados"></div>
+    </div>
+    <div class="painel-coluna">
+      <div class="painel-coluna-header">
+        <h3>Aprovados <span class="count" id="cnt-aprovados">—</span></h3>
+        <div class="painel-segmented" id="seg-aprov-dias">
+          <button data-d="7" class="active">7d</button>
+          <button data-d="15">15d</button>
+          <button data-d="30">30d</button>
+          <button data-d="todos">Todos</button>
+        </div>
+        <button class="btn btn-icon btn-ghost btn-painel-relatorio" title="Gerar relatório com os RICs deste painel" data-rel-painel="aprovados">📄</button>
+      </div>
+      <div class="painel-coluna-body" id="lst-aprovados"></div>
+    </div>
+  </div>
+
+  <h2 class="painel-titulo" data-grupo="acompanhamento">RICs em andamento na Casa Civil</h2>
+  <div class="grid-3 painel-grupo" data-grupo-content="acompanhamento" style="grid-template-columns:1fr;margin-bottom:22px">
+    <div class="painel-coluna attention">
+      <div class="painel-coluna-header"><h3>Em andamento CC / Aguardando resposta <span class="count" id="cnt-andamento">—</span></h3></div>
+      <div class="painel-coluna-body" id="lst-andamento"></div>
+    </div>
+  </div>
+</section>
+
+<!-- LISTA -->
+<section class="pane" id="pane-lista">
+  <div class="card">
+    <div class="toolbar" style="margin-bottom:0">
+      <button class="btn btn-sm" id="btn-toggle-filtros" type="button">▼ Filtros</button>
+      <div class="contador-destaque" id="contador-destaque" style="margin-left:8px"><span class="num" id="contador-num">—</span> <span id="contador-label">requerimentos</span></div>
+      <div class="filtros-ativos" id="filtros-ativos"></div>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" id="btn-export-csv">Exportar CSV</button>
+      <button class="btn btn-sm" id="btn-export-xlsx">Exportar XLSX</button>
+      <button class="btn btn-sm btn-primary" id="btn-gerar-relatorio" title="Gerar relatório Word/PDF dos requerimentos atualmente filtrados">📄 Relatório</button>
+    </div>
+    <div id="filtros-container" style="margin-top:12px">
+      <div class="form-row">
+        <div><label>Buscar (livre)</label><input type="text" id="filter-busca" placeholder="ementa, autor, número, objeto, resumo, observações"></div>
+        <div><label>Casa</label><select id="filter-casa"><option value="">Todas</option><option value="camara">Câmara</option><option value="senado">Senado</option></select></div>
+        <div><label>Sigla</label><select id="filter-sigla"><option value="">Todas</option><option value="RIC">RIC</option><option value="RQS">RQS</option><option value="REQ">REQ</option></select></div>
+        <div><label>Ano</label><select id="filter-ano"><option value="">Todos</option></select></div>
+        <div><label>Relevante</label><select id="filter-relevante"><option value="">Todos</option><option value="sim">Apenas relevantes</option><option value="nao">Não relevantes</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Sit. Legislativa</label><select id="filter-leg"><option value="">Todas</option><option value="tramitacao_inicial">Tramitação inicial</option><option value="aguardando_aprovacao">Aguardando aprovação</option><option value="aprovado">Aprovado</option><option value="aguardando_resposta">Aguardando resposta</option><option value="respondido">Respondido</option><option value="retirado">Retirado</option><option value="pendente">Não enriquecido</option></select></div>
+        <div><label>Status interno</label><select id="filter-status-int"></select></div>
+        <div><label>Etapa</label><select id="filter-etapa"></select></div>
+        <div><label>Temática</label><select id="filter-tematica"></select></div>
+        <div><label>Prazo etapa</label><select id="filter-prazo"><option value="">Todos</option><option value="vencido">Vencido</option><option value="hoje">Hoje</option><option value="proximo">Próximos 7 dias</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Aprovado de</label><input type="date" id="filter-aprov-de"></div>
+        <div><label>Aprovado até</label><input type="date" id="filter-aprov-ate"></div>
+        <div><label>Prazo final CN</label><select id="filter-prazo-cn"><option value="">Todos</option></select></div>
+        <div><button class="btn" id="btn-clear-filters" style="margin-top:18px">Limpar filtros</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:0">
+    <div style="overflow-x:auto">
+      <table id="tbl-lista">
+        <thead><tr>
+          <th class="sortable col-identificacao" data-sort="identificacao">Identificação</th>
+          <th class="sortable" data-sort="dataApresentacao">Apresent.</th>
+          <th>Prazo Resposta</th>
+          <th>Autor</th>
+          <th class="col-objeto">Objeto / Ementa</th>
+          <th class="sortable" data-sort="situacaoLegislativa">Sit. Legislativa</th>
+          <th>Etapa</th>
+          <th>Prazo etapa</th>
+        </tr></thead>
+        <tbody id="tbl-lista-body"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="lista-pagination"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- MODAL DETALHE -->
+<div class="modal-bg" id="modal-detalhe">
+  <div class="modal modal-wide">
+    <div class="modal-header modal-header-detalhe">
+      <button class="modal-close" data-close-modal="modal-detalhe">&times;</button>
+      <button class="btn btn-primary btn-salvar-mini" id="btn-salvar-marcacao-header" title="Salvar análise">Salvar</button>
+      <span class="save-feedback save-feedback-mini" id="save-feedback-header">Salvo ✓</span>
+      <h2 id="modal-titulo">—</h2>
+    </div>
+    <div id="modal-body"></div>
+    <div class="modal-footer-detalhe" id="modal-footer-detalhe">
+      <!-- Botões de exclusão/ocultação injetados pelo abrirDetalhe -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SYNC -->
+<div class="modal-bg" id="modal-sync">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>Sincronização</h2>
+      <button class="modal-close" data-close-modal="modal-sync">&times;</button>
+    </div>
+    <div class="alert alert-info" id="cors-warning" style="display:none">
+      <b>Atenção CORS:</b> abrindo via <code>file://</code> o navegador pode bloquear chamadas. Configure proxy CORS em Configurações ou rode <code>python3 -m http.server 8000</code> na pasta.
+    </div>
+    <div class="card">
+      <h2>Sincronização por ano</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Coleta todos os requerimentos do tipo escolhido, filtra por menção a Casa Civil, armazena no IndexedDB. Enriquecimento (histórico, situação, inteiro teor) só para os filtrados.</p>
+      <div class="form-row">
+        <div><label>Casa</label><select id="sync-casa"><option value="ambas">Ambas (Câmara + Senado)</option><option value="camara">Câmara — RIC</option><option value="senado">Senado — RQS + REQ</option></select></div>
+        <div><label>Ano</label><select id="sync-ano"></select></div>
+        <div><label><input type="checkbox" id="sync-enriquecer" checked style="width:auto;margin-right:6px;vertical-align:middle"> Enriquecer com histórico/situação</label></div>
+        <div class="actions"><button class="btn btn-primary" id="btn-sync">Iniciar sincronização</button></div>
+      </div>
+      <div class="progress" style="display:none" id="sync-progress-wrap"><div class="progress-bar" id="sync-progress" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <h2>Sincronização incremental</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Busca apenas o que foi atualizado nos últimos N dias.</p>
+      <div class="form-row">
+        <div><label>Últimos N dias <span class="text-small text-muted">(máx 180)</span></label><input type="number" id="sync-dias" value="3" min="1" max="180"></div>
+        <div class="actions"><button class="btn" id="btn-sync-incremental">Sincronizar incremental</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Reenriquecer existentes</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Atualiza histórico/situação dos itens já armazenados. Pula itens com status final há mais de 30 dias por padrão.</p>
+      <div class="form-row">
+        <div><label><input type="checkbox" id="reenriq-forcar" style="width:auto;margin-right:6px;vertical-align:middle"> Forçar (ignorar cache)</label></div>
+        <div class="actions"><button class="btn" id="btn-reenriquecer">Reenriquecer todos</button></div>
+      </div>
+    </div>
+    <div class="card"><h2>Log</h2><div class="log" id="sync-log">Pronto.</div></div>
+  </div>
+</div>
+
+<!-- MODAL XLSX (v4.5) -->
+<div class="modal-bg" id="modal-xlsx">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>⬆ Atualizar via XLSX</h2>
+      <button class="modal-close" data-close-modal="modal-xlsx">&times;</button>
+    </div>
+
+    <!-- ETAPA 1: Seleção -->
+    <div class="xlsx-step" id="xlsx-step-1">
+      <p class="text-small text-muted" style="margin-bottom:12px">Selecione um arquivo Excel <code>Controle_RICs.xlsx</code> (aba <b>Controle RI</b>, 27 colunas) para atualizar os dados do app. O merge é inteligente — apenas marcações são atualizadas; nada é removido.</p>
+      <div class="xlsx-dropzone" id="xlsx-dropzone">
+        <div class="xlsx-dropzone-icon">📊</div>
+        <div class="xlsx-dropzone-text"><b>Arraste o arquivo aqui</b><br><span class="text-small text-muted">ou clique para selecionar</span></div>
+        <input type="file" id="xlsx-input" accept=".xlsx,.xlsm" style="display:none">
+      </div>
+      <div class="xlsx-actions" style="margin-top:12px">
+        <button class="btn btn-sm" id="btn-xlsx-historico">📜 Ver histórico de importações</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 2: Processando -->
+    <div class="xlsx-step" id="xlsx-step-2" style="display:none">
+      <h3 style="font-size:14px;margin:0 0 12px 0" id="xlsx-progress-title">Processando…</h3>
+      <div class="xlsx-progress-bar"><div class="xlsx-progress-fill" id="xlsx-progress-fill"></div></div>
+      <p class="text-small text-muted" id="xlsx-progress-text">Aguardando…</p>
+    </div>
+
+    <!-- ETAPA 3: Preview -->
+    <div class="xlsx-step" id="xlsx-step-3" style="display:none">
+      <div class="xlsx-resumo" id="xlsx-resumo"></div>
+      <div class="xlsx-slugs-novos" id="xlsx-slugs-novos" style="display:none"></div>
+      <div class="xlsx-diff-header" style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px 0;gap:8px;flex-wrap:wrap">
+        <h3 style="font-size:13px;margin:0">RICs afetados</h3>
+        <div class="xlsx-diff-filtros">
+          <button class="btn btn-sm xlsx-diff-filtro active" data-tipo="todos">Todos</button>
+          <button class="btn btn-sm xlsx-diff-filtro" data-tipo="novo">Apenas novos</button>
+          <button class="btn btn-sm xlsx-diff-filtro" data-tipo="atualizado">Apenas atualizados</button>
+        </div>
+      </div>
+      <div class="xlsx-diff-list" id="xlsx-diff-list"></div>
+      <div id="xlsx-ausentes-box" style="margin-top:10px;display:none">
+        <p class="text-small text-muted" style="margin:0 0 6px"><b id="xlsx-ausentes-cnt">0</b> RIC(s) estão na base mas <b>não constam</b> neste XLSX.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" id="btn-xlsx-export-ausentes">↧ Exportar lista (TXT) dos ausentes</button>
+          <button class="btn btn-sm" id="btn-xlsx-ocultar-ausentes">🙈 Ocultar os ausentes da base</button>
+        </div>
+        <div class="text-small" id="xlsx-ocultar-feedback" style="margin-top:6px"></div>
+      </div>
+      <div class="xlsx-actions" style="margin-top:16px;justify-content:flex-end;gap:8px">
+        <button class="btn" id="btn-xlsx-cancelar">Cancelar</button>
+        <button class="btn btn-primary" id="btn-xlsx-aplicar">Aplicar mudanças</button>
+      </div>
+    </div>
+
+    <!-- ETAPA 4: Aplicação -->
+    <div class="xlsx-step" id="xlsx-step-4" style="display:none">
+      <h3 style="font-size:14px;margin:0 0 12px 0">Aplicando…</h3>
+      <div class="xlsx-progress-bar"><div class="xlsx-progress-fill" id="xlsx-apply-fill"></div></div>
+      <p class="text-small text-muted" id="xlsx-apply-text">Iniciando…</p>
+    </div>
+
+    <!-- ETAPA 5: Sucesso -->
+    <div class="xlsx-step" id="xlsx-step-5" style="display:none">
+      <div class="alert alert-ok" id="xlsx-success-msg"></div>
+      <div class="xlsx-actions">
+        <button class="btn btn-primary" data-close-modal="modal-xlsx">Fechar</button>
+      </div>
+    </div>
+
+    <!-- ETAPA: Erro -->
+    <div class="xlsx-step" id="xlsx-step-erro" style="display:none">
+      <div class="alert alert-err" id="xlsx-erro-msg"></div>
+      <div class="xlsx-actions">
+        <button class="btn" id="btn-xlsx-tentar-novamente">Tentar novamente</button>
+        <button class="btn" data-close-modal="modal-xlsx">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTÓRICO XLSX -->
+<div class="modal-bg" id="modal-xlsx-historico">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📜 Histórico de importações XLSX</h2>
+      <button class="modal-close" data-close-modal="modal-xlsx-historico">&times;</button>
+    </div>
+    <p class="text-small text-muted" style="margin-bottom:12px">Apenas as <b>3 importações mais recentes</b> têm snapshot armazenado para reversão. As demais ficam registradas mas sem possibilidade de rollback.</p>
+    <div id="xlsx-historico-list">
+      <div class="text-small text-muted" style="text-align:center;padding:24px">Carregando…</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DIFF DE HISTÓRICO -->
+<div class="modal-bg" id="modal-xlsx-diff-hist">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>Diff da importação</h2>
+      <button class="modal-close" data-close-modal="modal-xlsx-diff-hist">&times;</button>
+    </div>
+    <div id="xlsx-diff-hist-conteudo"></div>
+  </div>
+</div>
+
+<!-- MODAL CONFIG -->
+<!-- MODAL RELATÓRIO (v4.6) -->
+<div class="modal-bg" id="modal-relatorio">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📄 Gerar Relatório</h2>
+      <button class="modal-close" data-close-modal="modal-relatorio">&times;</button>
+    </div>
+    <div id="modal-relatorio-body"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-sobre">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>ⓘ Sobre o Monitor RIC</h2>
+      <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
+    </div>
+    <div class="card">
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.7</span></span></p>
+      <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
+      <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
+      <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
+        <li><b>Sincronização com as APIs do Congresso</b> (Câmara e Senado), com enriquecimento automático de ementa, autoria, tramitação e inteiro teor.</li>
+        <li><b>Triagem e análise</b> de cada RIC: objeto, resumo, temática, relevância, observações e unidades consultadas.</li>
+        <li><b>Controle de prazos</b> conforme art. 50 §2º da CF e arts. 224/231 do CPC, com cálculo automático das etapas internas.</li>
+        <li><b>Painéis gerenciais</b> com gráficos de situação legislativa, etapas e prazos.</li>
+        <li><b>Relatórios</b> em Word/PDF com campos e formatação configuráveis, e presets de usuário.</li>
+        <li><b>Importação e exportação</b> no formato da planilha <i>Controle RICs.xlsx</i>.</li>
+        <li><b>Edição em lote</b> e <b>inclusão manual</b> de requerimentos.</li>
+        <li><b>Sincronização da base na nuvem</b> (GitHub Gist privado, cifrada com AES-GCM 256).</li>
+        <li>Análise assistida por <b>IA (Google Gemini)</b> do inteiro teor.</li>
+      </ul>
+      <p class="text-small text-muted" style="margin:0">Dados legislativos: Dados Abertos da Câmara dos Deputados e do Senado Federal. Uso institucional interno.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-export-xlsx">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>📤 Exportar para XLSX (Controle RI)</h2>
+      <button class="modal-close" data-close-modal="modal-export-xlsx">&times;</button>
+    </div>
+    <div class="card">
+      <p class="text-small text-muted" style="margin-bottom:12px">Exporta um arquivo XLSX com a aba <b>Controle RI</b> no mesmo formato do <code>Controle_RICs.xlsx</code> (26 colunas). Apenas os RICs selecionados são incluídos; campos inexistentes no app ficam em branco no XLSX.</p>
+      <div class="form-row" style="margin-bottom:8px">
+        <div style="flex:2"><label>Buscar RICs</label><input type="text" id="exp-busca" placeholder="número, autor, objeto, casa..."></div>
+        <div><label>Casa</label><select id="exp-casa">
+          <option value="">Todas</option>
+          <option value="camara">Câmara</option>
+          <option value="senado">Senado</option>
+          <option value="cn">Congresso Nacional</option>
+          <option value="cldf">CLDF</option>
+        </select></div>
+        <div style="display:flex;align-items:flex-end;gap:6px">
+          <button class="btn btn-sm" id="exp-select-all">Marcar todos</button>
+          <button class="btn btn-sm" id="exp-select-none">Desmarcar</button>
+        </div>
+      </div>
+      <div class="text-small text-muted" id="exp-contador" style="margin-bottom:6px">—</div>
+      <div id="exp-lista" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;background:var(--surface-2)"></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn btn-primary" id="btn-export-xlsx-gerar">📤 Exportar XLSX</button>
+        <span class="text-small text-muted" id="exp-feedback"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-edicao-lote">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>✏️ Edição em lote</h2>
+      <button class="modal-close" data-close-modal="modal-edicao-lote">&times;</button>
+    </div>
+    <div class="card">
+      <p class="text-small text-muted" style="margin-bottom:12px">Aplica o mesmo conjunto de valores aos RICs selecionados. Campos deixados em branco <b>não são alterados</b> nos RICs (preservam o valor atual). Marque apenas o que quer mudar em lote.</p>
+      <div class="form-row" style="margin-bottom:8px">
+        <div style="flex:2"><label>Buscar RICs</label><input type="text" id="lote-busca" placeholder="número, autor, objeto, casa..."></div>
+        <div><label>Casa</label><select id="lote-casa">
+          <option value="">Todas</option>
+          <option value="camara">Câmara</option>
+          <option value="senado">Senado</option>
+          <option value="cn">Congresso Nacional</option>
+          <option value="cldf">CLDF</option>
+        </select></div>
+        <div><label>Prazo de resposta (CN)</label><select id="lote-f-prazo"><option value="">Todos</option></select></div>
+        <div><label>Etapa atual</label><select id="lote-f-etapa">
+          <option value="">Todas</option>
+          <option value="recebimento">Recebimento</option>
+          <option value="admissibilidade">Admissibilidade</option>
+          <option value="subsidios">Coleta de subsídios</option>
+          <option value="conformidade">Análise de conformidade</option>
+          <option value="validacao_ssgp">Validação SSGP</option>
+          <option value="aprovacao_se">Aprovação SE</option>
+          <option value="validacao_gm_expedicao">Validação GM / Expedição</option>
+        </select></div>
+        <div style="display:flex;align-items:flex-end;gap:6px">
+          <button class="btn btn-sm" id="lote-select-all">Marcar todos</button>
+          <button class="btn btn-sm" id="lote-select-none">Desmarcar</button>
+        </div>
+      </div>
+      <div class="text-small text-muted" id="lote-contador" style="margin-bottom:6px">—</div>
+      <div id="lote-lista" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;background:var(--surface-2);margin-bottom:14px"></div>
+
+      <h3 style="margin:0 0 10px;font-size:14px">Campos a alterar nos RICs selecionados</h3>
+      <div class="form-row">
+        <div>
+          <label><input type="checkbox" id="lote-ck-etapa"> Etapa</label>
+          <select id="lote-etapa" disabled>
+            <option value="">—</option>
+            <option value="recebimento">Recebimento</option>
+            <option value="admissibilidade">Admissibilidade</option>
+            <option value="subsidios">Coleta de subsídios</option>
+            <option value="conformidade">Análise de conformidade</option>
+            <option value="validacao_ssgp">Validação SSGP</option>
+            <option value="aprovacao_se">Aprovação SE</option>
+            <option value="validacao_gm_expedicao">Validação GM / Expedição (Prazo final CN)</option>
+          </select>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-prazoetapa"> Prazo da etapa <span class="text-small text-muted">(prazo REAL da etapa marcada acima)</span></label>
+          <input type="date" id="lote-prazoetapa" disabled>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-tematica"> Temática</label>
+          <select id="lote-tematica" disabled></select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div>
+          <label><input type="checkbox" id="lote-ck-nuprec"> Processo de recebimento (NUP)</label>
+          <input type="text" id="lote-nuprec" placeholder="00046.001234/2026-XX" disabled>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-dataresp"> Data da resposta</label>
+          <input type="date" id="lote-dataresp" disabled>
+        </div>
+        <div>
+          <label><input type="checkbox" id="lote-ck-tiporesp"> Tipo de resposta</label>
+          <select id="lote-tiporesp" disabled></select>
+        </div>
+      </div>
+      <div class="toolbar" style="margin-top:14px">
+        <button class="btn btn-primary" id="btn-lote-aplicar">✓ Aplicar aos selecionados</button>
+        <span class="text-small text-muted" id="lote-feedback"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-incluir-manual">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>➕ Incluir requerimento manualmente</h2>
+      <button class="modal-close" data-close-modal="modal-incluir-manual">&times;</button>
+    </div>
+    <div class="card">
+      <p class="text-small text-muted" style="margin-bottom:12px">Informe a casa, o tipo e o número/ano. O sistema buscará na API oficial e, se encontrar, preencherá automaticamente ementa, autor, tramitação e links. Se não encontrar (a busca por número/ano é limitada no Senado), o requerimento é criado em branco para você completar manualmente.</p>
+      <div class="form-row">
+        <div><label>Casa</label><select id="im-casa">
+          <option value="camara">Câmara dos Deputados</option>
+          <option value="senado">Senado Federal</option>
+        </select></div>
+        <div><label>Tipo</label><select id="im-sigla">
+          <option value="RIC">RIC</option>
+          <option value="RQS">RQS</option>
+          <option value="REQ">REQ</option>
+        </select></div>
+        <div><label>Número</label><input type="number" id="im-numero" placeholder="ex.: 1234" min="1"></div>
+        <div><label>Ano</label><input type="number" id="im-ano" placeholder="ex.: 2026" min="1988" max="2100"></div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn btn-primary" id="btn-im-confirmar">Buscar e incluir</button>
+      </div>
+      <div id="im-feedback" class="text-small" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-cloudsync">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⤓ Sync base na nuvem</h2>
+      <button class="modal-close" data-close-modal="modal-cloudsync">&times;</button>
+    </div>
+    <div class="card">
+      <div id="cloud-estado-resumo" class="text-small" style="margin-bottom:12px"></div>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+        <button class="btn btn-primary btn-sm" id="btn-cloud-sync-agora">↻ Sincronizar agora</button>
+        <button class="btn btn-sm" id="btn-cloud-desconectar">Desconectar</button>
+      </div>
+    </div>
+    <div class="card cfg-acordeao">
+      <h2 class="cfg-acordeao-header">Configuração</h2>
+      <p class="text-small text-muted" style="margin-bottom:10px">Sincronização single-user via GitHub Gist privado. Os dados são cifrados (AES-GCM 256) antes de sair deste computador. Informe um PAT fine-grained com permissão de Gists e o ID do Gist (ou crie um novo).</p>
+      <div class="form-row">
+        <div style="flex:2"><label>Personal Access Token (PAT)</label><input type="password" id="cfg-cloud-pat" placeholder="github_pat_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-cloud-pat-nofill"></div>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div style="flex:2"><label>Gist ID</label><input type="text" id="cfg-cloud-gistid" placeholder="ID do Gist secreto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-cloud-gistid-nofill"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-sm" id="btn-cloud-criar-gist">+ Criar novo Gist</button></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" id="btn-cloud-salvar-cfg">Salvar configuração</button>
+        <button class="btn btn-sm" id="btn-cloud-testar">Testar conexão</button>
+      </div>
+      <div id="cloud-cfg-feedback" class="text-small" style="margin-top:8px"></div>
+    </div>
+    <div class="card cfg-acordeao cfg-collapsed">
+      <h2 class="cfg-acordeao-header">Ativar outro computador</h2>
+      <p class="text-small text-muted" style="margin-bottom:10px">Exporte a configuração neste computador e cole no outro para ativar a sincronização com um único <i>paste</i>.</p>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+        <button class="btn btn-sm" id="btn-cloud-exportar">Exportar configuração</button>
+      </div>
+      <textarea id="cloud-export-texto" rows="3" readonly style="margin-top:8px;display:none" placeholder="Texto de configuração aparecerá aqui"></textarea>
+      <div style="margin-top:12px">
+        <label>Importar configuração (colar do outro computador)</label>
+        <textarea id="cloud-import-texto" rows="3" placeholder="Cole aqui o texto MRIC1:..." autocomplete="off" data-1p-ignore data-lpignore="true"></textarea>
+        <button class="btn btn-sm btn-primary" id="btn-cloud-importar" style="margin-top:8px">Importar e ativar</button>
+      </div>
+      <div id="cloud-import-feedback" class="text-small" style="margin-top:8px"></div>
+    </div>
+    <div class="card cfg-acordeao cfg-collapsed">
+      <h2 class="cfg-acordeao-header">Como configurar (passo a passo)</h2>
+      <ol class="text-small" style="line-height:1.7;padding-left:20px">
+        <li><b>Recomendado — token clássico (mais confiável para Gists):</b> GitHub → Settings → Developer settings → <b>Personal access tokens → Tokens (classic)</b> → <b>Generate new token (classic)</b>. Em "Select scopes", marque apenas <b>gist</b>. Gere e copie o token.</li>
+        <li>(Alternativa fine-grained: em "Account permissions" habilite "Gists: Read and write" — porém tokens fine-grained às vezes dão erro 403 em Gists, por isso o clássico é preferível.)</li>
+        <li>Cole o token no campo <b>PAT</b> acima e clique em <b>Testar conexão</b> para confirmar que tem acesso a Gists.</li>
+        <li>Clique em <b>"+ Criar novo Gist"</b> — o ID será preenchido automaticamente.</li>
+        <li>Clique em <b>Salvar configuração</b>. A primeira sincronização ocorre automaticamente.</li>
+        <li>Em cada computador adicional, use <b>Exportar configuração</b> aqui e <b>Importar e ativar</b> lá — um único <i>paste</i> resolve.</li>
+        <li><b>Computador compartilhado?</b> Clique em <b>Desconectar</b> ao terminar, para remover as credenciais deste dispositivo.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-config">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h2>Configurações</h2>
+      <button class="modal-close" data-close-modal="modal-config">&times;</button>
+    </div>
+    <div class="card">
+      <h2>🤖 API Gemini (análise automática de PDFs)</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Configure sua chave da Google Gemini API para analisar automaticamente o inteiro teor dos requerimentos e pré-preencher os campos Objeto e Resumo. <a href="https://aistudio.google.com/apikey" target="_blank">Obter chave</a>.</p>
+      <div class="form-row">
+        <div style="flex:2"><label>Chave da API</label><input type="password" id="cfg-gemini-key" placeholder="AIza..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-gemini-key-nofill"></div>
+        <div><label>Modelo</label><select id="cfg-gemini-model">
+          <option value="gemini-2.5-flash">gemini-2.5-flash (rápido, recomendado)</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro (mais preciso)</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (econômico)</option>
+          <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+        </select></div>
+      </div>
+      <p class="text-small text-muted">A chave é armazenada apenas no seu navegador (IndexedDB), nunca enviada a outros servidores além do próprio Google.</p>
+    </div>
+    <div class="card">
+      <h2>Termos de busca (regex)</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Regex aplicada à ementa normalizada (minúsculas, sem acento). O padrão pega "Casa Civil" e variações, incluindo nomes da Ministra atual e do anterior.</p>
+      <textarea id="cfg-regex" rows="3"></textarea>
+      <div style="margin-top:8px">
+        <button class="btn" id="btn-test-regex">Testar com texto de exemplo</button>
+        <button class="btn" id="btn-reset-regex">Restaurar padrão</button>
+      </div>
+      <div id="regex-test-result" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>Unidades para consulta (multi-select no detalhamento)</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Lista de siglas usada nos checkboxes do detalhe do requerimento. Uma por linha.</p>
+      <textarea id="cfg-unidades" rows="6"></textarea>
+      <div style="margin-top:8px"><button class="btn" id="btn-reset-unidades">Restaurar padrão</button></div>
+    </div>
+    <div class="card">
+      <h2>Proxy CORS (opcional)</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Use <code>{url}</code> onde a URL alvo deve ser inserida. Ex.: <code>https://corsproxy.io/?url={url}</code>.</p>
+      <input type="text" id="cfg-proxy" placeholder="https://corsproxy.io/?url={url}">
+      <div style="margin-top:8px"><button class="btn" id="btn-test-conn">Testar conectividade</button></div>
+      <div id="conn-test-result" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <h2>Backup e dados</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Dados ficam no navegador (IndexedDB). Faça backup periodicamente.</p>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px">
+        <input type="checkbox" id="cfg-backup-incluir-credenciais">
+        Incluir credenciais no backup (PAT do GitHub e chave Gemini)
+      </label>
+      <p class="text-small text-muted" style="margin:-4px 0 12px"><b>Por segurança</b>, o backup é exportado <b>sem</b> as credenciais por padrão. Marque a opção acima apenas se for guardar o arquivo em local seguro e não compartilhá-lo.</p>
+      <div class="toolbar">
+        <button class="btn" id="btn-export-backup">Exportar backup (JSON)</button>
+        <label class="btn" style="cursor:pointer">Importar backup<input type="file" id="btn-import-backup" accept=".json" style="display:none"></label>
+        <button class="btn btn-danger" id="btn-clear">Limpar todos os dados</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>🔧 Manutenção de dados</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Rotinas de correção idempotentes (podem ser executadas várias vezes sem efeito colateral). Não alteram a nuvem diretamente — as mudanças sincronizam normalmente depois.</p>
+      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
+        <button class="btn btn-sm" id="btn-manut-tudo">Executar manutenção completa</button>
+      </div>
+      <div id="manut-log" class="text-small" style="margin-top:10px;white-space:pre-wrap;font-family:monospace"></div>
+    </div>
+    <div class="card">
+      <h2>RICs ocultos e excluídos</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">Gerencie RICs que foram ocultados (preservados na base, mas fora de listas e estatísticas) ou excluídos (com snapshot para recuperação).</p>
+      <div class="toolbar">
+        <button class="btn" id="btn-listar-ocultos">Listar RICs ocultos</button>
+        <button class="btn" id="btn-listar-excluidos">Histórico de exclusões</button>
+      </div>
+      <div id="gerenciar-ocultos-resultado" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Feriados e dias não-úteis</h2>
+      <p class="text-small text-muted" style="margin-bottom:12px">O cálculo de prazos sugeridos das etapas leva em conta os feriados nacionais brasileiros (fixos e móveis: Carnaval, Sexta da Paixão, Corpus Christi). Adicione aqui feriados extras (ex.: pontos facultativos, recessos, feriados estaduais/distritais).</p>
+      <div class="toolbar">
+        <button class="btn" id="btn-gerenciar-feriados">Gerenciar feriados customizados</button>
+      </div>
+      <div id="feriados-resultado" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Sobre</h2>
+      <p class="text-small text-muted">APIs públicas:<br>• <a href="https://dadosabertos.camara.leg.br/swagger/api.html" target="_blank">Câmara — Dados Abertos v2</a><br>• <a href="https://legis.senado.leg.br/dadosabertos/docs/" target="_blank">Senado — Dados Abertos</a><br>Filtragem por menção a Casa Civil é feita localmente. Nenhum dado é enviado a servidores de terceiros.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+"use strict";
+
+// ===== CONSTANTES INTERNAS =====
+const TEMATICAS = [
+  "EXTRA - COP30","EXTRA - EMERGENCIA RS","EXTRA - LAVAJATO","EXTRA - PR - 8 DE JANEIRO","EXTRA - PR - VOLUNTARIADO",
+  "GGI - CONTRATACOES","GGI - ETICA/DISCIPLINAR/TCE","GGI - GOVERNANCA","GGI - ORGANIZACAO ADM","GGI - PESSOAS",
+  "GGI - TRANSFERENCIA DE RECURSOS","GGI - TRANSPARENCIA/ACESSO A INFORMACAO","GGI - VIAGENS",
+  "INFRA - CIDADES","INFRA - CONCESSAO","INFRA - HIDRICA","INFRA - MINAS E ENERGIA","INFRA - OBRAS PARALISADAS",
+  "INFRA - PAC","INFRA - RODOVIA/HIDROVIA/FERROVIA",
+  "PPU - AGROPECUARIA/PESCA","PPU - AMBIENTAL","PPU - DESENVOLVIMENTO ECONOMICO","PPU - DIREITOS E GARANTIAS",
+  "PPU - EDUCACAO","PPU - ENERGETICO/NUCLEAR","PPU - JUSTICA/SEGURANCA PUBLICA","PPU - ORCAMENTARIO/FISCAL/TRIBUTARIO",
+  "PPU - POVOS ORIGINARIOS","PPU - RELACOES EXTERIORES","PPU - SEGURANCA NACIONAL","PPU - SOCIOASSISTENCIAL",
+  "PPU - TRABALHO/PREVIDENCIA",
+  "PR - AGENDAS E EVENTOS","PR - CARTAO DE PAGAMENTO","PR - COMUNICACAO","PR - CONTRATACOES",
+  "PR - INFORMACOES PESSOAIS","PR - PALACIOS","PR - PRESENTES","PR - PRIMEIRA DAMA","PR - SEGURANCA","PR - VIAGENS"
+];
+const STATUS_INTERNO = [
+  { v: "novo", t: "Novo (não triado)" },
+  { v: "tramitacao_cn", t: "Em tramitação no Congresso Nacional" },
+  { v: "andamento_cc", t: "Em andamento na Casa Civil" },
+  { v: "respondido", t: "Respondido" },
+  { v: "retirado", t: "Retirado / Não enviado" }
+];
+const ETAPAS = [
+  { v: "", t: "—" },
+  { v: "admissibilidade", t: "Análise de competência / Admissibilidade" },
+  { v: "subsidios", t: "Coleta de subsídios 
