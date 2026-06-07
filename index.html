@@ -762,7 +762,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.9</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.9c</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -1203,7 +1203,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.9</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.9 (ajustada2)</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -1650,7 +1650,26 @@ const MAP_SIT_SENADO = {
   // Retirado
   "retirada pelo autor": "retirado",
   "retirado": "retirado",
-  "retirado pelo autor": "retirado"
+  "retirado pelo autor": "retirado",
+  // v4.7.9-ajustada2: situações adicionais do endpoint situacaoatual (fluxo de RQS/REQ)
+  "aguardando inclusao ordem do dia": "tramitacao_inicial",
+  "aguardando leitura": "tramitacao_inicial",
+  "pronta para deliberacao": "tramitacao_inicial",
+  "aguardando deliberacao": "aguardando_aprovacao",
+  "aguardando deliberacao da mesa": "aguardando_aprovacao",
+  "aguardando deliberacao do plenario": "aguardando_aprovacao",
+  "deferido": "aprovado",
+  "aprovado": "aprovado",
+  "aprovada": "aprovado",
+  "indeferido": "retirado",
+  "indeferida": "retirado",
+  "prejudicado": "retirado",
+  "prejudicada": "retirado",
+  "rejeitado": "retirado",
+  "rejeitada": "retirado",
+  "arquivado": "respondido",
+  "arquivada": "respondido",
+  "concluida": "respondido"
 };
 
 // Detecção textual primária para o Senado (sobre TextoTramitacao / DescricaoTramitacao)
@@ -2320,9 +2339,22 @@ async function camaraListarRIC(ano, onProgress) {
   return todos;
 }
 async function camaraListarRICPorPeriodo(di, df) {
-  const url = `${URL_CAMARA}/proposicoes?siglaTipo=RIC&dataInicio=${di}&dataFim=${df}&itens=100&ordem=DESC&ordenarPor=id`;
-  const data = await smartFetch(url);
-  return data.dados || [];
+  // v4.7.9-ajustada: pagina todos os resultados (a API limita itens por página; sem paginar,
+  // RICs além da 1ª página eram perdidos). dataInicio/dataFim filtram por data de APRESENTAÇÃO.
+  const todos = [];
+  let pagina = 1;
+  const ITENS = 100;
+  const MAX_PAGINAS = 50; // trava de segurança (até 5000 RICs no período)
+  while (pagina <= MAX_PAGINAS) {
+    const url = `${URL_CAMARA}/proposicoes?siglaTipo=RIC&dataInicio=${di}&dataFim=${df}&itens=${ITENS}&pagina=${pagina}&ordem=DESC&ordenarPor=id`;
+    const data = await smartFetch(url);
+    const dados = data.dados || [];
+    todos.push(...dados);
+    if (dados.length < ITENS) break; // última página
+    pagina++;
+    await sleep(THROTTLE_MS);
+  }
+  return todos;
 }
 function normalizaProposicaoCamara(p) {
   const us = p.ultimoStatus || {};
@@ -2542,6 +2574,50 @@ async function senadoBuscarInteiroTeor(prop) {
   } catch (e) {}
 }
 
+// v4.7.9-ajustada2: o endpoint /materia/movimentacoes mudou de estrutura e passou a trazer apenas
+// movimentações administrativas (trânsito entre órgãos), sem o texto de tramitação nem a situação.
+// Por isso a detecção do Senado ficava "cega" (tudo virava tramitacao_inicial). Este endpoint
+// dedicado traz a SITUAÇÃO e a LOCALIZAÇÃO atuais da matéria de forma estruturada.
+// Retorna { descricaoSituacao, siglaSituacao, dataSituacao, local } ou null.
+async function senadoBuscarSituacaoAtual(prop) {
+  const url = `${URL_SENADO}/materia/situacaoatual/${prop.idOriginal}.json`;
+  let data;
+  try { data = await smartFetch(url); }
+  catch (e) { return null; }
+  // Varredura defensiva: a API varia a forma do JSON. Procura, em qualquer nível, um objeto que
+  // contenha uma descrição de situação. Não inventa campos — testa os nomes conhecidos da API do Senado.
+  let achado = null;
+  const CAMPOS_DESC = ["DescricaoSituacao", "NomeSituacao"];
+  const CAMPOS_SIGLA = ["SiglaSituacao", "SiglaSituacaoAtual"];
+  const CAMPOS_DATA = ["DataSituacao", "DataLocal", "Data"];
+  const CAMPOS_LOCAL_NOME = ["NomeLocal", "DescricaoLocal"];
+  const CAMPOS_LOCAL_SIGLA = ["SiglaLocal"];
+  function getPrim(obj, chaves) {
+    for (const k of chaves) {
+      const v = obj[k];
+      // Aceita apenas valores escalares (string/número) — evita capturar "[object Object]"
+      if (v != null && typeof v !== "object" && String(v).trim() !== "") return String(v).trim();
+    }
+    return "";
+  }
+  function visit(obj) {
+    if (!obj || typeof obj !== "object") return;
+    if (Array.isArray(obj)) { obj.forEach(visit); return; }
+    const desc = getPrim(obj, CAMPOS_DESC);
+    if (desc && !achado) {
+      achado = {
+        descricaoSituacao: desc,
+        siglaSituacao: getPrim(obj, CAMPOS_SIGLA),
+        dataSituacao: getPrim(obj, CAMPOS_DATA).substring(0, 10),
+        local: getPrim(obj, CAMPOS_LOCAL_NOME) || getPrim(obj, CAMPOS_LOCAL_SIGLA),
+      };
+    }
+    for (const k of Object.keys(obj)) if (obj[k] && typeof obj[k] === "object") visit(obj[k]);
+  }
+  visit(data);
+  return achado;
+}
+
 async function senadoBuscarMovimentacoes(prop) {
   const url = `${URL_SENADO}/materia/movimentacoes/${prop.idOriginal}.json`;
   const data = await smartFetch(url);
@@ -2588,12 +2664,46 @@ async function senadoBuscarMovimentacoes(prop) {
   return eventos;
 }
 
-async function detectarSituacaoSenado(prop) {
+async function detectarSituacaoSenado(prop, sitAtual) {
   const hist = prop.historico || [];
   const det = { situacao: "pendente", dataAprovacao: "", despachoAprovacao: "", ultimaMovimentacaoData: "", prazoFinalCNSugerido: "" };
+
+  // v4.7.9-ajustada2: data da última movimentação (administrativa) ainda vem do histórico, se houver.
+  if (hist.length) {
+    hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
+    det.ultimaMovimentacaoData = (hist[hist.length - 1].dataHora || hist[hist.length - 1].data || "").substring(0, 10);
+  }
+  // Se a situação atual estruturada trouxe data mais recente, usa-a como última movimentação.
+  if (sitAtual && sitAtual.dataSituacao && sitAtual.dataSituacao > (det.ultimaMovimentacaoData || "")) {
+    det.ultimaMovimentacaoData = sitAtual.dataSituacao;
+  }
+
+  // FONTE PRIMÁRIA: situação atual estruturada do endpoint /materia/situacaoatual.
+  // Mapeia pela DescricaoSituacao normalizada; é o dado mais confiável e substitui a
+  // antiga dependência de regex sobre o texto das movimentações (que ficou vazio na API nova).
+  if (sitAtual && sitAtual.descricaoSituacao) {
+    const sn = normalizar(sitAtual.descricaoSituacao);
+    const mapeado = MAP_SIT_SENADO[sn];
+    if (mapeado) {
+      det.situacao = mapeado;
+      if (mapeado === "aprovado") {
+        det.dataAprovacao = sitAtual.dataSituacao || "";
+        det.despachoAprovacao = sitAtual.descricaoSituacao;
+      }
+      return det;
+    }
+    // Sem mapeamento exato: registra para o usuário decidir e tenta heurística textual leve.
+    registrarSituacaoNaoMapeada(sitAtual.descricaoSituacao, "senado");
+    if (/arquiv|encerr|conclu/.test(sn)) det.situacao = "respondido";
+    else if (/retirad|prejudic|rejeit|devolvid/.test(sn)) det.situacao = "retirado";
+    else if (/aprov|deferid/.test(sn)) det.situacao = "aprovado";
+    else if (/aguardando\s+resposta|aguardando\s+informac/.test(sn)) det.situacao = "aguardando_resposta";
+    else if (/decisao\s+da\s+mesa|deliberac/.test(sn)) det.situacao = "aguardando_aprovacao";
+    else det.situacao = "tramitacao_inicial";
+    // mesmo com heurística, segue para tentar extrair prazo/aprovação do texto, abaixo
+  }
+
   if (hist.length === 0) return det;
-  hist.sort((a, b) => (a.dataHora || a.data || "").localeCompare(b.dataHora || b.data || ""));
-  det.ultimaMovimentacaoData = (hist[hist.length - 1].dataHora || hist[hist.length - 1].data || "").substring(0, 10);
 
   let aprovEv = null, respEv = null, arqEv = null, retiradoEv = null;
 
@@ -2632,7 +2742,11 @@ async function detectarSituacaoSenado(prop) {
     det.despachoAprovacao = (aprovEv.despacho || aprovEv.descricao || aprovEv.situacao || "").substring(0, 500);
   }
 
-  // Determinação por precedência: respondido > aprovado+prazo > aprovado > retirado > fallback
+  // Determinação por precedência. Eventos textuais (respondido/aprovado/retirado) têm peso quando
+  // detectados, pois indicam fatos concretos com data. Mas, havendo situação estruturada (sitAtual),
+  // ela é a base e o texto só REFINA: não rebaixamos uma situação estruturada "respondido/aprovado"
+  // para "tramitacao_inicial" por causa do fallback.
+  const temSitEstruturada = !!(sitAtual && sitAtual.descricaoSituacao);
   if (respEv || arqEv) {
     det.situacao = "respondido";
   } else if (aprovEv && det.prazoFinalCNSugerido) {
@@ -2641,13 +2755,12 @@ async function detectarSituacaoSenado(prop) {
     det.situacao = "aprovado";
   } else if (retiradoEv) {
     det.situacao = "retirado";
-  } else {
-    // Fallback 1: último evento com situacao no dicionário
+  } else if (!temSitEstruturada) {
+    // Sem situação estruturada: usa os fallbacks sobre o histórico (comportamento antigo)
     const ultimaComMapa = [...hist].reverse().find(e => e.situacao && MAP_SIT_SENADO[normalizar(e.situacao)]);
     if (ultimaComMapa) {
       det.situacao = MAP_SIT_SENADO[normalizar(ultimaComMapa.situacao)];
     } else {
-      // Fallback 2: heurística textual sobre último evento com situacao
       const ult = [...hist].reverse().find(e => e.situacao);
       if (ult) {
         registrarSituacaoNaoMapeada(ult.situacao, "senado");
@@ -2660,6 +2773,8 @@ async function detectarSituacaoSenado(prop) {
       }
     }
   }
+  // Se temSitEstruturada e nenhum evento textual concreto foi achado, det.situacao já está
+  // definido pela situação estruturada (mapeada ou heurística), feito no topo da função.
   return det;
 }
 
@@ -2712,7 +2827,12 @@ async function enriquecerProposicao(prop, opts = {}) {
       if (!prop.urlInteiroTeor) { await senadoBuscarInteiroTeor(prop); await sleep(THROTTLE_MS); }
       try { prop.historico = await senadoBuscarMovimentacoes(prop); }
       catch (e) { prop.historico = []; if (log) log.add(`Senado ${prop.identificacao}: falha em movimentações — ${e.message}`, "warn"); }
-      const det = await detectarSituacaoSenado(prop);
+      // v4.7.9-ajustada2: busca a situação atual estruturada (fonte primária confiável)
+      let sitAtual = null;
+      try { sitAtual = await senadoBuscarSituacaoAtual(prop); await sleep(THROTTLE_MS); }
+      catch (e) { if (log) log.add(`Senado ${prop.identificacao}: falha em situação atual — ${e.message}`, "warn"); }
+      prop.situacaoAtualSenado = sitAtual || null;
+      const det = await detectarSituacaoSenado(prop, sitAtual);
       prop.situacaoLegislativa = det.situacao;
       prop.dataAprovacao = det.dataAprovacao;
       prop.despachoAprovacao = det.despachoAprovacao;
@@ -3013,10 +3133,14 @@ async function sincronizarIncremental(numdias) {
     if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
   }
 
-  // v4.7.4: além da descoberta por regex, reenriquece TODAS as proposições já na base
-  // (inclusive as adicionadas via XLSX que não atendem ao regex de Casa Civil), para que
-  // tenham situação legislativa, datas e inteiro teor atualizados. Pula apenas as que
-  // estão em estado final e dentro da janela de cache (a menos que forçado em outro fluxo).
+  // v4.7.9-ajustada: a busca por período na coleção /proposicoes da Câmara filtra por DATA DE
+  // APRESENTAÇÃO — ou seja, só descobre RICs NOVOS. As ATUALIZAÇÕES de tramitação de RICs antigos
+  // (respostas, aprovações, mudanças de situação) NÃO aparecem nessa lista. Por isso, o passo de
+  // reenriquecimento dos RICs já existentes é o que captura essas atualizações — e ele NÃO pode
+  // pular itens ativos por cache. Regra revista:
+  //   - RICs NÃO finalizados (em tramitação/aguardando) → SEMPRE re-checa a tramitação na API.
+  //   - RICs finalizados (aprovado/respondido/retirado) → re-checa só se passou da janela de cache;
+  //     isso reduz chamadas sem perder mudanças, já que itens finalizados raramente voltam a tramitar.
   const idsJaProcessados = new Set(proposicoesParaSalvar.map(p => p.id));
   const todasBase = await DB.getAll("proposicoes");
   const aReenriquecer = todasBase.filter(p => {
@@ -3026,21 +3150,28 @@ async function sincronizarIncremental(numdias) {
     return p.origem === "camara" || p.origem === "senado";  // só o que tem API
   });
   if (aReenriquecer.length) {
-    log.add(`Reenriquecendo ${aReenriquecer.length} RIC(s) já na base (inclusive fora do regex)...`, "info");
-    let rc = 0, rpul = 0;
+    log.add(`Verificando atualizações de ${aReenriquecer.length} RIC(s) já na base...`, "info");
+    let rc = 0, rpul = 0, rmud = 0;
     const atualizados = [];
+    const finais = ["aprovado", "respondido", "retirado"];
     for (const p of aReenriquecer) {
-      if (podeUsarCacheStatus(p, false)) { rpul++; continue; }
+      const ehFinal = finais.includes(p.situacaoLegislativa);
+      // Pula APENAS finalizados ainda dentro da janela de cache. Ativos são sempre re-checados.
+      if (ehFinal && p.dataEnriquecimento && diasDesde(p.dataEnriquecimento) < CACHE_DIAS_FINAL) { rpul++; continue; }
+      const sitAntes = p.situacaoLegislativa;
+      const movAntes = p.ultimaMovimentacaoData || "";
       try {
+        // forçar:true garante que enriquecerProposicao não reaplique o cache internamente
         await enriquecerProposicao(p, { log, forcar: true });
         atualizados.push(p);
+        if (p.situacaoLegislativa !== sitAntes || (p.ultimaMovimentacaoData || "") !== movAntes) rmud++;
         await sleep(THROTTLE_MS);
       } catch (e) { log.add(`${p.identificacao}: falha — ${e.message}`, "warn"); }
       rc++;
       if (rc % 10 === 0) log.add(`...${rc}/${aReenriquecer.length}`, "dim");
     }
     if (atualizados.length) await DB.bulkPut("proposicoes", atualizados);
-    log.add(`Reenriquecimento concluído: ${rc} processados, ${rpul} pulados (cache).`, "ok");
+    log.add(`Verificação concluída: ${rc} checados, ${rmud} com mudança de situação/movimentação, ${rpul} pulados (finalizados em cache).`, "ok");
   }
 
   await setConfig("ultimaSync", new Date().toISOString());
