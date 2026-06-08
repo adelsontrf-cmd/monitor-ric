@@ -762,7 +762,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.9c</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.9d</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -1203,7 +1203,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.9 (ajustada2)</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.9 (ajustada3)</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -2447,35 +2447,10 @@ async function detectarSituacaoCamara(prop) {
     det.despachoAprovacao = aprovEvento.despacho || aprovEvento.descricao;
   }
 
-  // Regra especial interno: olhar despacho da última tramitação
-  const ultima = hist[hist.length - 1];
-  if (REGRA_DESPACHO_APROVADO_CAMARA.test(ultima.despacho || "")) {
-    det.situacao = "aprovado";
-    if (!det.dataAprovacao) {
-      det.dataAprovacao = ultima.data;
-      det.despachoAprovacao = ultima.despacho;
-    }
-    return det;
-  }
-
-  // Tentar mapeamento via descricaoSituacao da última tramitação
-  const sitNorm = normalizar(ultima.situacao || "");
-  if (sitNorm && MAP_SIT_CAMARA[sitNorm]) {
-    det.situacao = MAP_SIT_CAMARA[sitNorm];
-  } else if (aprovEvento) {
-    // Se há evento de aprovação mas a última situação não bate em nada, classifica como aprovado
-    det.situacao = "aprovado";
-  } else if (sitNorm) {
-    // Não mapeada — registrar para revisão e usar fallback
-    registrarSituacaoNaoMapeada(ultima.situacao, "camara");
-    // Fallback: se contém arquivad/retirad/rejeit/prejudic → retirado
-    if (/arquiv|retirad|rejeit|prejudic/.test(sitNorm)) det.situacao = "retirado";
-    else if (/aguard.+resp/.test(sitNorm)) det.situacao = "aguardando_resposta";
-    else det.situacao = "tramitacao_inicial";
-  } else {
-    det.situacao = "tramitacao_inicial";
-  }
-  // Extração de prazo Câmara: "Prazo para Resposta Externas (de DD/MM/YYYY a DD/MM/YYYY)"
+  // v4.7.9-ajustada3: extrai o prazo de resposta ANTES de decidir a situação, para poder aplicar
+  // a regra "aprovado + prazo → aguardando_resposta" (mesma lógica do Senado). A última situação
+  // textual da Câmara para RIC aprovado já costuma ser "Aguardando Resposta" + um evento de
+  // "Prazo para Resposta Externas (de DD/MM a DD/MM)".
   for (const t of hist) {
     if (det.prazoFinalCNSugerido) break;
     const txt = (t.descricao || "") + " " + (t.despacho || "");
@@ -2487,6 +2462,37 @@ async function detectarSituacaoCamara(prop) {
         det.prazoFinalCNSugerido = `${ano}-${partes[1].padStart(2,"0")}-${partes[0].padStart(2,"0")}`;
       }
     }
+  }
+
+  // Regra especial interno: olhar despacho da última tramitação
+  const ultima = hist[hist.length - 1];
+  if (REGRA_DESPACHO_APROVADO_CAMARA.test(ultima.despacho || "")) {
+    if (!det.dataAprovacao) {
+      det.dataAprovacao = ultima.data;
+      det.despachoAprovacao = ultima.despacho;
+    }
+    // aprovado + já tem prazo de resposta → o ciclo avançou para "aguardando resposta"
+    det.situacao = det.prazoFinalCNSugerido ? "aguardando_resposta" : "aprovado";
+    return det;
+  }
+
+  // Tentar mapeamento via descricaoSituacao da última tramitação
+  const sitNorm = normalizar(ultima.situacao || "");
+  if (sitNorm && MAP_SIT_CAMARA[sitNorm]) {
+    det.situacao = MAP_SIT_CAMARA[sitNorm];
+    // aprovado estruturado, mas com prazo já definido → aguardando resposta
+    if (det.situacao === "aprovado" && det.prazoFinalCNSugerido) det.situacao = "aguardando_resposta";
+  } else if (aprovEvento) {
+    // Há evento de aprovação mas a última situação não bate em nada
+    det.situacao = det.prazoFinalCNSugerido ? "aguardando_resposta" : "aprovado";
+  } else if (sitNorm) {
+    // Não mapeada — registrar para revisão e usar fallback
+    registrarSituacaoNaoMapeada(ultima.situacao, "camara");
+    if (/arquiv|retirad|rejeit|prejudic/.test(sitNorm)) det.situacao = "retirado";
+    else if (/aguard.+resp/.test(sitNorm)) det.situacao = "aguardando_resposta";
+    else det.situacao = "tramitacao_inicial";
+  } else {
+    det.situacao = "tramitacao_inicial";
   }
   return det;
 }
@@ -2782,7 +2788,10 @@ async function detectarSituacaoSenado(prop, sitAtual) {
 function podeUsarCacheStatus(prop, forcar) {
   if (forcar) return false;
   if (!prop.dataEnriquecimento) return false;
-  const finais = ["aprovado","respondido","retirado"];
+  // v4.7.9-ajustada3: "aprovado" NÃO é estado terminal — um RIC aprovado ainda será respondido
+  // (ciclo: aprovado → aguardando_resposta → respondido). Tratá-lo como final fazia o cache pular
+  // a transição e congelar a situação em "aprovado". Apenas respondido/retirado são terminais.
+  const finais = ["respondido", "retirado"];
   if (!finais.includes(prop.situacaoLegislativa)) return false;
   return diasDesde(prop.dataEnriquecimento) < CACHE_DIAS_FINAL;
 }
@@ -2845,11 +2854,16 @@ async function enriquecerProposicao(prop, opts = {}) {
   }
 }
 
-// idOriginal válido = número/string não vazia que não seja "null"/"undefined"
+// idOriginal válido = string não vazia, não "null"/"undefined"/"0", e sem "/".
+// v4.7.9-ajustada3: ids no formato sintético "numero/ano" (ex.: "143/2025", vindos de XLSX e nunca
+// resolvidos) NÃO são ids reais da API e produziam URLs inválidas (HTTP 405 em /proposicoes/143/2025/
+// tramitacoes). Rejeitá-los aqui faz o enriquecimento resolver o id real via camaraBuscarPorNumeroAno.
 function _idOriginalValido(idOriginal) {
   if (idOriginal === null || idOriginal === undefined) return false;
   const s = String(idOriginal).trim();
-  return s !== "" && s !== "null" && s !== "undefined" && s !== "0";
+  if (s === "" || s === "null" || s === "undefined" || s === "0") return false;
+  if (s.includes("/")) return false; // formato "numero/ano" não é id numérico da API
+  return true;
 }
 
 // ===== Inclusão manual de requerimento (v4.7) =====
@@ -3153,7 +3167,9 @@ async function sincronizarIncremental(numdias) {
     log.add(`Verificando atualizações de ${aReenriquecer.length} RIC(s) já na base...`, "info");
     let rc = 0, rpul = 0, rmud = 0;
     const atualizados = [];
-    const finais = ["aprovado", "respondido", "retirado"];
+    // v4.7.9-ajustada3: só respondido/retirado são terminais. "aprovado" continua tramitando
+    // (vira aguardando_resposta e depois respondido), então deve ser SEMPRE re-checado.
+    const finais = ["respondido", "retirado"];
     for (const p of aReenriquecer) {
       const ehFinal = finais.includes(p.situacaoLegislativa);
       // Pula APENAS finalizados ainda dentro da janela de cache. Ativos são sempre re-checados.
