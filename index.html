@@ -762,7 +762,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.7.9d</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.8</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -779,6 +779,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">⤓</span>Sync base na nuvem</button>
         <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">＋</span>Incluir requerimento</button>
         <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✎</span>Edição em lote</button>
+        <button class="menu-item" id="btn-open-relatorios-menu" role="menuitem"><span class="menu-item-icon">📄</span>Relatórios</button>
         <button class="menu-item" id="btn-open-xlsx" role="menuitem"><span class="menu-item-icon">↥</span>Atualizar via Controle RICs.xlsx</button>
         <button class="menu-item" id="btn-open-export-xlsx" role="menuitem"><span class="menu-item-icon">↧</span>Exportar Controle RICs.xlsx</button>
         <button class="menu-item" id="btn-open-config" role="menuitem"><span class="menu-item-icon">⚙</span>Configurações</button>
@@ -1203,7 +1204,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.7.9 (ajustada3)</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.8</span></span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -1272,6 +1273,14 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <option value="cldf">CLDF</option>
         </select></div>
         <div><label>Prazo de resposta (CN)</label><select id="lote-f-prazo"><option value="">Todos</option></select></div>
+        <div><label>Status interno</label><select id="lote-f-status">
+          <option value="">Todos</option>
+          <option value="novo">Novo (não triado)</option>
+          <option value="tramitacao_cn">Em tramitação no Congresso Nacional</option>
+          <option value="andamento_cc">Em andamento na Casa Civil</option>
+          <option value="respondido">Respondido</option>
+          <option value="retirado">Retirado / Não enviado</option>
+        </select></div>
         <div><label>Etapa atual</label><select id="lote-f-etapa">
           <option value="">Todas</option>
           <option value="recebimento">Recebimento</option>
@@ -1292,6 +1301,16 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 
       <h3 style="margin:0 0 10px;font-size:14px">Campos a alterar nos RICs selecionados</h3>
       <div class="form-row">
+        <div>
+          <label><input type="checkbox" id="lote-ck-status"> Status interno</label>
+          <select id="lote-status" disabled>
+            <option value="novo">Novo (não triado)</option>
+            <option value="tramitacao_cn">Em tramitação no Congresso Nacional</option>
+            <option value="andamento_cc">Em andamento na Casa Civil</option>
+            <option value="respondido">Respondido</option>
+            <option value="retirado">Retirado / Não enviado</option>
+          </select>
+        </div>
         <div>
           <label><input type="checkbox" id="lote-ck-etapa"> Etapa</label>
           <select id="lote-etapa" disabled>
@@ -3978,7 +3997,7 @@ async function abrirDetalhe(id) {
     </div>
 
     <div class="modal-section collapsible collapsed" data-sec="historico">
-      <div class="section-header"><h3>Histórico de tramitação ${p.historico && p.historico.length ? `(${p.historico.length} eventos)` : "(não enriquecido)"}</h3></div>
+      <div class="section-header"><h3>Histórico de tramitação no CN ${p.historico && p.historico.length ? `(${p.historico.length} eventos)` : "(não enriquecido)"}</h3></div>
       <div class="section-content">
       ${renderHistorico(p)}
       </div>
@@ -4464,10 +4483,8 @@ async function abrirDetalhe(id) {
       }
     });
   });
-  // v4.7: inicia com o tópico "Objeto" aberto (todos os outros fechados)
+  // v4.8: inicia com TODOS os tópicos do acordeão fechados
   document.querySelectorAll("#modal-detalhe .modal-section.collapsible").forEach(s => s.classList.add("collapsed"));
-  const secObjeto = document.querySelector('#modal-detalhe .modal-section.collapsible[data-sec="objeto"]');
-  if (secObjeto) secObjeto.classList.remove("collapsed");
 
   // Bind das etapas do fluxo (v4.6)
   bindEtapasFluxoHandlers(id);
@@ -4493,10 +4510,23 @@ async function abrirDetalhe(id) {
 }
 
 function renderHistorico(p) {
-  if (!p.historico || p.historico.length === 0) {
+  const temHist = p.historico && p.historico.length > 0;
+  // v4.8: para o Senado, a movimentação administrativa não informa a situação. Mostramos no topo
+  // uma linha com a SITUAÇÃO ATUAL estruturada (endpoint situacaoatual) — o dado que de fato
+  // identifica a situação prevista no app — e o despacho/local correspondente.
+  let linhaSituacaoSenado = "";
+  if (p.origem === "senado" && p.situacaoAtualSenado && p.situacaoAtualSenado.descricaoSituacao) {
+    const sit = p.situacaoAtualSenado;
+    const partes = [sit.descricaoSituacao];
+    if (sit.local) partes.push(`Local: ${sit.local}`);
+    const desc = partes.join(" — ");
+    linhaSituacaoSenado = `<tr class="aprovacao"><td>${formatarData(sit.dataSituacao) || "—"}</td><td>Situação atual</td><td><b>${escapeHtml(desc)}</b></td></tr>`;
+  }
+
+  if (!temHist && !linhaSituacaoSenado) {
     return `<p class="text-small text-muted"><i>Histórico ainda não foi buscado. Use "Reenriquecer existentes" na sincronização.</i></p>`;
   }
-  const eventos = [...p.historico].sort((a, b) => (b.dataHora || b.data || "").localeCompare(a.dataHora || a.data || ""));
+  const eventos = temHist ? [...p.historico].sort((a, b) => (b.dataHora || b.data || "").localeCompare(a.dataHora || a.data || "")) : [];
   const linhas = eventos.map(e => {
     const ehAprov = (p.origem === "camara" && (e.codTipo === COD_APROVACAO_CAMARA || /^aprovac[ãa]o$/i.test(normalizar(e.descricao || "")) || REGRA_DESPACHO_APROVADO_CAMARA.test(e.despacho || ""))) ||
                     (p.origem === "senado" && p.dataAprovacao && e.data === p.dataAprovacao);
@@ -4504,7 +4534,10 @@ function renderHistorico(p) {
     const desc = [e.descricao, e.situacao ? `[${e.situacao}]` : "", e.despacho].filter(Boolean).join(" — ");
     return `<tr${cls}><td>${formatarData(e.data)}</td><td>${escapeHtml(e.siglaOrgao || "")}</td><td>${escapeHtml(desc)}</td></tr>`;
   }).join("");
-  return `<div class="historico-tabela"><table><thead><tr><th>Data</th><th>Órgão</th><th>Descrição / situação / despacho</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+  const nota = (p.origem === "senado" && temHist && !linhaSituacaoSenado)
+    ? `<p class="text-small text-muted" style="margin-top:6px"><i>Obs.: o Senado divulga apenas movimentações administrativas (trânsito entre órgãos) neste histórico. A situação legislativa é apurada à parte.</i></p>`
+    : "";
+  return `<div class="historico-tabela"><table><thead><tr><th>Data</th><th>Órgão</th><th>Descrição / situação / despacho</th></tr></thead><tbody>${linhaSituacaoSenado}${linhas}</tbody></table></div>${nota}`;
 }
 
 // ===== PAINEL =====
@@ -5910,6 +5943,11 @@ function _listaRicsParaSelecao(termo, casa, opts) {
     if (opts.etapa) {
       if (_etapaAtualDe(m) !== opts.etapa) return false;
     }
+    if (opts.status) {
+      // status interno "novo" cobre marcações sem statusInterno definido
+      const st = m.statusInterno || "novo";
+      if (st !== opts.status) return false;
+    }
     if (!t) return true;
     const blob = `${p.identificacao} ${p.autor || ""} ${m.apelido || ""} ${p.ementa || ""} ${p.origem || ""}`.toLowerCase();
     return blob.includes(t);
@@ -6041,12 +6079,60 @@ function _loteFiltrosAtuais() {
     termo: document.getElementById("lote-busca").value,
     casa: document.getElementById("lote-casa").value,
     prazoCn: document.getElementById("lote-f-prazo") ? document.getElementById("lote-f-prazo").value : "",
+    status: document.getElementById("lote-f-status") ? document.getElementById("lote-f-status").value : "",
     etapa: document.getElementById("lote-f-etapa") ? document.getElementById("lote-f-etapa").value : "",
   };
 }
-function renderLoteLista() {
+function _loteOpts(f) {
+  return { prazoCn: f.prazoCn, etapa: f.etapa, status: f.status };
+}
+// v4.8: filtros em cascata — cada filtro reduz as opções disponíveis dos demais.
+// Para cada dimensão, recalcula as opções válidas aplicando TODOS os outros filtros (menos ele mesmo).
+function atualizarOpcoesCascata() {
   const f = _loteFiltrosAtuais();
-  const lista = _listaRicsParaSelecao(f.termo, f.casa, { prazoCn: f.prazoCn, etapa: f.etapa });
+  // Conjunto-base: aplica busca sempre
+  const semFiltro = (excluir) => _listaRicsParaSelecao(f.termo, excluir === "casa" ? "" : f.casa, {
+    prazoCn: excluir === "prazo" ? "" : f.prazoCn,
+    status: excluir === "status" ? "" : f.status,
+    etapa: excluir === "etapa" ? "" : f.etapa,
+  });
+
+  // Casa
+  const selCasa = document.getElementById("lote-casa");
+  const casasValidas = new Set(semFiltro("casa").map(p => p.origem));
+  Array.from(selCasa.options).forEach(o => { if (o.value) o.disabled = !casasValidas.has(o.value); });
+
+  // Status interno
+  const selStatus = document.getElementById("lote-f-status");
+  if (selStatus) {
+    const statusValidos = new Set(semFiltro("status").map(p => (listaEstado.marcacoes.get(p.id) || {}).statusInterno || "novo"));
+    Array.from(selStatus.options).forEach(o => { if (o.value) o.disabled = !statusValidos.has(o.value); });
+  }
+
+  // Etapa atual
+  const selEtapa = document.getElementById("lote-f-etapa");
+  if (selEtapa) {
+    const etapasValidas = new Set(semFiltro("etapa").map(p => _etapaAtualDe(listaEstado.marcacoes.get(p.id) || {})));
+    Array.from(selEtapa.options).forEach(o => { if (o.value) o.disabled = !etapasValidas.has(o.value); });
+  }
+
+  // Prazo CN (repopula só com as datas válidas no recorte atual)
+  const selPrazo = document.getElementById("lote-f-prazo");
+  if (selPrazo) {
+    const cur = selPrazo.value;
+    const datas = [...new Set(semFiltro("prazo").map(p => ((listaEstado.marcacoes.get(p.id) || {}).prazoFinalCN || "").substring(0, 10)).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)))].sort();
+    selPrazo.innerHTML = `<option value="">Todos</option>` + datas.map(d => {
+      const [y, mo, dd] = d.split("-");
+      return `<option value="${d}"${d === cur ? " selected" : ""}>${dd}/${mo}/${y}</option>`;
+    }).join("");
+    // se a data selecionada saiu do recorte, limpa
+    if (cur && !datas.includes(cur)) selPrazo.value = "";
+  }
+}
+function renderLoteLista() {
+  atualizarOpcoesCascata();
+  const f = _loteFiltrosAtuais();
+  const lista = _listaRicsParaSelecao(f.termo, f.casa, _loteOpts(f));
   const cont = document.getElementById("lote-lista");
   cont.innerHTML = lista.map(p => {
     const checked = loteSelecionados.has(p.id) ? "checked" : "";
@@ -6063,7 +6149,7 @@ function renderLoteLista() {
   });
   atualizarLoteContador();
 }
-// Popula o select de prazo de resposta (CN) do modal de lote
+// Popula o select de prazo de resposta (CN) do modal de lote (carga inicial)
 function popularLoteFiltroPrazo() {
   const sel = document.getElementById("lote-f-prazo");
   if (!sel) return;
@@ -6098,6 +6184,7 @@ function popularSelectsLote() {
 // Liga cada checkbox ao seu input (habilita/desabilita)
 function bindLoteCampos() {
   const pares = [
+    ["lote-ck-status", "lote-status"],
     ["lote-ck-etapa", "lote-etapa"],
     ["lote-ck-prazoetapa", "lote-prazoetapa"],
     ["lote-ck-tematica", "lote-tematica"],
@@ -6115,22 +6202,29 @@ function bindLoteCampos() {
   });
 }
 
+// v4.8: acesso ao modal de Relatórios pelo menu de ações
+document.getElementById("btn-open-relatorios-menu").onclick = () => {
+  fecharMenuAcoes();
+  relatorioAbrirModal("personalizado");
+};
+
 document.getElementById("btn-open-edicao-lote").onclick = () => {
   fecharMenuAcoes();
   loteSelecionados = new Set();
   document.getElementById("lote-busca").value = "";
   document.getElementById("lote-casa").value = "";
   if (document.getElementById("lote-f-prazo")) document.getElementById("lote-f-prazo").value = "";
+  if (document.getElementById("lote-f-status")) document.getElementById("lote-f-status").value = "";
   if (document.getElementById("lote-f-etapa")) document.getElementById("lote-f-etapa").value = "";
   document.getElementById("lote-feedback").innerHTML = "";
   popularSelectsLote();
   popularLoteFiltroPrazo();
   bindLoteCampos();
   // Reseta os checkboxes de campos
-  ["lote-ck-etapa","lote-ck-prazoetapa","lote-ck-tematica","lote-ck-nuprec","lote-ck-dataresp","lote-ck-tiporesp"].forEach(id => {
+  ["lote-ck-status","lote-ck-etapa","lote-ck-prazoetapa","lote-ck-tematica","lote-ck-nuprec","lote-ck-dataresp","lote-ck-tiporesp"].forEach(id => {
     const ck = document.getElementById(id); if (ck) ck.checked = false;
   });
-  ["lote-etapa","lote-prazoetapa","lote-tematica","lote-nuprec","lote-dataresp","lote-tiporesp"].forEach(id => {
+  ["lote-status","lote-etapa","lote-prazoetapa","lote-tematica","lote-nuprec","lote-dataresp","lote-tiporesp"].forEach(id => {
     const inp = document.getElementById(id); if (inp) { inp.disabled = true; if (inp.tagName === "SELECT") inp.selectedIndex = 0; else inp.value = ""; }
   });
   renderLoteLista();
@@ -6139,10 +6233,11 @@ document.getElementById("btn-open-edicao-lote").onclick = () => {
 document.getElementById("lote-busca").addEventListener("input", renderLoteLista);
 document.getElementById("lote-casa").addEventListener("change", renderLoteLista);
 document.getElementById("lote-f-prazo").addEventListener("change", renderLoteLista);
+if (document.getElementById("lote-f-status")) document.getElementById("lote-f-status").addEventListener("change", renderLoteLista);
 document.getElementById("lote-f-etapa").addEventListener("change", renderLoteLista);
 document.getElementById("lote-select-all").onclick = () => {
   const f = _loteFiltrosAtuais();
-  _listaRicsParaSelecao(f.termo, f.casa, { prazoCn: f.prazoCn, etapa: f.etapa }).forEach(p => loteSelecionados.add(p.id));
+  _listaRicsParaSelecao(f.termo, f.casa, _loteOpts(f)).forEach(p => loteSelecionados.add(p.id));
   renderLoteLista();
 };
 document.getElementById("lote-select-none").onclick = () => { loteSelecionados = new Set(); renderLoteLista(); };
@@ -6152,6 +6247,7 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
   if (loteSelecionados.size === 0) { fb.innerHTML = '<span style="color:#b91c1c">Selecione ao menos um RIC.</span>'; return; }
   // Coleta os campos marcados
   const campos = {};
+  if (document.getElementById("lote-ck-status").checked) campos.statusInterno = document.getElementById("lote-status").value;
   if (document.getElementById("lote-ck-etapa").checked) campos.etapa = document.getElementById("lote-etapa").value;
   if (document.getElementById("lote-ck-prazoetapa").checked) campos.prazoEtapa = document.getElementById("lote-prazoetapa").value;
   if (document.getElementById("lote-ck-tematica").checked) campos.tematica = document.getElementById("lote-tematica").value;
@@ -6163,8 +6259,13 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
 
   const atualizadas = [];
   for (const id of loteSelecionados) {
-    const m = Object.assign({ proposicaoId: id }, listaEstado.marcacoes.get(id) || {});
-    if (!m.etapasFluxo) m.etapasFluxo = {};
+    // v4.8: lê a marcação ATUAL do banco (fonte da verdade) para não perder campos não editados.
+    // Se não existir, cria uma marcação vazia íntegra (mesmo modelo do app).
+    let mDb = await DB.get("marcacoes", id);
+    const m = mDb ? { ...mDb } : marcacaoVaziaPara(id);
+    m.proposicaoId = id;
+    if (!m.etapasFluxo || typeof m.etapasFluxo !== "object") m.etapasFluxo = {};
+    if ("statusInterno" in campos) m.statusInterno = campos.statusInterno;
     if ("tematica" in campos) m.tematica = campos.tematica;
     if ("nupRecebimento" in campos) m.nupRecebimento = campos.nupRecebimento;
     if ("dataResposta" in campos) m.dataResposta = campos.dataResposta;
@@ -6178,10 +6279,9 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
     if ("prazoEtapa" in campos) {
       let etapaAlvo = campos.etapa;
       if (!etapaAlvo) {
-        // usa a etapa atual (primeira não concluída)
         for (const e of ETAPAS_FLUXO_COMPLETO) {
-          const d = m.etapasFluxo[e.id];
-          if (!d || !d.concluida) { etapaAlvo = e.id; break; }
+          const dd = m.etapasFluxo[e.id];
+          if (!dd || !dd.concluida) { etapaAlvo = e.id; break; }
         }
       }
       if (etapaAlvo) {
@@ -6193,10 +6293,12 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
     atualizadas.push(m);
   }
   await DB.bulkPut("marcacoes", atualizadas);
-  atualizadas.forEach(m => listaEstado.marcacoes.set(m.proposicaoId, m));
+  // Recarrega o estado em memória DO BANCO para refletir com fidelidade
+  await carregarLista();
   aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
   fb.innerHTML = `<span style="color:#047857">✓ ${atualizadas.length} RIC(s) atualizado(s).</span>`;
-  setTimeout(() => { dispararFecharModal("modal-edicao-lote"); }, 1200);
+  // Atualiza a própria lista do modal (mantém aberto para conferência)
+  renderLoteLista();
 };
 
 
@@ -6647,7 +6749,10 @@ const XLSX_MERGE = (() => {
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
     // rows[0] é o header; pular
     const idxOf = nome => headers.indexOf(nome);
-    const result = { linhasValidas: [], ignoradas: { sem_numero: 0, numero_invalido: 0, sem_tipo: 0 }, slugsNovosEtapa: new Set(), slugsNovosStatus: new Set(), tiposCasasNovos: new Set() };
+    // v4.8: registra quais COLUNAS vieram na planilha, para preservar (não sobrescrever) os campos
+    // da marcação cuja coluna correspondente está ausente do XLSX.
+    const colunasPresentes = new Set(headers.filter(Boolean));
+    const result = { linhasValidas: [], colunasPresentes, ignoradas: { sem_numero: 0, numero_invalido: 0, sem_tipo: 0 }, slugsNovosEtapa: new Set(), slugsNovosStatus: new Set(), tiposCasasNovos: new Set() };
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length === 0 || row.every(c => c == null || c === "")) continue;
@@ -6787,7 +6892,16 @@ const XLSX_MERGE = (() => {
   // ============================================================
   // DIFF: estado atual vs novas linhas
   // ============================================================
-  function calcularDiff(linhas, propsAtuais, marcsAtuais) {
+  function calcularDiff(linhas, propsAtuais, marcsAtuais, colunasPresentes) {
+    colunasPresentes = colunasPresentes || null; // Set de colunas vindas do XLSX (para preservação)
+    // Mapa: campo da marcação → coluna do XLSX que o alimenta. Se a coluna não veio, preserva o valor atual.
+    const CAMPO_COLUNA = {
+      apelido: "Objeto", tematica: "Temáticas", resumo: "Resumo", comentarios: "Observação",
+      unidadesConsultadas: "Unidades", statusInterno: "Status", etapa: "Etapa", prazoEtapa: "Prazo da etapa",
+      dataRecebimentoSEI: "Protocolo PR (DATA)", prazoFinalCN: "Prazo final", dataResposta: "Data da resposta",
+      nupRecebimento: "Processo de envio", nupResposta: "Processo de resposta", tipoResposta: "Tipo de resposta",
+      oficio: "Ofício", atribuicao: "Atribuição", linkCongresso: "Link Congresso", linkInteiroTeor: "Link Inteiro teor"
+    };
     const propsPorId = new Map(propsAtuais.map(p => [p.id, p]));
     const propsPorIdentificacao = new Map();
     // Lookup auxiliar para mesclagem REQ-CPI/CPMI → REQ:
@@ -6881,6 +6995,15 @@ const XLSX_MERGE = (() => {
         etapasFluxo: etapasFluxoFinal,
         atualizadoEm: new Date().toISOString()
       };
+      // v4.8: preserva campos cuja COLUNA não veio na planilha (não sobrescreve com vazio).
+      // Ex.: se o XLSX não tem a coluna "Observação", mantém o comentário já existente.
+      if (colunasPresentes && marcExistentePrev) {
+        for (const [campo, coluna] of Object.entries(CAMPO_COLUNA)) {
+          if (!colunasPresentes.has(coluna) && marcExistentePrev[campo] !== undefined) {
+            marcXlsxAjustada[campo] = marcExistentePrev[campo];
+          }
+        }
+      }
 
       const marcExistente = marcExistentePrev;
       if (propId) idsNoXlsx.add(propId);
@@ -7193,7 +7316,7 @@ async function processarArquivoXlsx(file) {
 
     const propsAtuais = await DB.getAll("proposicoes");
     const marcsAtuais = await DB.getAll("marcacoes");
-    const diff = XLSX_MERGE.calcularDiff(parseResult.linhasValidas, propsAtuais, marcsAtuais);
+    const diff = XLSX_MERGE.calcularDiff(parseResult.linhasValidas, propsAtuais, marcsAtuais, parseResult.colunasPresentes);
 
     document.getElementById("xlsx-progress-fill").style.width = "100%";
     await new Promise(r => setTimeout(r, 200));
@@ -8229,6 +8352,68 @@ const RELATORIO_PRESETS_NATIVOS = [
   { id: "tramitacao-cn", nome: "Em tramitação no Congresso", aplicar: () => ({ statusInterno: "tramitacao_cn" }) },
   { id: "respondidos-30d", nome: "Respondidos nos últimos 30 dias", aplicar: () => ({ statusInterno: "respondido", respDe: addDiasIso(isoHoje(), -30), respAte: isoHoje() }) },
   { id: "relevantes-sem-resposta", nome: "Relevantes sem resposta", aplicar: () => ({ rel: "sim", statusInternoExcl: "respondido" }) },
+  // v4.8: presets de boletim — definem campos, escopo, organização e formatação.
+  {
+    id: "boletim-ssgp-andamento",
+    nome: "Boletim SSGP — Em andamento na Casa Civil",
+    aplicar: () => ({ statusInterno: "andamento_cc" }),
+    campos: [
+      { grupo: "analise", id: "objetoTema" }, { grupo: "analise", id: "objetoTema2" },
+      { grupo: "identificacao", id: "autor" }, { grupo: "tramitacaoInterna", id: "prazoFinalCN" },
+    ],
+    organizacao: { modo: "lista", agruparPor: "prazoFinalCN", ordenarPor: "prazoFinalCN", direcao: "asc" },
+    formatacao: { orientacao: "retrato" },
+  },
+  {
+    id: "boletim-ssgp-aprovados",
+    nome: "Boletim SSGP — Aprovados",
+    aplicar: () => ({ leg: "aprovado" }),
+    campos: [
+      { grupo: "analise", id: "objetoTema" }, { grupo: "analise", id: "objetoTema2" },
+      { grupo: "identificacao", id: "autor" },
+    ],
+    organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
+    formatacao: { orientacao: "retrato" },
+  },
+  {
+    id: "boletim-ssgp-apresentados-semana",
+    nome: "Boletim SSGP — Apresentados na última semana",
+    aplicar: () => ({
+      leg: ["tramitacao_inicial", "aguardando_aprovacao"],
+      statusInterno: ["novo", "tramitacao_cn"],
+      apresDe: addDiasIso(isoHoje(), -7), apresAte: isoHoje(),
+    }),
+    campos: [
+      { grupo: "analise", id: "objetoTema" }, { grupo: "analise", id: "objetoTema2" },
+      { grupo: "identificacao", id: "autor" },
+    ],
+    organizacao: { modo: "lista", agruparPor: "sem", ordenarPor: "dataApresentacao", direcao: "desc" },
+    formatacao: { orientacao: "retrato" },
+  },
+  {
+    id: "coordenacao-se-informe",
+    nome: "Coordenação SE — informe",
+    aplicar: () => ({ statusInterno: "andamento_cc" }),
+    campos: [
+      { grupo: "identificacao", id: "ricAutor" },
+      { grupo: "analise", id: "objetoTema" }, { grupo: "analise", id: "objetoTema2" },
+      { grupo: "analise", id: "comentarios" }, { grupo: "tramitacaoInterna", id: "prazoFinalCN" },
+    ],
+    organizacao: { modo: "lista", agruparPor: "prazoFinalCN", ordenarPor: "prazoFinalCN", direcao: "asc" },
+    formatacao: { orientacao: "retrato" },
+  },
+  {
+    id: "coordenacao-se-quadro-geral",
+    nome: "Coordenação SE — quadro geral",
+    aplicar: () => ({ statusInterno: "andamento_cc" }),
+    campos: [
+      { grupo: "identificacao", id: "ricAutor" },
+      { grupo: "analise", id: "objetoTema" }, { grupo: "analise", id: "resumo" },
+      { grupo: "analise", id: "comentarios" }, { grupo: "tramitacaoInterna", id: "prazoFinalCN" },
+    ],
+    organizacao: { modo: "lista", agruparPor: "prazoFinalCN", ordenarPor: "prazoFinalCN", direcao: "asc" },
+    formatacao: { orientacao: "paisagem" },
+  },
 ];
 
 const RELATORIO_CAMPOS = {
@@ -8236,7 +8421,9 @@ const RELATORIO_CAMPOS = {
     nome: "Identificação da proposição",
     campos: [
       { id: "casa", label: "Casa" }, { id: "sigla", label: "Sigla" },
-      { id: "identificacao", label: "Número/Ano" }, { id: "autor", label: "Autor (com partido/UF)" },
+      { id: "identificacao", label: "Número/Ano" },
+      { id: "ricAutor", label: "RIC + Autor (Número/Ano - Autor)" },
+      { id: "autor", label: "Autor (com partido/UF)" },
       { id: "dataApresentacao", label: "Data de apresentação" },
       { id: "urlPortal", label: "Link do portal oficial" }, { id: "urlInteiroTeor", label: "Link do inteiro teor" },
     ],
@@ -8255,6 +8442,7 @@ const RELATORIO_CAMPOS = {
     campos: [
       { id: "apelido", label: "Objeto resumido" },
       { id: "objetoTema", label: "Assunto" },
+      { id: "objetoTema2", label: "Assunto 2 (complemento do objeto)" },
       { id: "tematica", label: "Temática" },
       { id: "relevante", label: "Relevante (Sim/Não)" }, { id: "palavrasChave", label: "Palavras-chave (SSGP)" },
       { id: "resumo", label: "Resumo" }, { id: "comentarios", label: "Observações" },
@@ -8322,7 +8510,17 @@ function relatorioPreSelecionado(preset) {
   if (preset) {
     estado.preset = preset;
     const p = RELATORIO_PRESETS_NATIVOS.find(x => x.id === preset);
-    if (p) estado.filtros = p.aplicar();
+    if (p) {
+      if (p.aplicar) estado.filtros = p.aplicar();
+      // v4.8: presets podem definir também campos, organização e formatação.
+      if (p.campos) {
+        // zera todos e liga apenas os campos do preset
+        for (const g of Object.keys(estado.campos)) for (const c of Object.keys(estado.campos[g])) estado.campos[g][c] = false;
+        for (const { grupo, id } of p.campos) { if (estado.campos[grupo]) estado.campos[grupo][id] = true; }
+      }
+      if (p.organizacao) Object.assign(estado.organizacao, p.organizacao);
+      if (p.formatacao) Object.assign(estado.formatacao, p.formatacao);
+    }
   }
   return estado;
 }
@@ -8340,8 +8538,9 @@ async function relatorioCalcularEscopo(estado) {
     if (f.casa) lista = lista.filter(p => p.origem === f.casa);
     if (f.sigla) lista = lista.filter(p => p.sigla === f.sigla);
     if (f.ano) lista = lista.filter(p => String(p.ano) === String(f.ano));
-    if (f.leg) lista = lista.filter(p => p.situacaoLegislativa === f.leg);
-    if (f.statusInterno) lista = lista.filter(p => (mMap.get(p.id) || {}).statusInterno === f.statusInterno);
+    // v4.8: leg e statusInterno aceitam string OU array (múltiplos valores = união)
+    if (f.leg) { const arr = Array.isArray(f.leg) ? f.leg : [f.leg]; lista = lista.filter(p => arr.includes(p.situacaoLegislativa)); }
+    if (f.statusInterno) { const arr = Array.isArray(f.statusInterno) ? f.statusInterno : [f.statusInterno]; lista = lista.filter(p => arr.includes((mMap.get(p.id) || {}).statusInterno || "novo")); }
     if (f.statusInternoExcl) lista = lista.filter(p => (mMap.get(p.id) || {}).statusInterno !== f.statusInternoExcl);
     if (f.etapa) lista = lista.filter(p => (mMap.get(p.id) || {}).etapa === f.etapa);
     if (f.tematica) lista = lista.filter(p => (mMap.get(p.id) || {}).tematica === f.tematica);
@@ -8432,14 +8631,24 @@ function relatorioAgrupar(lista, agruparPor, marcsMap) {
         return ap.substring(0, 60); // fallback: primeiros chars do apelido
       }
       case "ano": return String(p.ano || "(sem ano)");
+      case "prazoFinalCN": {
+        // v4.8: agrupa pela data de prazo final CN (marcação ou sugerido). Sem prazo → grupo próprio.
+        const prz = (m.prazoFinalCN || p.prazoFinalCNSugerido || "").substring(0, 10);
+        return /^\d{4}-\d{2}-\d{2}$/.test(prz) ? formatarData(prz) : "(sem prazo final CN)";
+      }
       default: return "(?)";
     }
   }
   const grupos = new Map();
+  const ordKey = new Map(); // nome do grupo → chave de ordenação (para datas, usa ISO)
   for (const p of lista) {
     const k = chave(p);
     if (!grupos.has(k)) grupos.set(k, []);
     grupos.get(k).push(p);
+    if (agruparPor === "prazoFinalCN" && !ordKey.has(k)) {
+      const m = marcsMap.get(p.id) || {};
+      ordKey.set(k, (m.prazoFinalCN || p.prazoFinalCNSugerido || "9999-99-99").substring(0, 10));
+    }
   }
   const arr = [...grupos.entries()].map(([nome, rics]) => ({ nome, rics }));
   arr.sort((a, b) => {
@@ -8447,6 +8656,10 @@ function relatorioAgrupar(lista, agruparPor, marcsMap) {
     const bSem = b.nome && b.nome.startsWith("(sem ");
     if (aSem && !bSem) return 1;
     if (!aSem && bSem) return -1;
+    // Datas: ordena cronologicamente pela chave ISO
+    if (agruparPor === "prazoFinalCN") {
+      return (ordKey.get(a.nome) || "").localeCompare(ordKey.get(b.nome) || "");
+    }
     return (a.nome || "").localeCompare(b.nome || "", "pt-BR");
   });
   return arr;
@@ -8468,6 +8681,13 @@ function relatorioValorCampo(p, m, campoId, opts) {
     case "casa": return ({ camara: "Câmara dos Deputados", senado: "Senado Federal", cn: "Congresso Nacional", cldf: "CLDF" }[p.origem] || p.origem || "—");
     case "sigla": return esc(p.sigla || "—");
     case "identificacao": return esc(p.identificacao || "—");
+    case "ricAutor": {
+      // v4.8: mescla "Número/Ano" + "Autor (com partido/UF)" → "RIC xxx/xxxx - Dep. Fulano (Partido/UF)"
+      const ric = (p.identificacao || "").trim();
+      const aut = (formatarAutor(p) || "").trim();
+      if (ric && aut) return esc(`${ric} - ${aut}`);
+      return esc(ric || aut || "—");
+    }
     case "autor": return esc(formatarAutor(p) || "—");
     case "dataApresentacao": return formatarData(p.dataApresentacao) || "—";
     case "urlPortal": return renderLink(p.urlPortal, "Abrir página oficial");
@@ -8486,6 +8706,16 @@ function relatorioValorCampo(p, m, campoId, opts) {
       if (!ap) return "—";
       const mTema = ap.match(/^([A-ZÀ-Ÿ0-9][A-ZÀ-Ÿ0-9\s\-/]*[A-ZÀ-Ÿ0-9])\s+-\s+/);
       return esc(mTema ? mTema[1].trim() : ap.substring(0, 60));
+    }
+    case "objetoTema2": {
+      // v4.8: "Assunto 2" = parte do objeto resumido que NÃO consta do "Assunto".
+      // No formato "TEMA - síntese", é a síntese (após o primeiro " - "). Sem o separador,
+      // é o restante do objeto após os 60 caracteres usados no "Assunto".
+      const ap = (m.apelido || "").trim();
+      if (!ap) return "—";
+      const sep = ap.match(/^[A-ZÀ-Ÿ0-9][A-ZÀ-Ÿ0-9\s\-/]*[A-ZÀ-Ÿ0-9]\s+-\s+(.+)$/);
+      if (sep) return esc(sep[1].trim());
+      return ap.length > 60 ? esc(ap.substring(60).trim()) : "—";
     }
     case "tematica": return esc(m.tematica || "—");
     case "relevante": return m.relevante ? "Sim" : "Não";
@@ -9361,6 +9591,7 @@ async function relatorioRenderModal() {
     {v:"sem", t:"Sem agrupamento"}, {v:"casa", t:"Casa"},
     {v:"situacaoLegislativa", t:"Situação legislativa"}, {v:"statusInterno", t:"Status interno"},
     {v:"etapa", t:"Etapa"}, {v:"tematica", t:"Temática"},
+    {v:"prazoFinalCN", t:"Prazo final CN"},
     {v:"objeto", t:"Objeto (tema em CAIXA ALTA)"},
     {v:"ano", t:"Ano de apresentação"},
   ];
@@ -9517,9 +9748,11 @@ async function relatorioRenderModal() {
   const renderDebounced = debounce(() => relatorioRenderModal(), 200);
   const elPreset = document.getElementById("rel-preset");
   if (elPreset) elPreset.addEventListener("change", () => {
-    relatorioEstado.preset = elPreset.value;
-    const p = RELATORIO_PRESETS_NATIVOS.find(x => x.id === elPreset.value);
-    if (p) relatorioEstado.filtros = p.aplicar();
+    // v4.8: aplica o preset completo (filtros + campos + organização + formatação),
+    // preservando o título digitado pelo usuário, se houver.
+    const tituloAtual = relatorioEstado.formatacao && relatorioEstado.formatacao.titulo;
+    relatorioEstado = relatorioPreSelecionado(elPreset.value);
+    if (tituloAtual) relatorioEstado.formatacao.titulo = tituloAtual;
     relatorioRenderModal();
   });
   const bindFiltro = (id, key) => {
