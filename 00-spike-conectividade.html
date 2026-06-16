@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spike — Conectividade Supabase (Monitor RIC)</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; background:#f7f8fa; color:#1a1a2e; }
+  h1 { color:#1E3A6F; font-size:1.3rem; }
+  .card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:1rem; margin:.8rem 0; }
+  .ok { border-left:5px solid #2e9e5b; } .fail { border-left:5px solid #c0392b; } .pend { border-left:5px solid #C9A14A; }
+  code { background:#eef; padding:1px 4px; border-radius:3px; font-size:.85em; }
+  input { width:100%; padding:.5rem; margin:.3rem 0; box-sizing:border-box; }
+  button { background:#1E3A6F; color:#fff; border:0; padding:.6rem 1.2rem; border-radius:6px; cursor:pointer; font-size:1rem; }
+  pre { white-space:pre-wrap; font-size:.8em; background:#f0f0f5; padding:.5rem; border-radius:4px; max-height:200px; overflow:auto; }
+</style>
+</head>
+<body>
+<h1>Spike de conectividade — Supabase × rede Casa Civil</h1>
+<p>Preencha com os dados do projeto de teste e execute. <b>Gate do plano:</b> se algum teste essencial (1–3) falhar nesta rede, a migração para.</p>
+
+<div class="card">
+  <label>URL do projeto (ex.: <code>https://abcdefgh.supabase.co</code>)</label>
+  <input id="url" placeholder="https://SEU-PROJETO.supabase.co">
+  <label>Chave <code>anon</code> / publishable</label>
+  <input id="anon" placeholder="eyJhbGciOi...">
+  <label>E-mail de teste (usuário criado no painel Auth)</label>
+  <input id="email" placeholder="teste@exemplo.com">
+  <label>Senha de teste</label>
+  <input id="senha" type="password">
+  <button onclick="rodar()">Executar testes</button>
+</div>
+
+<div id="resultados"></div>
+
+<script type="module">
+/* ============================================================
+   PONTO DE ATENÇÃO §8 DO PLANO:
+   Versão FIXADA em 2.79.0 — última versão pública referenciada
+   como funcional via ESM direto no navegador, antes da regressão
+   do wrapper ESM (dez/2025) que quebra uso sem prebundle.
+   Se o import abaixo falhar, o Teste 0 acusa e os demais não rodam.
+   ============================================================ */
+const VERSAO_FIXADA = '2.79.0';
+const CDN = `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@${VERSAO_FIXADA}/+esm`;
+
+const R = document.getElementById('resultados');
+function card(titulo, status, detalhe) {
+  const d = document.createElement('div');
+  d.className = 'card ' + (status === 'ok' ? 'ok' : status === 'fail' ? 'fail' : 'pend');
+  d.innerHTML = `<b>${titulo}</b> — ${status === 'ok' ? '✅ PASSOU' : status === 'fail' ? '❌ FALHOU' : '⏳'}<pre>${detalhe || ''}</pre>`;
+  R.appendChild(d);
+  return d;
+}
+
+let createClient = null;
+let erroImport = null;
+try {
+  ({ createClient } = await import(CDN));
+} catch (e) { erroImport = e; }
+
+window.rodar = async function () {
+  R.innerHTML = '';
+
+  // ---- Teste 0: import ESM do supabase-js (gate da arquitetura single-file)
+  if (!createClient) {
+    card(`Teste 0 — import ESM supabase-js@${VERSAO_FIXADA} via jsDelivr`, 'fail',
+      `Import falhou: ${erroImport}\n` +
+      `Possíveis causas: (a) cdn.jsdelivr.net bloqueado nesta rede; ` +
+      `(b) regressão ESM atinge também esta versão.\n` +
+      `Mitigação do plano (§8): auto-hospedar bundle ESM gerado uma vez com esbuild.`);
+    return;
+  }
+  card(`Teste 0 — import ESM supabase-js@${VERSAO_FIXADA} via jsDelivr`, 'ok',
+    'createClient disponível. Arquitetura single-file sem build é viável nesta rede.');
+
+  const url = document.getElementById('url').value.trim().replace(/\/$/, '');
+  const anon = document.getElementById('anon').value.trim();
+  if (!url || !anon) { card('Configuração', 'fail', 'Informe URL e chave anon.'); return; }
+
+  // ---- Teste 1: alcance de rede do domínio do projeto (o equivalente do api.github.com)
+  const c1 = card('Teste 1 — alcance de *.supabase.co (REST /rest/v1/)', 'pend', 'testando...');
+  try {
+    const t0 = performance.now();
+    const r = await fetch(`${url}/rest/v1/`, { headers: { apikey: anon } });
+    const ms = Math.round(performance.now() - t0);
+    c1.className = 'card ok';
+    c1.querySelector('pre').textContent = `HTTP ${r.status} em ${ms} ms. Domínio NÃO está bloqueado pelo firewall.`;
+    c1.querySelector('b').insertAdjacentText('afterend', ' — ✅ PASSOU');
+  } catch (e) {
+    c1.className = 'card fail';
+    c1.querySelector('pre').textContent =
+      `Falha de rede: ${e}\nPadrão idêntico ao bloqueio de api.github.com → ` +
+      `GATE REPROVADO. Não prosseguir com a migração nesta rede sem liberação da TI.`;
+    return;
+  }
+
+  const supabase = createClient(url, anon);
+
+  // ---- Teste 2: autenticação (e-mail/senha, cadastro fechado)
+  const email = document.getElementById('email').value.trim();
+  const senha = document.getElementById('senha').value;
+  const c2 = card('Teste 2 — login e-mail/senha (GoTrue /auth/v1/)', 'pend', 'testando...');
+  if (!email || !senha) {
+    c2.className = 'card pend';
+    c2.querySelector('pre').textContent = 'Pulado: informe e-mail/senha de um usuário criado no painel Auth.';
+  } else {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) { c2.className = 'card fail'; c2.querySelector('pre').textContent = `Erro: ${error.message}`; return; }
+    c2.className = 'card ok';
+    c2.querySelector('pre').textContent = `Sessão obtida. uid=${data.user.id}\nRLS poderá usar auth.uid() / auth.role().`;
+  }
+
+  // ---- Teste 3: leitura de uma linha (PostgREST + RLS)
+  // Pré-requisito: rodar no SQL Editor do projeto de teste:
+  //   create table if not exists spike_teste (id int primary key, msg text);
+  //   insert into spike_teste values (1,'ola da casa civil') on conflict do nothing;
+  //   alter table spike_teste enable row level security;
+  //   create policy "leitura autenticada" on spike_teste for select using (auth.role() = 'authenticated');
+  const c3 = card('Teste 3 — SELECT em tabela com RLS', 'pend', 'testando...');
+  const { data: linhas, error: e3 } = await supabase.from('spike_teste').select('*').limit(1);
+  if (e3) {
+    c3.className = 'card fail';
+    c3.querySelector('pre').textContent =
+      `Erro: ${e3.message}\nSe for "relation does not exist", crie a tabela spike_teste ` +
+      `(SQL no comentário do código-fonte desta página) e rode de novo.`;
+  } else {
+    c3.className = 'card ok';
+    c3.querySelector('pre').textContent = `Linhas: ${JSON.stringify(linhas)}\nLeitura via PostgREST + RLS OK.`;
+  }
+
+  // ---- Teste 4 (informativo): Realtime websocket
+  const c4 = card('Teste 4 — Realtime (websocket wss://)', 'pend', 'testando (5 s)...');
+  const canal = supabase.channel('spike');
+  let resolvido = false;
+  canal.subscribe((status) => {
+    if (resolvido) return;
+    if (status === 'SUBSCRIBED') {
+      resolvido = true; c4.className = 'card ok';
+      c4.querySelector('pre').textContent = 'Websocket conectado. Colaboração ao vivo (§6 do plano) é viável nesta rede.';
+      supabase.removeChannel(canal);
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      resolvido = true; c4.className = 'card fail';
+      c4.querySelector('pre').textContent =
+        `Status: ${status}. Firewalls corporativos costumam bloquear wss:// mesmo liberando https://.\n` +
+        `NÃO é gate: o plano funciona sem Realtime (atualização por refresh/polling), mas registre o resultado.`;
+    }
+  });
+  setTimeout(() => { if (!resolvido) { resolvido = true; c4.className = 'card fail';
+    c4.querySelector('pre').textContent = 'Timeout 5 s. Provável bloqueio de wss://. Ver nota do Teste 4.'; } }, 5000);
+};
+</script>
+</body>
+</html>
