@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#4f46e5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Monitor RIC 2.0">
+<meta name="apple-mobile-web-app-title" content="Monitor RIC">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>Monitor RIC 2.0</title>
+<title>Monitor RIC</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -762,7 +762,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC 2.0<span class="versao-badge" title="Versão atual">2.0</span></span></h1>
+      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">2.0</span></span></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
@@ -1204,8 +1204,8 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC 2.0</b> <span class="text-small text-muted">(versão <span id="sobre-versao">2.0</span>, backend Supabase)</span></p>
-      <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
+      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">(versão <span id="sobre-versao">2.0</span>, backend Supabase)</span></p>
+      <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
         <li><b>Sincronização com as APIs do Congresso</b> (Câmara e Senado), com enriquecimento automático de ementa, autoria, tramitação e inteiro teor.</li>
@@ -1215,7 +1215,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <li><b>Relatórios</b> em Word/PDF com campos e formatação configuráveis, e presets de usuário.</li>
         <li><b>Importação e exportação</b> no formato da planilha <i>Controle RICs.xlsx</i>.</li>
         <li><b>Edição em lote</b> e <b>inclusão manual</b> de requerimentos.</li>
-        <li><b>Sincronização da base na nuvem</b> (GitHub Gist privado, cifrada com AES-GCM 256).</li>
+        <li><b>Base institucional na nuvem</b> (Supabase), com login por conta e atualização dos dados sob demanda.</li>
         <li>Análise assistida por <b>IA (Google Gemini)</b> do inteiro teor.</li>
       </ul>
       <p class="text-small text-muted" style="margin:0">Dados legislativos: Dados Abertos da Câmara dos Deputados e do Senado Federal. Uso institucional interno.</p>
@@ -1393,9 +1393,11 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     <div class="card">
       <div id="conta-estado-resumo" class="text-small" style="margin-bottom:12px"></div>
       <div class="toolbar" style="flex-wrap:wrap;gap:8px">
-        <button class="btn btn-primary btn-sm" id="btn-conta-atualizar" style="display:none">↻ Atualizar dados agora</button>
+        <button class="btn btn-primary btn-sm" id="btn-conta-atualizar" style="display:none">↻ Baixar dados da nuvem</button>
+        <button class="btn btn-sm" id="btn-conta-enviar" style="display:none">⬆ Atualizar banco na nuvem (upload)</button>
         <button class="btn btn-sm" id="btn-conta-sair" style="display:none">Sair (logout)</button>
       </div>
+      <div id="conta-upload-feedback" class="text-small" style="margin-top:8px"></div>
     </div>
     <div class="card cfg-acordeao" id="conta-card-login">
       <h2 class="cfg-acordeao-header">Entrar</h2>
@@ -1410,11 +1412,6 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <button class="btn btn-primary btn-sm" id="btn-conta-entrar">Entrar</button>
       </div>
       <div id="conta-login-feedback" class="text-small" style="margin-top:8px"></div>
-    </div>
-    <div class="card cfg-acordeao cfg-collapsed">
-      <h2 class="cfg-acordeao-header">Sobre o modo espelho (Fase F)</h2>
-      <p class="text-small text-muted" style="line-height:1.7">Nesta fase o aplicativo <b>lê</b> os dados diretamente do Supabase e mantém o banco local (IndexedDB) apenas como <b>espelho de leitura</b>, para funcionar offline. Ainda <b>não há gravação na nuvem</b>: qualquer edição feita aqui fica só neste dispositivo e é substituída na próxima atualização dos dados. A gravação colaborativa e o tempo real (Realtime) entram na fase seguinte.</p>
-      <p class="text-small text-muted" style="line-height:1.7;margin-top:8px">A antiga sincronização por GitHub Gist (CloudSync) foi <b>desativada</b> e substituída por este login. A chave usada aqui é a chave pública (<i>anon/publishable</i>), protegida por RLS no servidor; a <code>service_role</code> nunca fica no aplicativo.</p>
     </div>
   </div>
 </div>
@@ -1880,6 +1877,58 @@ const Nuvem = (() => {
     return m;
   }
 
+  // ---- Coerção para ENVIO (satisfaz constraints do banco: btrim, date, int) ----
+  const _int  = v => { if (v === 0) return 0; if (v == null || v === "") return null; const n = parseInt(v, 10); return Number.isNaN(n) ? null : n; };
+  const _bool = v => (v === true ? true : (v === false ? false : null));
+  const _data = v => { const s = (v == null ? "" : String(v)).trim(); const m = s.match(/^\d{4}-\d{2}-\d{2}/); return m ? m[0] : null; }; // date-only ou null (nunca "")
+  const _ts   = v => { const s = (v == null ? "" : String(v)).trim(); return s || null; };
+  const _t    = v => (v == null ? null : String(v).trim()); // colunas texto (inclui as com CHECK btrim)
+  const _j    = v => (v == null ? null : (Array.isArray(v) ? (v.length ? v : null) : (typeof v === "object" ? (Object.keys(v).length ? v : null) : v)));
+
+  // Inverso de linhaParaProposicao. NÃO envia campos_extras nem colunas de auditoria (trigger).
+  function linhaDeProposicao(p) {
+    return {
+      id: p.id, id_original: p.idOriginal ?? null,
+      origem: _t(p.origem), sigla: _t(p.sigla), numero: _int(p.numero), ano: _int(p.ano),
+      identificacao: _t(p.identificacao), ementa: _t(p.ementa), ementa_detalhada: _t(p.ementaDetalhada), keywords: _t(p.keywords),
+      data_apresentacao: _data(p.dataApresentacao),
+      autor: _t(p.autor), autor_partido: _t(p.autorPartido), autor_uf: _t(p.autorUF),
+      situacao_bruta: _t(p.situacaoBruta), descricao_tramitacao: _t(p.descricaoTramitacao), despacho: _t(p.despacho),
+      sigla_orgao: _t(p.siglaOrgao), sigla_comissao: _t(p.siglaComissao),
+      url: _t(p.url), url_inteiro_teor: _t(p.urlInteiroTeor), url_portal: _t(p.urlPortal),
+      historico: _j(p.historico), situacao_atual_senado: _j(p.situacaoAtualSenado),
+      situacao_legislativa: _t(p.situacaoLegislativa),
+      data_aprovacao: _data(p.dataAprovacao), despacho_aprovacao: _t(p.despachoAprovacao),
+      ultima_movimentacao_data: _data(p.ultimaMovimentacaoData),
+      prazo_final_cn_sugerido: _data(p.prazoFinalCNSugerido),
+      data_enriquecimento: _ts(p.dataEnriquecimento), coletado_em: _ts(p.coletadoEm),
+      origem_dado: _t(p.origemDado), oculto: _bool(p.oculto), precisa_enriquecer: _bool(p.precisaEnriquecer),
+    };
+  }
+  // Inverso de linhaParaMarcacao. unidadesConsultadas vai para a junção (fora daqui).
+  function linhaDeMarcacao(m) {
+    return {
+      proposicao_id: m.proposicaoId,
+      apelido: _t(m.apelido), tematica_slug: _t(m.tematica) || null, relevante: _bool(m.relevante),
+      palavras_chave: _t(m.palavrasChave), resumo: _t(m.resumo), comentarios: _t(m.comentarios),
+      status_interno: _t(m.statusInterno), etapa: _t(m.etapa), etapas_fluxo: _j(m.etapasFluxo),
+      prazo_etapa: _data(m.prazoEtapa), data_recebimento_sei: _data(m.dataRecebimentoSEI),
+      prazo_final_cn: _data(m.prazoFinalCN), data_resposta: _data(m.dataResposta),
+      nup_recebimento: _t(m.nupRecebimento), nup_resposta: _t(m.nupResposta), tipo_resposta: _t(m.tipoResposta),
+      oficio: _t(m.oficio), atribuicao: _t(m.atribuicao),
+      link_congresso: _t(m.linkCongresso), link_inteiro_teor: _t(m.linkInteiroTeor),
+      analogos: _j(m.analogos), analogos_calculado_em: _ts(m.analogosCalculadoEm),
+      criada_automaticamente: _bool(m.criadaAutomaticamente), atualizado_em_app: _ts(m.atualizadoEm),
+    };
+  }
+  async function upsertLote(c, tabela, linhas, onConflict, ignorarDuplicados = false) {
+    const LOTE = 200;
+    for (let i = 0; i < linhas.length; i += LOTE) {
+      const { error } = await c.from(tabela).upsert(linhas.slice(i, i + LOTE), { onConflict, ignoreDuplicates: ignorarDuplicados });
+      if (error) throw error;
+    }
+  }
+
   // ---- Leitura paginada (evita truncamento silencioso do PostgREST, limite ~1000) ----
   async function lerTudo(tabela, colunas = "*") {
     const c = await client();
@@ -1951,6 +2000,55 @@ const Nuvem = (() => {
       _estado.ultimaAtualizacao = new Date().toISOString();
       _estado.ultimoErro = "";
       return { proposicoes: props.length, marcacoes: marcs.length };
+    },
+
+    // ENVIO (upload): grava a base LOCAL na nuvem. Idempotente (upsert por PK).
+    // Reconstrói a junção de unidades das proposições enviadas. Não inventa slug:
+    // unidades sem correspondência no cadastro são reportadas, não gravadas.
+    async enviarBaseParaNuvem() {
+      const c = await client();
+      const [props, marcs, linhasUni] = await Promise.all([
+        DB.getAll("proposicoes"), DB.getAll("marcacoes"), lerTudo("unidades", "slug,nome"),
+      ]);
+      const slugPorNome = new Map(linhasUni.map(u => [u.nome ?? u.slug, u.slug]));
+
+      // 1) proposicoes (o trigger cria a marcação 1:1; a etapa 2 sobrescreve os campos)
+      await upsertLote(c, "proposicoes", props.map(linhaDeProposicao), "id");
+      // 2) marcacoes
+      await upsertLote(c, "marcacoes", marcs.map(linhaDeMarcacao), "proposicao_id");
+      // 3) junção marcacao_unidades: reconstrói para as proposições enviadas
+      const semSlug = {}; const juncao = [];
+      for (const m of marcs) {
+        const nomes = Array.isArray(m.unidadesConsultadas) ? m.unidadesConsultadas : [];
+        for (const nome of nomes) {
+          const slug = slugPorNome.get(nome);
+          if (!slug) { semSlug[nome] = (semSlug[nome] || 0) + 1; continue; }
+          juncao.push({ proposicao_id: m.proposicaoId, unidade_slug: slug });
+        }
+      }
+      const ids = props.map(p => p.id);
+      const LOTE = 200;
+      for (let i = 0; i < ids.length; i += LOTE) {
+        const { error } = await c.from("marcacao_unidades").delete().in("proposicao_id", ids.slice(i, i + LOTE));
+        if (error) throw error;
+      }
+      if (juncao.length) await upsertLote(c, "marcacao_unidades", juncao, "proposicao_id,unidade_slug", true);
+
+      _estado.ultimaAtualizacao = new Date().toISOString();
+      return { proposicoes: props.length, marcacoes: marcs.length, unidades: juncao.length, unidadesSemSlug: semSlug };
+    },
+
+    // Config compartilhada (config_compartilhada: chave text PK, valor jsonb).
+    async obterConfigCompartilhada(chave) {
+      const c = await client();
+      const { data, error } = await c.from("config_compartilhada").select("valor").eq("chave", chave).maybeSingle();
+      if (error) throw error;
+      return data ? data.valor : null;
+    },
+    async salvarConfigCompartilhada(chave, valor) {
+      const c = await client();
+      const { error } = await c.from("config_compartilhada").upsert({ chave, valor }, { onConflict: "chave" });
+      if (error) throw error;
     },
   };
 })();
@@ -5817,8 +5915,17 @@ document.getElementById("cfg-unidades").addEventListener("change", async e => {
   await setConfig("unidades", e.target.value);
   await carregarLista();
 });
-document.getElementById("cfg-gemini-key").addEventListener("change", async e => await setConfig("geminiKey", e.target.value.trim()));
-document.getElementById("cfg-gemini-model").addEventListener("change", async e => await setConfig("geminiModel", e.target.value));
+document.getElementById("cfg-gemini-key").addEventListener("change", async e => {
+  const v = e.target.value.trim();
+  await setConfig("geminiKey", v);
+  const u = Nuvem.usuario();
+  if (u) { try { await Nuvem.salvarConfigCompartilhada("geminiKey:" + u.id, v); } catch (err) { console.warn("salvar geminiKey na nuvem:", err); } }
+});
+document.getElementById("cfg-gemini-model").addEventListener("change", async e => {
+  await setConfig("geminiModel", e.target.value);
+  const u = Nuvem.usuario();
+  if (u) { try { await Nuvem.salvarConfigCompartilhada("geminiModel:" + u.id, e.target.value); } catch (err) { console.warn("salvar geminiModel na nuvem:", err); } }
+});
 document.getElementById("btn-reset-regex").addEventListener("click", async () => {
   document.getElementById("cfg-regex").value = CONFIG_PADRAO.regex;
   await setConfig("regex", CONFIG_PADRAO.regex);
@@ -6011,6 +6118,25 @@ function atualizarIndicadorNuvem(estadoNome) {
   el.querySelector(".cloud-status-txt").textContent = e.txt;
 }
 
+// Puxa da nuvem as configurações da CONTA logada (chave Gemini + modelo) e aplica localmente.
+// Chaveado por usuário ("geminiKey:<uid>"), para ficar de fato cadastrado na conta logada.
+async function sincronizarConfigConta() {
+  const u = Nuvem.usuario();
+  if (!u) return;
+  try {
+    const k = await Nuvem.obterConfigCompartilhada("geminiKey:" + u.id);
+    if (k) {
+      await setConfig("geminiKey", String(k));
+      const el = document.getElementById("cfg-gemini-key"); if (el) el.value = String(k);
+    }
+    const md = await Nuvem.obterConfigCompartilhada("geminiModel:" + u.id);
+    if (md) {
+      await setConfig("geminiModel", String(md));
+      const el2 = document.getElementById("cfg-gemini-model"); if (el2) el2.value = String(md);
+    }
+  } catch (e) { console.warn("sincronizarConfigConta:", e); }
+}
+
 // Puxa a base da nuvem para o espelho e repinta todas as telas.
 async function atualizarDadosDaNuvem() {
   if (!Nuvem.autenticado()) { abrirModalConta(); return { ok: false, motivo: "não autenticado" }; }
@@ -6018,6 +6144,7 @@ async function atualizarDadosDaNuvem() {
   try {
     const r = await Nuvem.sincronizarEspelho();
     try { await garantirMarcacoes1a1(); } catch (e) { console.error("garantirMarcacoes1a1 (espelho):", e); }
+    await sincronizarConfigConta();
     await recarregarTudo();
     atualizarIndicadorNuvem("ok");
     renderContaModalEstado();
@@ -6034,6 +6161,7 @@ function renderContaModalEstado() {
   const resumo = document.getElementById("conta-estado-resumo");
   const cardLogin = document.getElementById("conta-card-login");
   const btnAtualizar = document.getElementById("btn-conta-atualizar");
+  const btnEnviar = document.getElementById("btn-conta-enviar");
   const btnSair = document.getElementById("btn-conta-sair");
   const u = Nuvem.usuario();
   if (u) {
@@ -6041,6 +6169,7 @@ function renderContaModalEstado() {
     if (resumo) resumo.innerHTML = `Conectado como <b>${escapeHtml(u.email || u.id)}</b>.<br>Última atualização de dados: ${escapeHtml(ua)}.`;
     if (cardLogin) cardLogin.style.display = "none";
     if (btnAtualizar) btnAtualizar.style.display = "";
+    if (btnEnviar) btnEnviar.style.display = "";
     if (btnSair) btnSair.style.display = "";
   } else {
     if (resumo) resumo.innerHTML = Nuvem.estado.ultimoErro
@@ -6048,6 +6177,7 @@ function renderContaModalEstado() {
       : `Não conectado. Entre com e-mail e senha para carregar os dados da nuvem.`;
     if (cardLogin) cardLogin.style.display = "";
     if (btnAtualizar) btnAtualizar.style.display = "none";
+    if (btnEnviar) btnEnviar.style.display = "none";
     if (btnSair) btnSair.style.display = "none";
   }
 }
@@ -6555,6 +6685,32 @@ document.getElementById("btn-conta-sair").onclick = async () => {
   try { await Nuvem.logout(); } catch (e) { console.error("logout:", e); }
   atualizarIndicadorNuvem("entrar");
   renderContaModalEstado();
+};
+
+document.getElementById("btn-conta-enviar").onclick = async () => {
+  const fb = document.getElementById("conta-upload-feedback");
+  if (!Nuvem.autenticado()) { fb.innerHTML = '<span style="color:#b91c1c">Entre na conta antes de enviar.</span>'; return; }
+  if (!confirm("Atualizar o banco na nuvem com a base local (proposições e marcações)? Isto grava no Supabase as alterações deste dispositivo, inclusive as vindas da planilha Controle RICs.xlsx.")) return;
+  const btn = document.getElementById("btn-conta-enviar");
+  btn.disabled = true;
+  fb.innerHTML = "Enviando para a nuvem…";
+  atualizarIndicadorNuvem("sincronizando");
+  try {
+    const r = await Nuvem.enviarBaseParaNuvem();
+    let msg = `<span style="color:#047857">Enviado: ${r.proposicoes} proposições, ${r.marcacoes} marcações, ${r.unidades} vínculos de unidade.</span>`;
+    const semSlug = Object.entries(r.unidadesSemSlug || {});
+    if (semSlug.length) {
+      semSlug.sort((a, b) => b[1] - a[1]);
+      msg += `<br><span style="color:#b45309">Unidades sem correspondência no cadastro (não enviadas, decidir manualmente): ${semSlug.map(([n, c]) => escapeHtml(n) + " (" + c + ")").join(", ")}</span>`;
+    }
+    fb.innerHTML = msg;
+    atualizarIndicadorNuvem("ok");
+    renderContaModalEstado();
+  } catch (e) {
+    console.error("enviarBaseParaNuvem:", e);
+    fb.innerHTML = `<span style="color:#b91c1c">Falha ao enviar: ${escapeHtml(e?.message || String(e))}</span>`;
+    atualizarIndicadorNuvem("erro");
+  } finally { btn.disabled = false; }
 };
 
 // Menu de ações — abre/fecha o dropdown
@@ -10106,6 +10262,7 @@ async function recarregarTudo() {
           try {
             await Nuvem.sincronizarEspelho(); // puxa da nuvem -> espelho local
             try { await garantirMarcacoes1a1(); } catch (e) { console.error("garantirMarcacoes1a1 (espelho):", e); }
+            await sincronizarConfigConta();   // chave Gemini da conta, se houver
             await recarregarTudo();           // repinta com os dados frescos
             atualizarIndicadorNuvem("ok");
           } catch (e) {
