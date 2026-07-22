@@ -1399,8 +1399,16 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       </div>
       <div id="conta-upload-feedback" class="text-small" style="margin-top:8px"></div>
     </div>
+    <div class="card cfg-acordeao cfg-collapsed" id="conta-card-senha" style="display:none">
+      <h2 class="cfg-acordeao-header">Trocar minha senha</h2>
+      <div class="form-row"><div style="flex:2"><label>Nova senha</label><input type="password" id="senha-nova" placeholder="mínimo de 6 caracteres" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"></div></div>
+      <div class="form-row" style="margin-top:8px"><div style="flex:2"><label>Confirmar nova senha</label><input type="password" id="senha-nova2" placeholder="repita a nova senha" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"></div></div>
+      <div class="toolbar" style="margin-top:10px"><button class="btn btn-primary btn-sm" id="btn-trocar-minha-senha">Trocar senha</button></div>
+      <div id="senha-feedback" class="text-small" style="margin-top:8px"></div>
+    </div>
     <div class="card cfg-acordeao cfg-collapsed" id="conta-card-admin" style="display:none">
-      <h2 class="cfg-acordeao-header">Administração: criar usuário</h2>
+      <h2 class="cfg-acordeao-header">Administração: usuários</h2>
+      <h3 style="font-size:13px;margin:0 0 8px">Criar usuário</h3>
       <p class="text-small text-muted" style="margin-bottom:10px">Prerrogativa exclusiva do administrador. Cria uma conta de acesso à base (o cadastro público continua fechado). Um administrador pode criar outros administradores ou usuários comuns.</p>
       <div class="form-row">
         <div style="flex:2"><label>E-mail do novo usuário</label><input type="email" id="admin-novo-email" placeholder="nome@casacivil.gov.br" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
@@ -1413,6 +1421,12 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <button class="btn btn-primary btn-sm" id="btn-admin-criar">Criar usuário</button>
       </div>
       <div id="admin-criar-feedback" class="text-small" style="margin-top:8px"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+      <div class="toolbar" style="justify-content:space-between;align-items:center;gap:8px">
+        <h3 style="font-size:13px;margin:0">Usuários cadastrados</h3>
+        <button class="btn btn-sm" id="btn-admin-listar">↻ Atualizar lista</button>
+      </div>
+      <div id="admin-lista-usuarios" class="text-small" style="margin-top:8px"></div>
     </div>
     <div class="card cfg-acordeao" id="conta-card-login">
       <h2 class="cfg-acordeao-header">Entrar</h2>
@@ -2070,19 +2084,31 @@ const Nuvem = (() => {
     // (na Edge Function) consegue definir esse campo, então o usuário não se autopromove.
     usuarioEhAdmin() { return (_sessao?.user?.app_metadata?.role) === "admin"; },
 
-    // Criação de usuário: prerrogativa exclusiva do admin. NÃO usa service_role no app;
-    // chama a Edge Function 'criar-usuario', que valida o papel do chamador no servidor.
-    async criarUsuario({ email, senha, papel }) {
+    // Troca a PRÓPRIA senha (qualquer perfil). Usa a sessão atual, sem service_role.
+    async trocarMinhaSenha(novaSenha) {
       const c = await client();
-      const { data, error } = await c.functions.invoke("criar-usuario", { body: { email, senha, papel } });
+      const { error } = await c.auth.updateUser({ password: novaSenha });
+      if (error) throw error;
+    },
+
+    // Ações administrativas de contas via Edge Function 'admin-usuarios'.
+    // O service_role fica no servidor; a função confere que o chamador é admin.
+    async _admin(action, params = {}) {
+      const c = await client();
+      const { data, error } = await c.functions.invoke("admin-usuarios", { body: { action, ...params } });
       if (error) {
-        let msg = error.message || "Falha ao criar usuário.";
+        let msg = error.message || "Falha na operação.";
         try { const ctx = await error.context?.json?.(); if (ctx?.error) msg = ctx.error; } catch (e) {}
         throw new Error(msg);
       }
       if (data && data.error) throw new Error(data.error);
       return data;
     },
+    criarUsuario({ email, senha, papel }) { return this._admin("criar", { email, senha, papel }); },
+    async listarUsuarios() { const r = await this._admin("listar"); return r.usuarios || []; },
+    redefinirSenhaUsuario(id, senha) { return this._admin("redefinir_senha", { id, senha }); },
+    mudarPapelUsuario(id, papel) { return this._admin("mudar_papel", { id, papel }); },
+    excluirUsuario(id) { return this._admin("excluir", { id }); },
   };
 })();
 
@@ -5971,6 +5997,80 @@ document.getElementById("btn-admin-criar").onclick = async () => {
   } finally { btn.disabled = false; }
 };
 
+document.getElementById("btn-trocar-minha-senha").onclick = async () => {
+  const fb = document.getElementById("senha-feedback");
+  const s1 = document.getElementById("senha-nova").value;
+  const s2 = document.getElementById("senha-nova2").value;
+  if (!s1 || s1.length < 6) { fb.innerHTML = '<span style="color:#b91c1c">A senha deve ter ao menos 6 caracteres.</span>'; return; }
+  if (s1 !== s2) { fb.innerHTML = '<span style="color:#b91c1c">As senhas não conferem.</span>'; return; }
+  const btn = document.getElementById("btn-trocar-minha-senha");
+  btn.disabled = true;
+  fb.innerHTML = "Alterando…";
+  try {
+    await Nuvem.trocarMinhaSenha(s1);
+    fb.innerHTML = '<span style="color:#047857">Senha alterada com sucesso.</span>';
+    document.getElementById("senha-nova").value = "";
+    document.getElementById("senha-nova2").value = "";
+  } catch (e) {
+    console.error("trocarMinhaSenha:", e);
+    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e?.message || String(e))}</span>`;
+  } finally { btn.disabled = false; }
+};
+
+// Lista de usuários (admin). Cada linha traz ações de senha, perfil e exclusão.
+async function carregarListaUsuarios() {
+  const box = document.getElementById("admin-lista-usuarios");
+  if (!box) return;
+  box.innerHTML = "Carregando…";
+  try {
+    const usuarios = await Nuvem.listarUsuarios();
+    if (!usuarios.length) { box.innerHTML = "Nenhum usuário."; return; }
+    const meuId = Nuvem.usuario()?.id;
+    box.innerHTML = usuarios.map(u => {
+      const ehAdmin = u.papel === "admin";
+      const eu = u.id === meuId;
+      return `<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span><b>${escapeHtml(u.email || "")}</b> <span class="text-muted">(${ehAdmin ? "admin" : "usuário"}${eu ? ", você" : ""})</span></span>
+        <span style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm" data-acao="senha" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email || "")}">Senha</button>
+          <button class="btn btn-sm" data-acao="papel" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email || "")}" data-papel="${ehAdmin ? "admin" : "usuario"}">${ehAdmin ? "Tornar usuário" : "Tornar admin"}</button>
+          <button class="btn btn-sm" data-acao="excluir" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email || "")}"${eu ? " disabled" : ""}>Excluir</button>
+        </span>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    box.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e?.message || String(e))}</span>`;
+  }
+}
+
+document.getElementById("btn-admin-listar").onclick = () => carregarListaUsuarios();
+
+document.getElementById("admin-lista-usuarios").addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("button[data-acao]");
+  if (!btn) return;
+  const { acao, id, email, papel } = btn.dataset;
+  try {
+    if (acao === "senha") {
+      const nova = prompt(`Nova senha para ${email} (mínimo de 6 caracteres):`);
+      if (nova == null) return;
+      if (nova.length < 6) { alert("A senha deve ter ao menos 6 caracteres."); return; }
+      await Nuvem.redefinirSenhaUsuario(id, nova);
+      alert("Senha alterada.");
+    } else if (acao === "papel") {
+      const novo = papel === "admin" ? "usuario" : "admin";
+      if (!confirm(`Alterar o perfil de ${email} para ${novo === "admin" ? "administrador" : "usuário"}?`)) return;
+      await Nuvem.mudarPapelUsuario(id, novo);
+    } else if (acao === "excluir") {
+      if (!confirm(`Excluir ${email}? Esta ação não pode ser desfeita.`)) return;
+      await Nuvem.excluirUsuario(id);
+    }
+    await carregarListaUsuarios();
+  } catch (e) {
+    console.error("gestao usuario:", e);
+    alert("Falha: " + (e?.message || String(e)));
+  }
+});
+
 document.getElementById("cfg-gemini-key").addEventListener("change", async e => {
   const v = e.target.value.trim();
   await setConfig("geminiKey", v);
@@ -6216,6 +6316,7 @@ async function atualizarDadosDaNuvem() {
 function renderContaModalEstado() {
   const resumo = document.getElementById("conta-estado-resumo");
   const cardLogin = document.getElementById("conta-card-login");
+  const cardSenha = document.getElementById("conta-card-senha");
   const cardAdmin = document.getElementById("conta-card-admin");
   const btnAtualizar = document.getElementById("btn-conta-atualizar");
   const btnEnviar = document.getElementById("btn-conta-enviar");
@@ -6225,6 +6326,7 @@ function renderContaModalEstado() {
     const ua = Nuvem.estado.ultimaAtualizacao ? new Date(Nuvem.estado.ultimaAtualizacao).toLocaleString("pt-BR") : "ainda não atualizado nesta sessão";
     if (resumo) resumo.innerHTML = `Conectado como <b>${escapeHtml(u.email || u.id)}</b>${Nuvem.usuarioEhAdmin() ? " (administrador)" : ""}.<br>Última atualização de dados: ${escapeHtml(ua)}.`;
     if (cardLogin) cardLogin.style.display = "none";
+    if (cardSenha) cardSenha.style.display = "";
     if (cardAdmin) cardAdmin.style.display = Nuvem.usuarioEhAdmin() ? "" : "none";
     if (btnAtualizar) btnAtualizar.style.display = "";
     if (btnEnviar) btnEnviar.style.display = "";
@@ -6234,6 +6336,7 @@ function renderContaModalEstado() {
       ? `Não conectado. <span style="color:#b91c1c">${escapeHtml(Nuvem.estado.ultimoErro)}</span>`
       : `Não conectado. Entre com e-mail e senha para carregar os dados da nuvem.`;
     if (cardLogin) cardLogin.style.display = "";
+    if (cardSenha) cardSenha.style.display = "none";
     if (cardAdmin) cardAdmin.style.display = "none";
     if (btnAtualizar) btnAtualizar.style.display = "none";
     if (btnEnviar) btnEnviar.style.display = "none";
@@ -6245,6 +6348,7 @@ function abrirModalConta() {
   abrirModal("modal-cloudsync");
   renderContaModalEstado();
   configToAcordeao("modal-cloudsync", { todosFechados: true });
+  if (Nuvem.usuarioEhAdmin()) carregarListaUsuarios();
 }
 
 document.getElementById("btn-open-cloudsync").onclick = () => { fecharMenuAcoes(); abrirModalConta(); };
