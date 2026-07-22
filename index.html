@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#4f46e5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Monitor RIC">
+<meta name="apple-mobile-web-app-title" content="Monitor RIC 2.0">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
-<title>Monitor RIC — Requerimentos de Informação do Congresso Nacional</title>
+<title>Monitor RIC 2.0</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -762,11 +762,11 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <div class="brand-logo" aria-hidden="true">
         <img src="icon-72.png" alt="Monitor RIC" width="52" height="52" onerror="this.style.display='none';this.parentNode.classList.add('fallback');this.parentNode.innerHTML='R';">
       </div>
-      <h1><span class="h1-titulo">Monitor RIC<span class="versao-badge" title="Versão atual">v4.8</span></span><small>Requerimentos de Informação do Congresso Nacional</small></h1>
+      <h1><span class="h1-titulo">Monitor RIC 2.0<span class="versao-badge" title="Versão atual">2.0</span></span></h1>
     </div>
     <div class="header-actions">
       <div class="header-actions-tema">
-        <button class="cloud-status cloud-local" id="cloud-status-indicator" title="Clique para sincronizar agora" aria-label="Sincronizar agora"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Local</span></button>
+        <button class="cloud-status cloud-local" id="cloud-status-indicator" title="Conta / dados na nuvem" aria-label="Conta e dados na nuvem"><span class="cloud-status-icon">○</span><span class="cloud-status-txt">Nuvem</span></button>
         <button class="btn btn-icon btn-ghost" id="btn-dark-toggle" title="Alternar tema claro/escuro" aria-label="Alternar tema">☀️</button>
       </div>
     </div>
@@ -776,7 +776,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
       <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
         <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sync API Congresso</button>
-        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">⤓</span>Sync base na nuvem</button>
+        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">☁</span>Conta / Nuvem (login)</button>
         <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">＋</span>Incluir requerimento</button>
         <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✎</span>Edição em lote</button>
         <button class="menu-item" id="btn-open-relatorios-menu" role="menuitem"><span class="menu-item-icon">📄</span>Relatórios</button>
@@ -1204,7 +1204,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="modal-close" data-close-modal="modal-sobre">&times;</button>
     </div>
     <div class="card">
-      <p style="margin-bottom:14px"><b>Monitor RIC</b> <span class="text-small text-muted">— versão <span id="sobre-versao">4.8</span></span></p>
+      <p style="margin-bottom:14px"><b>Monitor RIC 2.0</b> <span class="text-small text-muted">(versão <span id="sobre-versao">2.0</span>, backend Supabase)</span></p>
       <p class="text-small" style="line-height:1.7;margin-bottom:14px">Aplicativo (PWA) da SSGP/SE/Casa Civil para monitorar os <b>Requerimentos de Informação</b> (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Funciona offline e instalável como app.</p>
       <h3 style="font-size:13px;margin:0 0 8px">Funcionalidades</h3>
       <ul class="text-small" style="line-height:1.7;padding-left:18px;margin-bottom:14px">
@@ -1387,57 +1387,34 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <div class="modal-bg" id="modal-cloudsync">
   <div class="modal">
     <div class="modal-header">
-      <h2>⤓ Sync base na nuvem</h2>
+      <h2>☁ Conta e dados na nuvem</h2>
       <button class="modal-close" data-close-modal="modal-cloudsync">&times;</button>
     </div>
     <div class="card">
-      <div id="cloud-estado-resumo" class="text-small" style="margin-bottom:12px"></div>
+      <div id="conta-estado-resumo" class="text-small" style="margin-bottom:12px"></div>
       <div class="toolbar" style="flex-wrap:wrap;gap:8px">
-        <button class="btn btn-primary btn-sm" id="btn-cloud-sync-agora">↻ Sincronizar agora</button>
-        <button class="btn btn-sm" id="btn-cloud-desconectar">Desconectar</button>
+        <button class="btn btn-primary btn-sm" id="btn-conta-atualizar" style="display:none">↻ Atualizar dados agora</button>
+        <button class="btn btn-sm" id="btn-conta-sair" style="display:none">Sair (logout)</button>
       </div>
     </div>
-    <div class="card cfg-acordeao">
-      <h2 class="cfg-acordeao-header">Configuração</h2>
-      <p class="text-small text-muted" style="margin-bottom:10px">Sincronização single-user via GitHub Gist privado. Os dados são cifrados (AES-GCM 256) antes de sair deste computador. Informe um PAT fine-grained com permissão de Gists e o ID do Gist (ou crie um novo).</p>
+    <div class="card cfg-acordeao" id="conta-card-login">
+      <h2 class="cfg-acordeao-header">Entrar</h2>
+      <p class="text-small text-muted" style="margin-bottom:10px">Acesso à base institucional no Supabase (Monitor RIC 2.0). Use o e-mail e a senha cadastrados pela equipe. O cadastro é fechado: novos usuários são criados apenas pelo administrador no painel do Supabase.</p>
       <div class="form-row">
-        <div style="flex:2"><label>Personal Access Token (PAT)</label><input type="password" id="cfg-cloud-pat" placeholder="github_pat_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-cloud-pat-nofill"></div>
+        <div style="flex:2"><label>E-mail</label><input type="email" id="conta-email" placeholder="nome@casacivil.gov.br" autocomplete="username" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
       </div>
       <div class="form-row" style="margin-top:8px">
-        <div style="flex:2"><label>Gist ID</label><input type="text" id="cfg-cloud-gistid" placeholder="ID do Gist secreto" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-cloud-gistid-nofill"></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn btn-sm" id="btn-cloud-criar-gist">+ Criar novo Gist</button></div>
+        <div style="flex:2"><label>Senha</label><input type="password" id="conta-senha" placeholder="senha" autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
       </div>
       <div class="toolbar" style="margin-top:10px">
-        <button class="btn btn-primary btn-sm" id="btn-cloud-salvar-cfg">Salvar configuração</button>
-        <button class="btn btn-sm" id="btn-cloud-testar">Testar conexão</button>
+        <button class="btn btn-primary btn-sm" id="btn-conta-entrar">Entrar</button>
       </div>
-      <div id="cloud-cfg-feedback" class="text-small" style="margin-top:8px"></div>
+      <div id="conta-login-feedback" class="text-small" style="margin-top:8px"></div>
     </div>
     <div class="card cfg-acordeao cfg-collapsed">
-      <h2 class="cfg-acordeao-header">Ativar outro computador</h2>
-      <p class="text-small text-muted" style="margin-bottom:10px">Exporte a configuração neste computador e cole no outro para ativar a sincronização com um único <i>paste</i>.</p>
-      <div class="toolbar" style="flex-wrap:wrap;gap:8px">
-        <button class="btn btn-sm" id="btn-cloud-exportar">Exportar configuração</button>
-      </div>
-      <textarea id="cloud-export-texto" rows="3" readonly style="margin-top:8px;display:none" placeholder="Texto de configuração aparecerá aqui"></textarea>
-      <div style="margin-top:12px">
-        <label>Importar configuração (colar do outro computador)</label>
-        <textarea id="cloud-import-texto" rows="3" placeholder="Cole aqui o texto MRIC1:..." autocomplete="off" data-1p-ignore data-lpignore="true"></textarea>
-        <button class="btn btn-sm btn-primary" id="btn-cloud-importar" style="margin-top:8px">Importar e ativar</button>
-      </div>
-      <div id="cloud-import-feedback" class="text-small" style="margin-top:8px"></div>
-    </div>
-    <div class="card cfg-acordeao cfg-collapsed">
-      <h2 class="cfg-acordeao-header">Como configurar (passo a passo)</h2>
-      <ol class="text-small" style="line-height:1.7;padding-left:20px">
-        <li><b>Recomendado — token clássico (mais confiável para Gists):</b> GitHub → Settings → Developer settings → <b>Personal access tokens → Tokens (classic)</b> → <b>Generate new token (classic)</b>. Em "Select scopes", marque apenas <b>gist</b>. Gere e copie o token.</li>
-        <li>(Alternativa fine-grained: em "Account permissions" habilite "Gists: Read and write" — porém tokens fine-grained às vezes dão erro 403 em Gists, por isso o clássico é preferível.)</li>
-        <li>Cole o token no campo <b>PAT</b> acima e clique em <b>Testar conexão</b> para confirmar que tem acesso a Gists.</li>
-        <li>Clique em <b>"+ Criar novo Gist"</b> — o ID será preenchido automaticamente.</li>
-        <li>Clique em <b>Salvar configuração</b>. A primeira sincronização ocorre automaticamente.</li>
-        <li>Em cada computador adicional, use <b>Exportar configuração</b> aqui e <b>Importar e ativar</b> lá — um único <i>paste</i> resolve.</li>
-        <li><b>Computador compartilhado?</b> Clique em <b>Desconectar</b> ao terminar, para remover as credenciais deste dispositivo.</li>
-      </ol>
+      <h2 class="cfg-acordeao-header">Sobre o modo espelho (Fase F)</h2>
+      <p class="text-small text-muted" style="line-height:1.7">Nesta fase o aplicativo <b>lê</b> os dados diretamente do Supabase e mantém o banco local (IndexedDB) apenas como <b>espelho de leitura</b>, para funcionar offline. Ainda <b>não há gravação na nuvem</b>: qualquer edição feita aqui fica só neste dispositivo e é substituída na próxima atualização dos dados. A gravação colaborativa e o tempo real (Realtime) entram na fase seguinte.</p>
+      <p class="text-small text-muted" style="line-height:1.7;margin-top:8px">A antiga sincronização por GitHub Gist (CloudSync) foi <b>desativada</b> e substituída por este login. A chave usada aqui é a chave pública (<i>anon/publishable</i>), protegida por RLS no servidor; a <code>service_role</code> nunca fica no aplicativo.</p>
     </div>
   </div>
 </div>
@@ -1775,6 +1752,209 @@ const DB = (() => {
 
 async function getConfig(key, def) { const r = await DB.get("config", key); return r ? r.value : def; }
 async function setConfig(key, value, opts) { await DB.put("config", { key, value }, opts); }
+
+// ============================================================
+// Monitor RIC 2.0, Camada Nuvem (Supabase), Fase F (espelho, somente leitura)
+// Integração inline do db-adapter.js (single-file, sem toolchain).
+//
+// Papel nesta fase:
+//   - Fonte da verdade ONLINE: Supabase (PostgREST + RLS).
+//   - IndexedDB local vira ESPELHO de leitura: a cada login/atualização,
+//     puxamos proposicoes+marcacoes da nuvem, convertemos para o formato do
+//     app (camelCase) e regravamos o espelho com {sync:false}.
+//   - NÃO há escrita na nuvem nesta fase (writes + Realtime = fase seguinte).
+//
+// O de-para linha->registro abaixo é o INVERSO exato do carregador validado
+// (03-carga-inicial.py) contra o backup real de 710/710. Se o schema-real.json
+// divergir, ajustar SOMENTE linhaParaProposicao / linhaParaMarcacao.
+// ============================================================
+const SUPABASE_URL  = "https://geyakdswxormbqtjndxq.supabase.co";
+const SUPABASE_ANON = "sb_publishable_XHNImRC0jiFzUnQ1uJMiLw_DEPXy7sB"; // chave pública (RLS protege). NUNCA usar service_role aqui.
+const SUPABASE_JS_VERSAO = "2.79.0"; // fixada (§8): regressão ESM em versões posteriores sem bundler
+const SUPABASE_CDN = `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@${SUPABASE_JS_VERSAO}/+esm`;
+
+const Nuvem = (() => {
+  let _client = null;
+  let _sessao = null;
+  const _estado = { online: false, sessao: null, ultimoErro: "", ultimaAtualizacao: null };
+  const _ouvintesAuth = [];
+
+  async function client() {
+    if (_client) return _client;
+    const { createClient } = await import(SUPABASE_CDN);
+    _client = createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { persistSession: true, autoRefreshToken: true },
+    });
+    _client.auth.onAuthStateChange((_ev, sessao) => {
+      _sessao = sessao; _estado.sessao = sessao;
+      _ouvintesAuth.forEach(cb => { try { cb(sessao); } catch (e) {} });
+    });
+    const { data } = await _client.auth.getSession();
+    _sessao = data?.session || null; _estado.sessao = _sessao;
+    return _client;
+  }
+
+  // ---- Coerção defensiva (mantém o shape que o app espera) ----
+  const txt = v => (v == null ? "" : v);              // null -> "" (texto)
+  const arr = v => (Array.isArray(v) ? v : (v == null ? [] : v));
+  const obj = v => (v == null ? {} : v);
+
+  // ---- De-para: linha proposicoes (snake) -> proposição do app (camel) ----
+  // Inverso de P{} do carregador. Datas vêm "YYYY-MM-DD" do PostgREST (já é o formato do app).
+  function linhaParaProposicao(r) {
+    const p = {
+      id: r.id,
+      idOriginal: r.id_original ?? null,
+      origem: txt(r.origem),
+      sigla: txt(r.sigla),
+      numero: r.numero,
+      ano: r.ano,
+      identificacao: txt(r.identificacao),
+      ementa: txt(r.ementa),
+      ementaDetalhada: txt(r.ementa_detalhada),
+      keywords: txt(r.keywords),
+      dataApresentacao: txt(r.data_apresentacao),
+      autor: txt(r.autor),
+      autorPartido: txt(r.autor_partido),
+      autorUF: txt(r.autor_uf),
+      situacaoBruta: txt(r.situacao_bruta),
+      descricaoTramitacao: txt(r.descricao_tramitacao),
+      despacho: txt(r.despacho),
+      siglaOrgao: txt(r.sigla_orgao),
+      siglaComissao: txt(r.sigla_comissao),
+      url: txt(r.url),
+      urlInteiroTeor: txt(r.url_inteiro_teor),
+      urlPortal: txt(r.url_portal),
+      historico: arr(r.historico),
+      situacaoAtualSenado: r.situacao_atual_senado ?? null,
+      situacaoLegislativa: r.situacao_legislativa || "pendente",
+      dataAprovacao: txt(r.data_aprovacao),
+      despachoAprovacao: txt(r.despacho_aprovacao),
+      ultimaMovimentacaoData: txt(r.ultima_movimentacao_data),
+      prazoFinalCNSugerido: txt(r.prazo_final_cn_sugerido),
+      dataEnriquecimento: r.data_enriquecimento ?? "",
+      coletadoEm: r.coletado_em ?? "",
+      origemDado: txt(r.origem_dado),
+      oculto: r.oculto === true,
+      precisaEnriquecer: r.precisa_enriquecer === true,
+    };
+    // campos_extras: válvula de escape (vazia nos dados atuais). Não omitir se existir.
+    if (r.campos_extras && typeof r.campos_extras === "object") Object.assign(p, r.campos_extras);
+    return p;
+  }
+
+  // ---- De-para: linha marcacoes (snake) -> marcação do app (camel) ----
+  // Inverso de M{}. ATENÇÃO: atualizado_em_app é o "atualizadoEm" do app
+  // (a coluna atualizado_em é auditoria do banco, não vai para o app).
+  // unidadesConsultadas NÃO está em marcacoes: vem da junção marcacao_unidades.
+  function linhaParaMarcacao(r, unidadesPorProp) {
+    const m = {
+      proposicaoId: r.proposicao_id,
+      apelido: txt(r.apelido),
+      tematica: txt(r.tematica_slug),
+      relevante: r.relevante === true,
+      palavrasChave: txt(r.palavras_chave),
+      resumo: txt(r.resumo),
+      comentarios: txt(r.comentarios),
+      unidadesConsultadas: arr(unidadesPorProp && unidadesPorProp.get(r.proposicao_id)),
+      statusInterno: txt(r.status_interno) || "novo",
+      etapa: txt(r.etapa),
+      prazoEtapa: txt(r.prazo_etapa),
+      etapasFluxo: obj(r.etapas_fluxo),
+      dataRecebimentoSEI: txt(r.data_recebimento_sei),
+      prazoFinalCN: txt(r.prazo_final_cn),
+      dataResposta: txt(r.data_resposta),
+      nupRecebimento: txt(r.nup_recebimento),
+      nupResposta: txt(r.nup_resposta),
+      tipoResposta: txt(r.tipo_resposta),
+      oficio: txt(r.oficio),
+      atribuicao: txt(r.atribuicao),
+      linkCongresso: txt(r.link_congresso),
+      linkInteiroTeor: txt(r.link_inteiro_teor),
+      analogos: arr(r.analogos),
+      analogosCalculadoEm: r.analogos_calculado_em ?? "",
+      criadaAutomaticamente: r.criada_automaticamente === true,
+      atualizadoEm: r.atualizado_em_app ?? "",
+    };
+    if (r.campos_extras && typeof r.campos_extras === "object") Object.assign(m, r.campos_extras);
+    return m;
+  }
+
+  // ---- Leitura paginada (evita truncamento silencioso do PostgREST, limite ~1000) ----
+  async function lerTudo(tabela, colunas = "*") {
+    const c = await client();
+    const PAG = 1000;
+    let inicio = 0, acc = [];
+    for (;;) {
+      const { data, error } = await c.from(tabela).select(colunas).range(inicio, inicio + PAG - 1);
+      if (error) throw error;
+      acc = acc.concat(data || []);
+      if (!data || data.length < PAG) break;
+      inicio += PAG;
+    }
+    return acc;
+  }
+
+  return {
+    estado: _estado,
+    onMudancaAuth(cb) { _ouvintesAuth.push(cb); },
+
+    async iniciar() {
+      try { await client(); _estado.online = true; }
+      catch (e) { _estado.online = false; _estado.ultimoErro = e?.message || String(e); throw e; }
+      return _sessao;
+    },
+    sessao() { return _sessao; },
+    usuario() { return _sessao?.user || null; },
+    autenticado() { return !!_sessao?.user; },
+
+    async login(email, senha) {
+      const c = await client();
+      const { data, error } = await c.auth.signInWithPassword({ email, password: senha });
+      if (error) throw error;
+      _sessao = data.session; _estado.sessao = _sessao;
+      return data.user;
+    },
+    async logout() {
+      const c = await client();
+      await c.auth.signOut();
+      _sessao = null; _estado.sessao = null;
+    },
+
+    // Puxa a base da nuvem e regrava o ESPELHO local (somente leitura). Retorna contadores.
+    async sincronizarEspelho() {
+      const [linhasProp, linhasMarc, linhasUni, linhasJunc] = await Promise.all([
+        lerTudo("proposicoes"),
+        lerTudo("marcacoes"),
+        lerTudo("unidades", "slug,nome"),
+        lerTudo("marcacao_unidades", "proposicao_id,unidade_slug"),
+      ]);
+      // slug -> nome canônico (a junção guarda slug; o app usa o nome canônico)
+      const nomePorSlug = new Map(linhasUni.map(u => [u.slug, u.nome ?? u.slug]));
+      const unidadesPorProp = new Map();
+      for (const j of linhasJunc) {
+        const nome = nomePorSlug.get(j.unidade_slug) ?? j.unidade_slug;
+        if (!unidadesPorProp.has(j.proposicao_id)) unidadesPorProp.set(j.proposicao_id, []);
+        const lista = unidadesPorProp.get(j.proposicao_id);
+        if (!lista.includes(nome)) lista.push(nome);
+      }
+      const props = linhasProp.map(linhaParaProposicao);
+      const marcs = linhasMarc.map(r => linhaParaMarcacao(r, unidadesPorProp));
+
+      // Regrava o espelho: limpa e reescreve, tudo {sync:false} (não dispara nuvem).
+      await DB.clear("proposicoes");
+      await DB.clear("marcacoes");
+      await DB.bulkPut("proposicoes", props, { sync: false });
+      await DB.bulkPut("marcacoes", marcs, { sync: false });
+
+      _estado.online = true;
+      _estado.ultimaAtualizacao = new Date().toISOString();
+      _estado.ultimoErro = "";
+      return { proposicoes: props.length, marcacoes: marcs.length };
+    },
+  };
+})();
+
 
 // ===== Migração v1/v2 → v3 (incluindo cópia do banco legado monitor-sic) =====
 async function migrarBancoLegado() {
@@ -5812,47 +5992,83 @@ function configToAcordeao(modalId = "modal-config", opts = {}) {
 
 document.getElementById("btn-open-config").onclick = async () => { fecharMenuAcoes(); await carregarConfigUI(); await renderNaoMapeadas(); abrirModal("modal-config"); configToAcordeao("modal-config", { todosFechados: true }); };
 
-// ===== Handlers da UI CloudSync (v4.7) =====
-function renderCloudModalEstado() {
-  const cfg = CloudSync.cfg;
-  const resumo = document.getElementById("cloud-estado-resumo");
-  if (resumo) {
-    const st = CloudSync.status;
-    const stTxt = { local: "Local (sem sincronização)", sincronizando: "Sincronizando…", sincronizado: "Sincronizado", pendente: "Pendente (alterações não enviadas)", erro: "Erro na última sincronização", offline: "Offline" }[st] || st;
-    resumo.innerHTML = CloudSync.estaConfigurado()
-      ? `Status: <b>${stTxt}</b><br>Gist ID: <code>${escapeHtml(cfg.gistId)}</code>`
-      : `Não configurado. Preencha PAT + Gist ID abaixo, ou importe a configuração de outro computador.`;
-  }
-  // Preenche os campos (sem expor o PAT inteiro se já salvo — mostra como está)
-  const elPat = document.getElementById("cfg-cloud-pat");
-  const elGist = document.getElementById("cfg-cloud-gistid");
-  if (elPat && cfg.pat) elPat.value = cfg.pat;
-  if (elGist && cfg.gistId) elGist.value = cfg.gistId;
+// ===== Handlers da UI Conta / Nuvem (Supabase, Fase F) =====
+// Indicador do cabeçalho: reaproveita as classes cloud-* (local/syncing/ok/pending/error/offline).
+function atualizarIndicadorNuvem(estadoNome) {
+  const el = document.getElementById("cloud-status-indicator");
+  if (!el) return;
+  const mapa = {
+    entrar:        { icon: "○", txt: "Entrar",         cls: "cloud-pending", title: "Faça login para carregar os dados da nuvem" },
+    sincronizando: { icon: "↻", txt: "Atualizando…",   cls: "cloud-syncing", title: "Buscando dados na nuvem" },
+    ok:            { icon: "✓", txt: "Nuvem",           cls: "cloud-ok",      title: "Conectado ao Supabase. Clique para atualizar os dados." },
+    offline:      { icon: "⊘", txt: "Espelho local",  cls: "cloud-offline", title: "Sem conexão com a nuvem. Exibindo o espelho local." },
+    erro:          { icon: "⚠", txt: "Erro",            cls: "cloud-error",   title: "Falha ao falar com a nuvem. Clique para tentar de novo." },
+  };
+  const e = mapa[estadoNome] || mapa.entrar;
+  el.className = "cloud-status " + e.cls;
+  el.title = e.title;
+  el.querySelector(".cloud-status-icon").textContent = e.icon;
+  el.querySelector(".cloud-status-txt").textContent = e.txt;
 }
 
-// v4.7.1: abre o modal de sincronização (agora acessível pelo menu de ações)
-function abrirModalCloudSync() {
+// Puxa a base da nuvem para o espelho e repinta todas as telas.
+async function atualizarDadosDaNuvem() {
+  if (!Nuvem.autenticado()) { abrirModalConta(); return { ok: false, motivo: "não autenticado" }; }
+  atualizarIndicadorNuvem("sincronizando");
+  try {
+    const r = await Nuvem.sincronizarEspelho();
+    try { await garantirMarcacoes1a1(); } catch (e) { console.error("garantirMarcacoes1a1 (espelho):", e); }
+    await recarregarTudo();
+    atualizarIndicadorNuvem("ok");
+    renderContaModalEstado();
+    return { ok: true, ...r };
+  } catch (e) {
+    console.error("atualizarDadosDaNuvem:", e);
+    atualizarIndicadorNuvem(navigator.onLine ? "erro" : "offline");
+    renderContaModalEstado();
+    return { ok: false, erro: e?.message || String(e) };
+  }
+}
+
+function renderContaModalEstado() {
+  const resumo = document.getElementById("conta-estado-resumo");
+  const cardLogin = document.getElementById("conta-card-login");
+  const btnAtualizar = document.getElementById("btn-conta-atualizar");
+  const btnSair = document.getElementById("btn-conta-sair");
+  const u = Nuvem.usuario();
+  if (u) {
+    const ua = Nuvem.estado.ultimaAtualizacao ? new Date(Nuvem.estado.ultimaAtualizacao).toLocaleString("pt-BR") : "ainda não atualizado nesta sessão";
+    if (resumo) resumo.innerHTML = `Conectado como <b>${escapeHtml(u.email || u.id)}</b>.<br>Última atualização de dados: ${escapeHtml(ua)}.`;
+    if (cardLogin) cardLogin.style.display = "none";
+    if (btnAtualizar) btnAtualizar.style.display = "";
+    if (btnSair) btnSair.style.display = "";
+  } else {
+    if (resumo) resumo.innerHTML = Nuvem.estado.ultimoErro
+      ? `Não conectado. <span style="color:#b91c1c">${escapeHtml(Nuvem.estado.ultimoErro)}</span>`
+      : `Não conectado. Entre com e-mail e senha para carregar os dados da nuvem.`;
+    if (cardLogin) cardLogin.style.display = "";
+    if (btnAtualizar) btnAtualizar.style.display = "none";
+    if (btnSair) btnSair.style.display = "none";
+  }
+}
+
+function abrirModalConta() {
   abrirModal("modal-cloudsync");
-  renderCloudModalEstado();
+  renderContaModalEstado();
   configToAcordeao("modal-cloudsync", { todosFechados: true });
 }
 
-document.getElementById("btn-open-cloudsync").onclick = () => { fecharMenuAcoes(); abrirModalCloudSync(); };
+document.getElementById("btn-open-cloudsync").onclick = () => { fecharMenuAcoes(); abrirModalConta(); };
 document.getElementById("btn-open-sobre").onclick = () => { fecharMenuAcoes(); abrirModal("modal-sobre"); };
 
-// v4.7.1: o clique no badge dispara "Sincronizar agora" (não abre mais o modal).
-// Se não estiver configurado, abre o modal para o usuário configurar.
+// Clique no indicador: se logado, atualiza os dados; senão, abre o login.
 document.getElementById("cloud-status-indicator").onclick = async () => {
-  if (!CloudSync.estaConfigurado()) {
-    abrirModalCloudSync();
-    return;
-  }
-  const r = await CloudSync.sincronizarAgora();
-  if (!r.ok && r.erro) {
-    // Em caso de erro, abre o modal para o usuário ver/ajustar
-    abrirModalCloudSync();
-  }
+  if (!Nuvem.autenticado()) { abrirModalConta(); return; }
+  await atualizarDadosDaNuvem();
 };
+
+// Mantém indicador e modal coerentes com o estado de auth.
+Nuvem.onMudancaAuth(() => { renderContaModalEstado(); atualizarIndicadorNuvem(Nuvem.autenticado() ? "ok" : "entrar"); });
 
 // ===== Inclusão manual de requerimento (v4.7) =====
 document.getElementById("btn-incluir-manual").onclick = () => {
@@ -6302,89 +6518,43 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
 };
 
 
-document.getElementById("btn-cloud-salvar-cfg").onclick = async () => {
-  const pat = document.getElementById("cfg-cloud-pat").value.trim();
-  const gistId = document.getElementById("cfg-cloud-gistid").value.trim();
-  const fb = document.getElementById("cloud-cfg-feedback");
-  if (!pat || !gistId) { fb.innerHTML = '<span style="color:#b91c1c">Informe PAT e Gist ID (ou crie um novo Gist).</span>'; return; }
-  await CloudSync.salvarConfig(pat, gistId);
-  fb.innerHTML = '<span style="color:#047857">Configuração salva. Sincronizando…</span>';
-  const r = await CloudSync.sincronizarAgora();
-  fb.innerHTML = r.ok ? '<span style="color:#047857">Sincronizado com sucesso.</span>' : `<span style="color:#b91c1c">${escapeHtml(r.erro || "Falha na sincronização")}</span>`;
-  renderCloudModalEstado();
-};
-
-document.getElementById("btn-cloud-testar").onclick = async () => {
-  const pat = document.getElementById("cfg-cloud-pat").value.trim();
-  const fb = document.getElementById("cloud-cfg-feedback");
-  if (!pat) { fb.innerHTML = '<span style="color:#b91c1c">Cole o PAT antes de testar.</span>'; return; }
-  fb.innerHTML = "Testando conexão com o GitHub…";
+document.getElementById("btn-conta-entrar").onclick = async () => {
+  const email = document.getElementById("conta-email").value.trim();
+  const senha = document.getElementById("conta-senha").value;
+  const fb = document.getElementById("conta-login-feedback");
+  if (!email || !senha) { fb.innerHTML = '<span style="color:#b91c1c">Informe e-mail e senha.</span>'; return; }
+  fb.innerHTML = "Entrando…";
+  atualizarIndicadorNuvem("sincronizando");
   try {
-    const r = await CloudSync.diagnosticar(pat);
-    if (r.ok) {
-      fb.innerHTML = `<span style="color:#047857">✓ ${escapeHtml(r.msg)}</span>`;
-    } else {
-      fb.innerHTML = `<span style="color:#b91c1c">✗ ${escapeHtml(r.msg)}</span>`;
-    }
+    await Nuvem.login(email, senha);
+    document.getElementById("conta-senha").value = "";
+    fb.innerHTML = '<span style="color:#047857">Conectado. Carregando dados da nuvem…</span>';
+    const r = await atualizarDadosDaNuvem();
+    fb.innerHTML = r.ok
+      ? `<span style="color:#047857">Pronto: ${r.proposicoes} proposições, ${r.marcacoes} marcações carregadas.</span>`
+      : `<span style="color:#b91c1c">${escapeHtml(r.erro || "Falha ao carregar dados")}</span>`;
+    renderContaModalEstado();
   } catch (e) {
-    fb.innerHTML = `<span style="color:#b91c1c">Falha no teste: ${escapeHtml(e.message)}</span>`;
+    const msg = /invalid login credentials/i.test(e?.message || "") ? "E-mail ou senha incorretos." : (e?.message || String(e));
+    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(msg)}</span>`;
+    atualizarIndicadorNuvem("erro");
   }
 };
 
-document.getElementById("btn-cloud-criar-gist").onclick = async () => {
-  const pat = document.getElementById("cfg-cloud-pat").value.trim();
-  const fb = document.getElementById("cloud-cfg-feedback");
-  if (!pat) { fb.innerHTML = '<span style="color:#b91c1c">Informe o PAT antes de criar o Gist.</span>'; return; }
-  fb.innerHTML = "Criando Gist secreto…";
+document.getElementById("btn-conta-atualizar").onclick = async () => {
+  const btn = document.getElementById("btn-conta-atualizar");
+  btn.disabled = true;
   try {
-    await CloudSync.salvarConfig(pat, ""); // grava o PAT para o create usar
-    const gistId = await CloudSync.criarNovoGist();
-    document.getElementById("cfg-cloud-gistid").value = gistId;
-    await CloudSync.salvarConfig(pat, gistId);
-    fb.innerHTML = `<span style="color:#047857">Gist criado: <code>${escapeHtml(gistId)}</code>. Clique em "Salvar configuração" para sincronizar.</span>`;
-    renderCloudModalEstado();
-  } catch (e) {
-    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e.message)}</span>`;
-  }
+    const r = await atualizarDadosDaNuvem();
+    if (!r.ok && r.erro) alert("Falha ao atualizar dados: " + r.erro);
+  } finally { btn.disabled = false; }
 };
 
-document.getElementById("btn-cloud-sync-agora").onclick = async () => {
-  const r = await CloudSync.sincronizarAgora();
-  renderCloudModalEstado();
-  if (!r.ok && r.erro) alert("Falha na sincronização: " + r.erro);
-};
-
-document.getElementById("btn-cloud-desconectar").onclick = async () => {
-  if (!confirm("Desconectar a sincronização deste computador? As credenciais (PAT e Gist ID) serão removidas deste dispositivo. Os dados locais permanecem.")) return;
-  await CloudSync.desconectar();
-  document.getElementById("cfg-cloud-pat").value = "";
-  document.getElementById("cfg-cloud-gistid").value = "";
-  renderCloudModalEstado();
-};
-
-document.getElementById("btn-cloud-exportar").onclick = () => {
-  const txt = CloudSync.exportarConfig();
-  const ta = document.getElementById("cloud-export-texto");
-  if (!txt) { alert("Configure o PAT e o Gist ID antes de exportar."); return; }
-  ta.style.display = "block";
-  ta.value = txt;
-  ta.select();
-  try { document.execCommand("copy"); } catch (e) {}
-};
-
-document.getElementById("btn-cloud-importar").onclick = async () => {
-  const txt = document.getElementById("cloud-import-texto").value.trim();
-  const fb = document.getElementById("cloud-import-feedback");
-  if (!txt) { fb.innerHTML = '<span style="color:#b91c1c">Cole o texto de configuração.</span>'; return; }
-  try {
-    await CloudSync.importarConfig(txt);
-    fb.innerHTML = '<span style="color:#047857">Configuração importada. Sincronizando…</span>';
-    const r = await CloudSync.sincronizarAgora();
-    fb.innerHTML = r.ok ? '<span style="color:#047857">Ativado e sincronizado.</span>' : `<span style="color:#b91c1c">${escapeHtml(r.erro || "Falha")}</span>`;
-    renderCloudModalEstado();
-  } catch (e) {
-    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e.message)}</span>`;
-  }
+document.getElementById("btn-conta-sair").onclick = async () => {
+  if (!confirm("Sair da conta? O espelho local continua disponível para leitura offline até a próxima atualização.")) return;
+  try { await Nuvem.logout(); } catch (e) { console.error("logout:", e); }
+  atualizarIndicadorNuvem("entrar");
+  renderContaModalEstado();
 };
 
 // Menu de ações — abre/fecha o dropdown
@@ -9924,14 +10094,35 @@ async function recarregarTudo() {
     await renderDashboard();
     // Detectar estado inconsistente de aplicação XLSX (rollback automático)
     await XLSX_MERGE.verificarEstadoInconsistente();
-    // v4.7: CloudSync — carrega config, inicia listeners de rede, sincroniza ao abrir
-    await CloudSync.carregarConfig();
-    CloudSync.initRede();
-    CloudSync.renderStatusIndicator();
-    if (CloudSync.estaConfigurado()) {
-      // Sync ao abrir (não bloqueia a UI)
-      CloudSync.sincronizarAgora().catch(e => console.error("Sync inicial:", e));
-    }
+    // Fase F: Nuvem (Supabase) em modo espelho somente leitura.
+    // CloudSync (GitHub Gist) foi desativado: não carregamos suas credenciais,
+    // então estaConfigurado()=false e notificarMudanca() vira no-op (nenhuma
+    // escrita local dispara chamada externa). A base local serve como espelho.
+    (async () => {
+      try {
+        await Nuvem.iniciar(); // cria o client e restaura sessão persistida
+        if (Nuvem.autenticado()) {
+          atualizarIndicadorNuvem("sincronizando");
+          try {
+            await Nuvem.sincronizarEspelho(); // puxa da nuvem -> espelho local
+            try { await garantirMarcacoes1a1(); } catch (e) { console.error("garantirMarcacoes1a1 (espelho):", e); }
+            await recarregarTudo();           // repinta com os dados frescos
+            atualizarIndicadorNuvem("ok");
+          } catch (e) {
+            console.error("Espelho inicial:", e);
+            atualizarIndicadorNuvem(navigator.onLine ? "erro" : "offline");
+          }
+        } else {
+          // Sem sessão: mostra o espelho local existente e pede login.
+          atualizarIndicadorNuvem("entrar");
+          abrirModalConta();
+        }
+      } catch (e) {
+        // Falha ao carregar a lib/rede: segue no espelho local (offline).
+        console.error("Nuvem.iniciar:", e);
+        atualizarIndicadorNuvem("offline");
+      }
+    })();
   } catch (e) {
     alert("Falha ao inicializar: " + e.message);
     console.error(e);
