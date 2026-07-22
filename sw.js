@@ -1,6 +1,6 @@
-// Monitor RIC — Service Worker v4.8
-// Cache-first do shell. Não cacheia chamadas a APIs externas.
-const CACHE_NAME = "monitor-ric-v4-8";
+// Monitor RIC, Service Worker v2.0 (backend Supabase)
+// Cache-first do shell. Não cacheia chamadas a APIs externas nem ao Supabase.
+const CACHE_NAME = "monitor-ric-v2-0";
 const SHELL = [
   "./",
   "./index.html",
@@ -36,7 +36,8 @@ self.addEventListener("fetch", e => {
     "legis.senado.leg.br",
     "generativelanguage.googleapis.com",
     "corsproxy.io",
-    "allorigins.win"
+    "allorigins.win",
+    "supabase.co"
   ];
   if (apisExternas.some(d => url.hostname.includes(d))) return;
   if (e.request.method !== "GET") return;
