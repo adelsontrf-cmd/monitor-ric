@@ -807,7 +807,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 <!-- NOVA ABA PAINEL — Cards de indicadores + gráficos -->
 <section class="pane active" id="pane-painel">
   <div id="pwa-install-banner" class="pwa-banner" style="display:none">
-    <div class="pwa-banner-text"><b>📱 Instalar como aplicativo</b><br>Instale o Monitor RIC no seu dispositivo para acesso rápido e funcionalidade offline.</div>
+    <div class="pwa-banner-text"><b>📱 Instalar como aplicativo</b><br>Instale o Monitor RIC no seu dispositivo para acesso rápido.</div>
     <div><button class="btn btn-primary btn-sm" id="btn-pwa-install">Instalar</button> <button class="btn btn-sm" id="btn-pwa-dismiss">Mais tarde</button></div>
   </div>
 
@@ -1398,6 +1398,21 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
         <button class="btn btn-sm" id="btn-conta-sair" style="display:none">Sair (logout)</button>
       </div>
       <div id="conta-upload-feedback" class="text-small" style="margin-top:8px"></div>
+    </div>
+    <div class="card cfg-acordeao cfg-collapsed" id="conta-card-admin" style="display:none">
+      <h2 class="cfg-acordeao-header">Administração: criar usuário</h2>
+      <p class="text-small text-muted" style="margin-bottom:10px">Prerrogativa exclusiva do administrador. Cria uma conta de acesso à base (o cadastro público continua fechado). Um administrador pode criar outros administradores ou usuários comuns.</p>
+      <div class="form-row">
+        <div style="flex:2"><label>E-mail do novo usuário</label><input type="email" id="admin-novo-email" placeholder="nome@casacivil.gov.br" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
+      </div>
+      <div class="form-row" style="margin-top:8px">
+        <div style="flex:2"><label>Senha provisória</label><input type="text" id="admin-novo-senha" placeholder="mínimo de 6 caracteres" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
+        <div><label>Perfil</label><select id="admin-novo-papel"><option value="usuario">Usuário</option><option value="admin">Administrador</option></select></div>
+      </div>
+      <div class="toolbar" style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" id="btn-admin-criar">Criar usuário</button>
+      </div>
+      <div id="admin-criar-feedback" class="text-small" style="margin-top:8px"></div>
     </div>
     <div class="card cfg-acordeao" id="conta-card-login">
       <h2 class="cfg-acordeao-header">Entrar</h2>
@@ -2049,6 +2064,24 @@ const Nuvem = (() => {
       const c = await client();
       const { error } = await c.from("config_compartilhada").upsert({ chave, valor }, { onConflict: "chave" });
       if (error) throw error;
+    },
+
+    // Papel do usuário logado, lido do JWT (app_metadata.role). Só o service_role
+    // (na Edge Function) consegue definir esse campo, então o usuário não se autopromove.
+    usuarioEhAdmin() { return (_sessao?.user?.app_metadata?.role) === "admin"; },
+
+    // Criação de usuário: prerrogativa exclusiva do admin. NÃO usa service_role no app;
+    // chama a Edge Function 'criar-usuario', que valida o papel do chamador no servidor.
+    async criarUsuario({ email, senha, papel }) {
+      const c = await client();
+      const { data, error } = await c.functions.invoke("criar-usuario", { body: { email, senha, papel } });
+      if (error) {
+        let msg = error.message || "Falha ao criar usuário.";
+        try { const ctx = await error.context?.json?.(); if (ctx?.error) msg = ctx.error; } catch (e) {}
+        throw new Error(msg);
+      }
+      if (data && data.error) throw new Error(data.error);
+      return data;
     },
   };
 })();
@@ -5915,6 +5948,29 @@ document.getElementById("cfg-unidades").addEventListener("change", async e => {
   await setConfig("unidades", e.target.value);
   await carregarLista();
 });
+document.getElementById("btn-admin-criar").onclick = async () => {
+  const fb = document.getElementById("admin-criar-feedback");
+  if (!Nuvem.usuarioEhAdmin()) { fb.innerHTML = '<span style="color:#b91c1c">Ação restrita a administradores.</span>'; return; }
+  const email = document.getElementById("admin-novo-email").value.trim();
+  const senha = document.getElementById("admin-novo-senha").value;
+  const papel = document.getElementById("admin-novo-papel").value;
+  if (!email || !senha) { fb.innerHTML = '<span style="color:#b91c1c">Informe e-mail e senha.</span>'; return; }
+  if (senha.length < 6) { fb.innerHTML = '<span style="color:#b91c1c">A senha deve ter ao menos 6 caracteres.</span>'; return; }
+  const btn = document.getElementById("btn-admin-criar");
+  btn.disabled = true;
+  fb.innerHTML = "Criando usuário…";
+  try {
+    await Nuvem.criarUsuario({ email, senha, papel });
+    fb.innerHTML = `<span style="color:#047857">Usuário <b>${escapeHtml(email)}</b> criado como ${papel === "admin" ? "administrador" : "usuário"}.</span>`;
+    document.getElementById("admin-novo-email").value = "";
+    document.getElementById("admin-novo-senha").value = "";
+    document.getElementById("admin-novo-papel").value = "usuario";
+  } catch (e) {
+    console.error("criarUsuario:", e);
+    fb.innerHTML = `<span style="color:#b91c1c">${escapeHtml(e?.message || String(e))}</span>`;
+  } finally { btn.disabled = false; }
+};
+
 document.getElementById("cfg-gemini-key").addEventListener("change", async e => {
   const v = e.target.value.trim();
   await setConfig("geminiKey", v);
@@ -6160,14 +6216,16 @@ async function atualizarDadosDaNuvem() {
 function renderContaModalEstado() {
   const resumo = document.getElementById("conta-estado-resumo");
   const cardLogin = document.getElementById("conta-card-login");
+  const cardAdmin = document.getElementById("conta-card-admin");
   const btnAtualizar = document.getElementById("btn-conta-atualizar");
   const btnEnviar = document.getElementById("btn-conta-enviar");
   const btnSair = document.getElementById("btn-conta-sair");
   const u = Nuvem.usuario();
   if (u) {
     const ua = Nuvem.estado.ultimaAtualizacao ? new Date(Nuvem.estado.ultimaAtualizacao).toLocaleString("pt-BR") : "ainda não atualizado nesta sessão";
-    if (resumo) resumo.innerHTML = `Conectado como <b>${escapeHtml(u.email || u.id)}</b>.<br>Última atualização de dados: ${escapeHtml(ua)}.`;
+    if (resumo) resumo.innerHTML = `Conectado como <b>${escapeHtml(u.email || u.id)}</b>${Nuvem.usuarioEhAdmin() ? " (administrador)" : ""}.<br>Última atualização de dados: ${escapeHtml(ua)}.`;
     if (cardLogin) cardLogin.style.display = "none";
+    if (cardAdmin) cardAdmin.style.display = Nuvem.usuarioEhAdmin() ? "" : "none";
     if (btnAtualizar) btnAtualizar.style.display = "";
     if (btnEnviar) btnEnviar.style.display = "";
     if (btnSair) btnSair.style.display = "";
@@ -6176,6 +6234,7 @@ function renderContaModalEstado() {
       ? `Não conectado. <span style="color:#b91c1c">${escapeHtml(Nuvem.estado.ultimoErro)}</span>`
       : `Não conectado. Entre com e-mail e senha para carregar os dados da nuvem.`;
     if (cardLogin) cardLogin.style.display = "";
+    if (cardAdmin) cardAdmin.style.display = "none";
     if (btnAtualizar) btnAtualizar.style.display = "none";
     if (btnEnviar) btnEnviar.style.display = "none";
     if (btnSair) btnSair.style.display = "none";
