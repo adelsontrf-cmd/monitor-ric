@@ -1601,7 +1601,7 @@ const URL_CAMARA = "https://dadosabertos.camara.leg.br/api/v2";
 const URL_SENADO = "https://legis.senado.leg.br/dadosabertos";
 const DB_NAME = "monitor-ric";
 const DB_NAME_LEGADO = "monitor-sic";
-const DB_VERSION = 2;
+const DB_VERSION = 3; // Fase I: v3 remove o store `tombstones` (resíduo do CloudSync)
 const SCHEMA_VERSAO_DADOS = 6;
 const CACHE_DIAS_FINAL = 30;
 const THROTTLE_MS = 250;
@@ -1748,8 +1748,12 @@ const DB = (() => {
         if (!d.objectStoreNames.contains("marcacoes")) d.createObjectStore("marcacoes", { keyPath: "proposicaoId" });
         if (!d.objectStoreNames.contains("config")) d.createObjectStore("config", { keyPath: "key" });
         if (!d.objectStoreNames.contains("naomapeadas")) d.createObjectStore("naomapeadas", { keyPath: "situacao" });
-        // store de marcadores de exclusão (registros deletados)
-        if (!d.objectStoreNames.contains("tombstones")) d.createObjectStore("tombstones", { keyPath: "id" });
+        // FASE I: `tombstones` era o marcador de exclusão do CloudSync (GitHub Gist),
+        // removido na Fase F. Sem aquele mecanismo o store não tem função.
+        // Remover store no IndexedDB SÓ é possível aqui, dentro do onupgradeneeded,
+        // e é isto que trata as bases já instaladas na versão 2: ao abrir na
+        // versão 3 o navegador dispara este bloco e apaga o store.
+        if (d.objectStoreNames.contains("tombstones")) d.deleteObjectStore("tombstones");
       };
       req.onsuccess = () => { db = req.result; resolve(db); };
       req.onerror = () => reject(req.error);
@@ -1758,16 +1762,14 @@ const DB = (() => {
   function tx(stores, mode = "readonly") { return db.transaction(stores, mode); }
   function getAll(store) { return new Promise((res, rej) => { const r = tx([store]).objectStore(store).getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
   function get(store, key) { return new Promise((res, rej) => { const r = tx([store]).objectStore(store).get(key); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
-  function put(store, value, opts) {
-    opts = opts || {};
+  function put(store, value) {
     return new Promise((res, rej) => {
       const r = tx([store], "readwrite").objectStore(store).put(value);
       r.onsuccess = () => { res(r.result); };
       r.onerror = () => rej(r.error);
     });
   }
-  function bulkPut(store, values, opts) {
-    opts = opts || {};
+  function bulkPut(store, values) {
     return new Promise((res, rej) => {
       const t = tx([store], "readwrite"); const s = t.objectStore(store);
       values.forEach(v => s.put(v));
@@ -1775,8 +1777,7 @@ const DB = (() => {
       t.onerror = () => rej(t.error);
     });
   }
-  function del(store, key, opts) {
-    opts = opts || {};
+  function del(store, key) {
     return new Promise((res, rej) => {
       const r = tx([store], "readwrite").objectStore(store).delete(key);
       r.onsuccess = () => { res(); };
@@ -1784,12 +1785,12 @@ const DB = (() => {
     });
   }
   function clear(store) { return new Promise((res, rej) => { const r = tx([store], "readwrite").objectStore(store).clear(); r.onsuccess = () => res(); r.onerror = () => rej(r.error); }); }
-  function clearAll() { return Promise.all(["proposicoes","marcacoes","config","naomapeadas","tombstones"].map(clear)); }
+  function clearAll() { return Promise.all(["proposicoes","marcacoes","config","naomapeadas"].map(clear)); }
   return { open, getAll, get, put, bulkPut, delete: del, clear, clearAll };
 })();
 
 async function getConfig(key, def) { const r = await DB.get("config", key); return r ? r.value : def; }
-async function setConfig(key, value, opts) { await DB.put("config", { key, value }, opts); }
+async function setConfig(key, value) { await DB.put("config", { key, value }); }
 
 // ============================================================
 // Monitor RIC 2.0, Camada Nuvem (Supabase), Fase F (espelho, somente leitura)
@@ -2165,8 +2166,8 @@ const Nuvem = (() => {
       // Regrava o espelho: limpa e reescreve, tudo {sync:false} (não dispara nuvem).
       await DB.clear("proposicoes");
       await DB.clear("marcacoes");
-      await DB.bulkPut("proposicoes", props, { sync: false });
-      await DB.bulkPut("marcacoes", marcs, { sync: false });
+      await DB.bulkPut("proposicoes", props);
+      await DB.bulkPut("marcacoes", marcs);
 
       _estado.online = true;
       _estado.ultimaAtualizacao = new Date().toISOString();
@@ -2583,19 +2584,20 @@ function marcacaoVaziaPara(proposicaoId) {
 }
 
 // v4.7.6: garante o invariante 1:1 (toda proposição tem uma marcação).
-// Idempotente e com {sync: false} — não dispara escrita na nuvem. Retorna nº de marcações criadas.
+// Idempotente. Escreve apenas no espelho local: no banco, quem cria a marcação
+// 1:1 é o gatilho trg_par_marcacao. Retorna nº de marcações criadas.
 async function garantirMarcacoes1a1() {
   const [props, marcs] = await Promise.all([DB.getAll("proposicoes"), DB.getAll("marcacoes")]);
   const comMarcacao = new Set(marcs.map(m => m.proposicaoId));
   const faltantes = props.filter(p => !comMarcacao.has(p.id));
   if (faltantes.length === 0) return 0;
   const novas = faltantes.map(p => marcacaoVaziaPara(p.id));
-  await DB.bulkPut("marcacoes", novas, { sync: false });
+  await DB.bulkPut("marcacoes", novas);
   return novas.length;
 }
 
 // v4.7.6: normaliza unidadesConsultadas para os valores canônicos configurados.
-// Idempotente, {sync:false}. Mapeia variantes conhecidas (caixa/abreviação) e descarta "-"/vazios.
+// Idempotente. Mapeia variantes conhecidas (caixa/abreviação) e descarta "-"/vazios.
 // Valores SEM mapeamento óbvio são preservados e devolvidos num log para decisão manual
 // (não inventa destino). Retorna { alteradas, semMapeamento: {valor: count} }.
 const UNIDADES_NORMALIZACAO = {
@@ -2644,12 +2646,12 @@ async function normalizarUnidadesConsultadas() {
       atualizadas.push(m);
     }
   }
-  if (atualizadas.length) await DB.bulkPut("marcacoes", atualizadas, { sync: false });
+  if (atualizadas.length) await DB.bulkPut("marcacoes", atualizadas);
   return { alteradas: atualizadas.length, semMapeamento };
 }
 
 // v4.7.6: recalcula o campo legado "etapa" a partir do etapasFluxo (primeira não concluída).
-// Idempotente, {sync:false}. Corrige marcações com etapa vazia+status preenchido ou etapa
+// Idempotente. Corrige marcações com etapa vazia+status preenchido ou etapa
 // incoerente (ex.: etapa="retirado"). Retorna nº de marcações corrigidas.
 async function recalcularEtapasInconsistentes() {
   const marcs = await DB.getAll("marcacoes");
@@ -2673,7 +2675,7 @@ async function recalcularEtapasInconsistentes() {
       }
     }
   }
-  if (atualizadas.length) await DB.bulkPut("marcacoes", atualizadas, { sync: false });
+  if (atualizadas.length) await DB.bulkPut("marcacoes", atualizadas);
   return atualizadas.length;
 }
 
@@ -3623,7 +3625,7 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
       // ação interativa, se o banco recusar nada fica gravado em lugar nenhum
       // e o espelho não diverge (mesmo princípio da edição na Fase G).
       await Nuvem.enviarProposicoes([norm]);
-      await DB.put("proposicoes", norm, { sync: false });
+      await DB.put("proposicoes", norm);
       return { resultado: "enriquecido", proposicao: norm };
     }
   } else if (casa === "senado") {
@@ -3646,7 +3648,7 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
       norm.inclusaoManual = true;
       normalizarTextosProposicao(norm);
       await Nuvem.enviarProposicoes([norm]);
-      await DB.put("proposicoes", norm, { sync: false });
+      await DB.put("proposicoes", norm);
       return { resultado: "enriquecido", proposicao: norm };
     }
   }
@@ -3673,7 +3675,7 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
   };
   normalizarTextosProposicao(sintetico);
   await Nuvem.enviarProposicoes([sintetico]);
-  await DB.put("proposicoes", sintetico, { sync: false });
+  await DB.put("proposicoes", sintetico);
   return { resultado: "sintetico", proposicao: sintetico };
 }
 
@@ -3818,7 +3820,7 @@ async function sincronizar({ casa, ano, enriquecer }) {
     const novasMarc = novos.filter(p => !marcsExist.has(p.id)).map(p => marcacaoVaziaPara(p.id));
     // Só no espelho local: no banco, o gatilho trg_par_marcacao já cria a
     // marcação 1:1 no INSERT da proposição.
-    if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
+    if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc);
   }
   await setConfig("ultimaSync", new Date().toISOString());
   log.add(`---`, "dim");
@@ -3895,7 +3897,7 @@ async function sincronizarIncremental(numdias) {
     const marcsExist = new Set((await DB.getAll("marcacoes")).map(m => m.proposicaoId));
     const novasMarc = novos.filter(p => !marcsExist.has(p.id)).map(p => marcacaoVaziaPara(p.id));
     // Só no espelho local: no banco quem cria é o gatilho trg_par_marcacao.
-    if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
+    if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc);
   }
 
   // v4.7.9-ajustada: a busca por período na coleção /proposicoes da Câmara filtra por DATA DE
@@ -3968,7 +3970,7 @@ async function reenriquecerExistentes(forcar) {
     else {
       await enriquecerProposicao(p, { log, forcar });
       normalizarTextosProposicao(p);
-      await DB.put("proposicoes", p, { sync: false });
+      await DB.put("proposicoes", p);
       atualizados.push(p);
       await sleep(THROTTLE_MS);
     }
@@ -4435,7 +4437,7 @@ async function ocultarRic(id) {
   exigirNuvem("A ocultação");
   await Nuvem.definirOculto(id, true);
   p.oculto = true;
-  await DB.put("proposicoes", p, { sync: false });
+  await DB.put("proposicoes", p);
 }
 
 async function reexibirRic(id) {
@@ -4444,7 +4446,7 @@ async function reexibirRic(id) {
   exigirNuvem("A reexibição");
   await Nuvem.definirOculto(id, false);
   p.oculto = false;
-  await DB.put("proposicoes", p, { sync: false });
+  await DB.put("proposicoes", p);
 }
 
 async function excluirRic(id) {
@@ -4471,13 +4473,8 @@ async function reverterExclusao(snapId) {
   if (semSlug && semSlug.length) {
     alert("Requerimento restaurado. Estas unidades não existem no cadastro da nuvem e não foram revinculadas:\n\n" + semSlug.join(", "));
   }
-  await DB.put("proposicoes", snap.proposicao, { sync: false });
-  if (snap.marcacao) await DB.put("marcacoes", snap.marcacao, { sync: false });
-  // v4.7: remove tombstones para o item poder voltar a sincronizar normalmente
-  try {
-    await DB.delete("tombstones", "prop:" + snap.proposicao.id, { sync: false });
-    await DB.delete("tombstones", "marc:" + snap.proposicao.id, { sync: false });
-  } catch (e) {}
+  await DB.put("proposicoes", snap.proposicao);
+  if (snap.marcacao) await DB.put("marcacoes", snap.marcacao);
   // Remove o snapshot consumido
   const novo = arr.filter(s => s.id !== snapId);
   localStorage.setItem(RIC_EXCLUSAO_SNAPSHOTS_KEY, JSON.stringify(novo));
@@ -5206,7 +5203,7 @@ async function abrirDetalhe(id) {
     } finally {
       if (btnSalvarG) btnSalvarG.disabled = false;
     }
-    await DB.put("marcacoes", novoM, { sync: false });
+    await DB.put("marcacoes", novoM);
     listaEstado.marcacoes.set(id, novoM);
     // A partir daqui, o estado gravado passa a ser a nova referência.
     marcBase = JSON.parse(JSON.stringify(novoM));
@@ -6884,7 +6881,7 @@ async function aplicarMudancaRealtime(tabela, payload) {
       listaEstado.marcacoes.delete(id);
     } else {
       const p = Nuvem.converterProposicao(linha);
-      await DB.put("proposicoes", p, { sync: false });
+      await DB.put("proposicoes", p);
       const i = listaEstado.itens.findIndex(x => x.id === id);
       if (i >= 0) listaEstado.itens[i] = p; else listaEstado.itens.push(p);
     }
@@ -6898,7 +6895,7 @@ async function aplicarMudancaRealtime(tabela, payload) {
       // as unidades consultadas são lidas à parte, só para esta proposição.
       try { m.unidadesConsultadas = await Nuvem.unidadesDe(id); }
       catch (e) { m.unidadesConsultadas = []; }
-      await DB.put("marcacoes", m, { sync: false });
+      await DB.put("marcacoes", m);
       // Se o usuário está com ESTE requerimento aberto e com alterações ainda
       // não salvas, o registro em memória não é trocado, para não apagar o que
       // ele digitou. O espelho no banco local já ficou atualizado acima.
@@ -7472,7 +7469,7 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
   // Espelho local só depois da nuvem, e só para os que de fato gravaram.
   const idsFalhos = new Set(rLote.falhas.map(f => f.id));
   const gravadasLocal = atualizadas.filter(m => !idsFalhos.has(m.proposicaoId));
-  if (gravadasLocal.length) await DB.bulkPut("marcacoes", gravadasLocal, { sync: false });
+  if (gravadasLocal.length) await DB.bulkPut("marcacoes", gravadasLocal);
   // Recarrega o estado em memória DO BANCO para refletir com fidelidade
   await carregarLista();
   aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
@@ -8300,8 +8297,8 @@ const XLSX_MERGE = (() => {
     // Aplicação atômica: limpa e regrava
     await DB.clear("proposicoes");
     await DB.clear("marcacoes");
-    if (snap.proposicoes.length) await DB.bulkPut("proposicoes", snap.proposicoes, { sync: false });
-    if (snap.marcacoes.length) await DB.bulkPut("marcacoes", snap.marcacoes, { sync: false });
+    if (snap.proposicoes.length) await DB.bulkPut("proposicoes", snap.proposicoes);
+    if (snap.marcacoes.length) await DB.bulkPut("marcacoes", snap.marcacoes);
     return snap;
   }
 
@@ -8324,14 +8321,14 @@ const XLSX_MERGE = (() => {
     try {
       // 1) Criar proposições novas
       if (diff.propsParaCriar.length) {
-        await DB.bulkPut("proposicoes", diff.propsParaCriar, { sync: false });
+        await DB.bulkPut("proposicoes", diff.propsParaCriar);
       }
       // 2) Atualizar URLs em proposições existentes
       for (const upd of diff.propsAtualizadasParaUrl) {
         const p = await DB.get("proposicoes", upd.id);
         if (p) {
           Object.assign(p, upd.fields);
-          await DB.put("proposicoes", p, { sync: false });
+          await DB.put("proposicoes", p);
         }
       }
       // 3) Aplicar marcações novas e atualizadas
@@ -8339,7 +8336,7 @@ const XLSX_MERGE = (() => {
         ...diff.marcsParaCriar,
         ...diff.marcsParaAtualizar.map(x => x.marcacao),
       ];
-      if (todasMarcs.length) await DB.bulkPut("marcacoes", todasMarcs, { sync: false });
+      if (todasMarcs.length) await DB.bulkPut("marcacoes", todasMarcs);
 
       // Sucesso: remover PENDENTE
       localStorage.removeItem(PENDENTE_KEY);
