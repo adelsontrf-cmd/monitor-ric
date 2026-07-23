@@ -2331,6 +2331,36 @@ const Nuvem = (() => {
     converterMarcacao(linha) { return linhaParaMarcacao(linha, null); },
     async unidadesDe(proposicaoId) { return unidadesDaProposicao(await client(), proposicaoId); },
 
+    // ---- FASE H: coleta ----
+    // Envia ao banco SOMENTE as proposições coletadas nesta rodada, por upsert
+    // em `id` (chave primária). Recoletar atualiza a linha existente e nunca
+    // duplica registro.
+    //
+    // NÃO envia marcações, de propósito: o gatilho trg_par_marcacao já cria a
+    // marcação 1:1 no INSERT de uma proposição nova. Mandar marcação daqui
+    // sobrescreveria a análise que um colega tenha feito.
+    //
+    // `linhaDeProposicao` devolve sempre o mesmo conjunto de chaves, o que
+    // evita o PGRST102 do PostgREST ("All object keys must match") quando
+    // registros do mesmo lote têm campos diferentes preenchidos.
+    async enviarProposicoes(props, aoProgredir) {
+      if (!props || !props.length) return { enviadas: 0 };
+      const c = await client();
+      const linhas = props.map(linhaDeProposicao);
+      const LOTE = 200;
+      for (let i = 0; i < linhas.length; i += LOTE) {
+        const { error } = await c.from("proposicoes")
+          .upsert(linhas.slice(i, i + LOTE), { onConflict: "id" });
+        if (error) throw error;
+        if (typeof aoProgredir === "function") {
+          try { aoProgredir(Math.min(i + LOTE, linhas.length), linhas.length); } catch (e) {}
+        }
+      }
+      _estado.online = true;
+      _estado.ultimaAtualizacao = new Date().toISOString();
+      return { enviadas: linhas.length };
+    },
+
     // Config compartilhada (config_compartilhada: chave text PK, valor jsonb).
     async obterConfigCompartilhada(chave) {
       const c = await client();
@@ -2687,6 +2717,19 @@ function diasDesde(iso) {
   return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 function isoHoje() { return new Date().toISOString().substring(0, 10); }
+
+// FASE H: espaço nas pontas é invisível na tela e já produziu 783 registros com
+// "Aguardando Resposta " que não casavam no de-para de situação (só apareceu via
+// repr()). Além disso, o banco tem CHECK de btrim em situacao_legislativa,
+// status_interno e etapa: um único valor com espaço faria o PostgREST recusar o
+// lote inteiro do upsert. Aplicado na ENTRADA, sobre todo campo de texto.
+function normalizarTextosProposicao(p) {
+  if (!p || typeof p !== "object") return p;
+  for (const k of Object.keys(p)) {
+    if (typeof p[k] === "string") p[k] = p[k].trim();
+  }
+  return p;
+}
 function addDiasIso(iso, dias) {
   if (!iso) return "";
   const d = new Date(iso + "T00:00:00");
@@ -3553,6 +3596,8 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
   numero = String(numero || "").trim();
   ano = String(ano || "").trim();
   if (!sigla || !numero || !ano) throw new Error("Informe tipo, número e ano.");
+  // FASE H: a inclusão passou a gravar no banco, então exige conexão.
+  if (!Nuvem.pronto()) throw new Error("Sem conexão com a nuvem. O requerimento não foi incluído.");
 
   // Verifica se já existe na base (por identificação)
   const idTentativa = casa === "camara" ? null : null; // id real só após busca
@@ -3573,7 +3618,12 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
       await camaraEnriquecerAutor(norm); await sleep(THROTTLE_MS);
       await enriquecerProposicao(norm, { forcar: true }); await sleep(THROTTLE_MS);
       norm.inclusaoManual = true;
-      await DB.put("proposicoes", norm);
+      normalizarTextosProposicao(norm);
+      // FASE H: grava no banco ANTES do espelho. Sendo um registro só e uma
+      // ação interativa, se o banco recusar nada fica gravado em lugar nenhum
+      // e o espelho não diverge (mesmo princípio da edição na Fase G).
+      await Nuvem.enviarProposicoes([norm]);
+      await DB.put("proposicoes", norm, { sync: false });
       return { resultado: "enriquecido", proposicao: norm };
     }
   } else if (casa === "senado") {
@@ -3594,7 +3644,9 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
       try { await senadoBuscarInteiroTeor(norm); await sleep(THROTTLE_MS); } catch (e) {}
       try { await enriquecerProposicao(norm, { forcar: true }); await sleep(THROTTLE_MS); } catch (e) {}
       norm.inclusaoManual = true;
-      await DB.put("proposicoes", norm);
+      normalizarTextosProposicao(norm);
+      await Nuvem.enviarProposicoes([norm]);
+      await DB.put("proposicoes", norm, { sync: false });
       return { resultado: "enriquecido", proposicao: norm };
     }
   }
@@ -3619,7 +3671,9 @@ async function incluirRequerimentoManual({ casa, sigla, numero, ano }) {
     inclusaoManual: true, sintetico: true,
     dataEnriquecimento: "", coletadoEm: new Date().toISOString()
   };
-  await DB.put("proposicoes", sintetico);
+  normalizarTextosProposicao(sintetico);
+  await Nuvem.enviarProposicoes([sintetico]);
+  await DB.put("proposicoes", sintetico, { sync: false });
   return { resultado: "sintetico", proposicao: sintetico };
 }
 
@@ -3646,7 +3700,40 @@ function progress(pct) {
 }
 
 // ===== SYNC =====
+// FASE H: envio em bloco ao final da coleta. A decisão foi coletar no espelho
+// local e enviar depois, o que tolera queda de rede no meio de uma coleta longa.
+//
+// Em caso de falha NÃO lança exceção: a coleta já terminou e os dados estão no
+// espelho. O aviso explica o que fazer, e o remédio é simplesmente rodar a
+// coleta de novo, que reenvia sem duplicar, porque o upsert é por chave primária.
+async function enviarColetaParaBanco(props) {
+  if (!props || !props.length) return { enviadas: 0, ok: true };
+  log.add(`Enviando ${props.length} proposição(ões) ao banco...`, "info");
+  try {
+    const r = await Nuvem.enviarProposicoes(props, (feitas, tot) => {
+      log.add(`...${feitas}/${tot} enviadas ao banco`, "dim");
+    });
+    log.add(`Banco atualizado: ${r.enviadas} proposição(ões).`, "ok");
+    return { enviadas: r.enviadas, ok: true };
+  } catch (e) {
+    console.error("enviarColetaParaBanco:", e);
+    log.add(`ERRO ao enviar ao banco: ${e.message}`, "err");
+    log.add("Os dados coletados estão apenas neste dispositivo e serão perdidos se você atualizar os dados antes de reenviar.", "err");
+    log.add("Remédio: rode a coleta de novo. Recoletar reenvia e não duplica registro.", "err");
+    alert("A coleta terminou, mas o envio ao banco falhou.\n\n" +
+          ((e && e.message) || String(e)) +
+          "\n\nOs dados estão só neste dispositivo. Rode a coleta de novo para reenviar; recoletar não duplica registro.");
+    return { enviadas: 0, ok: false, erro: (e && e.message) || String(e) };
+  }
+}
+
 async function sincronizar({ casa, ano, enriquecer }) {
+  // FASE H: a coleta grava no banco. Sem conexão ela nem começa, para não
+  // produzir uma base local que a próxima atualização de dados apagaria.
+  if (!Nuvem.pronto()) {
+    log.add("Coleta não iniciada: sem conexão com a nuvem. Entre na conta e confira a rede.", "err");
+    throw new Error("Sem conexão com a nuvem. A coleta não foi iniciada.");
+  }
   const regex = await getFiltroRegex();
   const total = { camara: 0, senado: 0, filtrados: 0 };
   const novos = [];
@@ -3678,6 +3765,7 @@ async function sincronizar({ casa, ano, enriquecer }) {
         }
         await camaraEnriquecerAutor(norm); await sleep(THROTTLE_MS);
         if (enriquecer) { await enriquecerProposicao(norm, { log }); await sleep(THROTTLE_MS); }
+        normalizarTextosProposicao(norm);
         proposicoesParaSalvar.push(norm);
         if (!old) novos.push(norm);
         i++; progress(15 + 35 * (i / matches.length));
@@ -3710,6 +3798,7 @@ async function sincronizar({ casa, ano, enriquecer }) {
             norm.ultimaMovimentacaoData = old.ultimaMovimentacaoData || "";
           }
           if (enriquecer) { await enriquecerProposicao(norm, { log }); await sleep(THROTTLE_MS); }
+          normalizarTextosProposicao(norm);
           proposicoesParaSalvar.push(norm);
           if (!old) novos.push(norm);
           i++; progress(50 + 45 * (i / Math.max(matches.length, 1)));
@@ -3720,20 +3809,30 @@ async function sincronizar({ casa, ano, enriquecer }) {
   }
   progress(95);
   if (proposicoesParaSalvar.length) await DB.bulkPut("proposicoes", proposicoesParaSalvar);
+  // FASE H: envio em bloco ao final, só das proposições desta rodada.
+  // Upsert por `id`, então recoletar atualiza e nunca duplica.
+  const envioG = await enviarColetaParaBanco(proposicoesParaSalvar);
   // v4.7.6: garante marcação inicial (em triagem) para toda proposição nova
   if (novos.length) {
     const marcsExist = new Set((await DB.getAll("marcacoes")).map(m => m.proposicaoId));
     const novasMarc = novos.filter(p => !marcsExist.has(p.id)).map(p => marcacaoVaziaPara(p.id));
+    // Só no espelho local: no banco, o gatilho trg_par_marcacao já cria a
+    // marcação 1:1 no INSERT da proposição.
     if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
   }
   await setConfig("ultimaSync", new Date().toISOString());
   log.add(`---`, "dim");
   log.add(`Concluído. Câmara: ${total.camara}. Senado: ${total.senado}. Casa Civil: ${total.filtrados}. Novos: ${novos.length}.`, "ok");
   progress(100); setTimeout(() => progress(null), 1200);
-  return { total, novos };
+  return { total, novos, envio: envioG };
 }
 
 async function sincronizarIncremental(numdias) {
+  // FASE H: mesma trava da coleta por ano.
+  if (!Nuvem.pronto()) {
+    log.add("Coleta não iniciada: sem conexão com a nuvem. Entre na conta e confira a rede.", "err");
+    throw new Error("Sem conexão com a nuvem. A coleta não foi iniciada.");
+  }
   const regex = await getFiltroRegex();
   const proposicoesParaSalvar = [];
   const novos = [];
@@ -3759,6 +3858,7 @@ async function sincronizarIncremental(numdias) {
       await camaraEnriquecerDetalhe(norm); await sleep(THROTTLE_MS);
       await camaraEnriquecerAutor(norm); await sleep(THROTTLE_MS);
       await enriquecerProposicao(norm, { log, forcar: true }); await sleep(THROTTLE_MS);
+      normalizarTextosProposicao(norm);
       proposicoesParaSalvar.push(norm);
       if (!old) novos.push(norm);
     }
@@ -3780,6 +3880,7 @@ async function sincronizarIncremental(numdias) {
       // v4.6: enriquecimento completo no incremental — busca inteiro teor + autor + movimentações + situação
       await senadoBuscarInteiroTeor(norm); await sleep(THROTTLE_MS);
       await enriquecerProposicao(norm, { log, forcar: true }); await sleep(THROTTLE_MS);
+      normalizarTextosProposicao(norm);
       proposicoesParaSalvar.push(norm);
       if (!old) novos.push(norm);
     }
@@ -3787,10 +3888,13 @@ async function sincronizarIncremental(numdias) {
   } catch (e) { log.add(`Senado: ERRO — ${e.message}`, "err"); }
 
   if (proposicoesParaSalvar.length) await DB.bulkPut("proposicoes", proposicoesParaSalvar);
+  // FASE H: primeiro bloco do incremental, só as proposições desta rodada.
+  await enviarColetaParaBanco(proposicoesParaSalvar);
   // v4.7.6: garante marcação inicial para toda proposição nova descoberta no incremental
   if (novos.length) {
     const marcsExist = new Set((await DB.getAll("marcacoes")).map(m => m.proposicaoId));
     const novasMarc = novos.filter(p => !marcsExist.has(p.id)).map(p => marcacaoVaziaPara(p.id));
+    // Só no espelho local: no banco quem cria é o gatilho trg_par_marcacao.
     if (novasMarc.length) await DB.bulkPut("marcacoes", novasMarc, { sync: false });
   }
 
@@ -3826,6 +3930,7 @@ async function sincronizarIncremental(numdias) {
       try {
         // forçar:true garante que enriquecerProposicao não reaplique o cache internamente
         await enriquecerProposicao(p, { log, forcar: true });
+        normalizarTextosProposicao(p);
         atualizados.push(p);
         if (p.situacaoLegislativa !== sitAntes || (p.ultimaMovimentacaoData || "") !== movAntes) rmud++;
         await sleep(THROTTLE_MS);
@@ -3834,6 +3939,9 @@ async function sincronizarIncremental(numdias) {
       if (rc % 10 === 0) log.add(`...${rc}/${aReenriquecer.length}`, "dim");
     }
     if (atualizados.length) await DB.bulkPut("proposicoes", atualizados);
+    // FASE H: segundo bloco do incremental, os RICs já existentes que mudaram
+    // de situação ou tramitação. Mesmo upsert por chave primária.
+    await enviarColetaParaBanco(atualizados);
     log.add(`Verificação concluída: ${rc} checados, ${rmud} com mudança de situação/movimentação, ${rpul} pulados (finalizados em cache).`, "ok");
   }
 
@@ -3843,21 +3951,32 @@ async function sincronizarIncremental(numdias) {
 }
 
 async function reenriquecerExistentes(forcar) {
+  // FASE H: mesma trava das demais rotinas de coleta.
+  if (!Nuvem.pronto()) {
+    log.add("Reenriquecimento não iniciado: sem conexão com a nuvem.", "err");
+    throw new Error("Sem conexão com a nuvem. O reenriquecimento não foi iniciado.");
+  }
   const todas = await DB.getAll("proposicoes");
   log.add(`Reenriquecimento: ${todas.length} itens. ${forcar ? "Forçando." : `Pulando finais (>${CACHE_DIAS_FINAL} dias).`}`, "info");
   progress(0);
   let proc = 0, pul = 0;
+  // O espelho local continua sendo gravado item a item, para não perder o
+  // progresso se a rotina for interrompida. O banco recebe em bloco no fim.
+  const atualizados = [];
   for (const p of todas) {
     if (podeUsarCacheStatus(p, forcar)) { pul++; }
     else {
       await enriquecerProposicao(p, { log, forcar });
-      await DB.put("proposicoes", p);
+      normalizarTextosProposicao(p);
+      await DB.put("proposicoes", p, { sync: false });
+      atualizados.push(p);
       await sleep(THROTTLE_MS);
     }
     proc++;
     if (proc % 5 === 0) log.add(`...${proc}/${todas.length} (${pul} pulados)`, "dim");
     progress(100 * proc / todas.length);
   }
+  await enviarColetaParaBanco(atualizados);
   log.add(`Concluído. ${proc} processados, ${pul} pulados.`, "ok");
   progress(100); setTimeout(() => progress(null), 1200);
 }
@@ -9478,6 +9597,11 @@ function relatorioCss(ehPrint, orientacao) {
 }
 
 async function relatorioGerarPdf(estado) {
+  // FASE H: o documento que sai daqui é distribuído, então ele é gerado
+  // sobre o dado do banco, e não sobre a cópia local que pode estar velha.
+  const _at = await relatorioAtualizarDoBanco();
+  estado._avisoBanco = _at.ok ? "" : _at.motivo;
+  await relatorioCalcularEscopo(estado);
   if (!estado.escopo.total) { alert("Nenhum requerimento no escopo. Ajuste os filtros."); return; }
   const html = relatorioGerarHtml(estado, true);
   // Detecção de mobile (iOS/Android): em vez de iframe (cuja orientação @page é
@@ -9530,6 +9654,11 @@ async function relatorioPreview(estado) {
 }
 
 async function relatorioGerarWord(estado) {
+  // FASE H: o documento que sai daqui é distribuído, então ele é gerado
+  // sobre o dado do banco, e não sobre a cópia local que pode estar velha.
+  const _at = await relatorioAtualizarDoBanco();
+  estado._avisoBanco = _at.ok ? "" : _at.motivo;
+  await relatorioCalcularEscopo(estado);
   if (!estado.escopo.total) { alert("Nenhum requerimento no escopo. Ajuste os filtros."); return; }
   if (typeof window.docx === "undefined") {
     try {
@@ -10128,8 +10257,31 @@ async function relatorioExcluirPresetUsuario(id) {
   localStorage.setItem(RELATORIO_PRESETS_USUARIO_KEY, JSON.stringify(novo));
 }
 
+// FASE H, decisão 1-a: relatórios e boletins trabalham com o banco novo.
+// O espelho é atualizado a partir do Supabase imediatamente antes de gerar,
+// de modo que o relatório nunca sai de uma cópia local defasada. Todo o código
+// de filtro, agrupamento e formatação continua lendo do espelho, como antes.
+//
+// Não bloqueia: se a atualização falhar (rede fora, por exemplo), o relatório
+// ainda é gerado a partir da última cópia local, com aviso visível no modal.
+async function relatorioAtualizarDoBanco() {
+  if (!Nuvem.pronto()) {
+    return { ok: false, motivo: Nuvem.autenticado() ? "sem conexão com a nuvem" : "não conectado à nuvem" };
+  }
+  try {
+    await Nuvem.sincronizarEspelho();
+    await carregarLista();
+    return { ok: true };
+  } catch (e) {
+    console.warn("relatorioAtualizarDoBanco:", e);
+    return { ok: false, motivo: (e && e.message) || String(e) };
+  }
+}
+
 async function relatorioAbrirModal(preset = null, ricEspecifico = null) {
+  const at = await relatorioAtualizarDoBanco();
   relatorioEstado = relatorioPreSelecionado(preset === "atual-lista" ? "personalizado" : preset);
+  relatorioEstado._avisoBanco = at.ok ? "" : at.motivo;
   if (ricEspecifico) relatorioEstado.filtros = { _ricUnico: ricEspecifico };
   if (preset === "atual-lista") relatorioEstado.filtros = relatorioCapturarFiltrosListaAtual();
   await relatorioRenderModal();
@@ -10199,7 +10351,7 @@ async function relatorioRenderModal() {
   const presetUsuarioOpts = `<option value="">— Nenhum preset salvo selecionado —</option>` +
     presetsUsuario.map(pu => `<option value="${escapeAttr(pu.id)}"${pu.id === presetUsuarioAtual ? " selected" : ""}>${escapeHtml(pu.nome)}</option>`).join("");
 
-  body.innerHTML = `${ricUnico ? `<div class="rel-aviso-info">📌 Escopo fixo: RIC <b>${escapeHtml(e.escopo.rics[0] ? e.escopo.rics[0].identificacao : ricUnico)}</b></div>` : ""}
+  body.innerHTML = `${e._avisoBanco ? `<div class="rel-aviso-info" style="background:#fef3c7;color:#92400e;border-color:#fcd34d">⚠ Não foi possível atualizar do banco (${escapeHtml(e._avisoBanco)}). O relatório usará a última cópia local carregada.</div>` : ""}${ricUnico ? `<div class="rel-aviso-info">📌 Escopo fixo: RIC <b>${escapeHtml(e.escopo.rics[0] ? e.escopo.rics[0].identificacao : ricUnico)}</b></div>` : ""}
 
 <details class="rel-bloco" data-bloco-id="A"${openAttr("A", !ricUnico)}>
   <summary class="rel-bloco-summary"><b>A. Escopo (filtros)</b> · <span class="rel-bloco-resumo">${e.escopo.total} requerimento${e.escopo.total!==1?"s":""}</span></summary>
