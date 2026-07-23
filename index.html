@@ -146,7 +146,7 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 .header-brand h1 { font-size: 16px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; min-width: 0; }
 .header-brand h1 .h1-titulo { display: inline-flex; align-items: baseline; gap: 6px; }
 .header-brand h1 small { display: block; font-size: 9.9px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; opacity: 0.7; }
-/* v4.7: indicador de status CloudSync */
+/* indicador de status da nuvem */
 .cloud-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; transition: all 0.2s; }
 .cloud-status:hover { filter: brightness(0.97); }
 .cloud-status-icon { font-size: 12px; line-height: 1; }
@@ -474,6 +474,9 @@ input[type="text"], input[type="number"], input[type="date"], input[type="passwo
   width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; background: var(--surface); color: var(--text);
 }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+/* Oculta visualmente o conteúdo sem usar type="password" (evita o gerenciador de
+   senhas do navegador oferecer salvamento em campos que não são senha). */
+.campo-mascarado { -webkit-text-security: disc; text-security: disc; }
 textarea { resize: vertical; min-height: 60px; font-family: inherit; }
 .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
 .form-row > div { flex: 1; min-width: 140px; }
@@ -776,7 +779,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <button class="btn btn-icon btn-ghost" id="btn-menu-acoes" title="Mais ações" aria-label="Menu de ações" aria-haspopup="true" aria-expanded="false">☰</button>
       <div class="menu-acoes-dropdown" id="menu-acoes-dropdown" role="menu">
         <button class="menu-item" id="btn-open-sync" role="menuitem"><span class="menu-item-icon">⟳</span>Sync API Congresso</button>
-        <button class="menu-item" id="btn-open-cloudsync" role="menuitem"><span class="menu-item-icon">☁</span>Conta / Nuvem (login)</button>
+        <button class="menu-item" id="btn-open-conta" role="menuitem"><span class="menu-item-icon">☁</span>Conta / Nuvem (login)</button>
         <button class="menu-item" id="btn-incluir-manual" role="menuitem"><span class="menu-item-icon">＋</span>Incluir requerimento</button>
         <button class="menu-item" id="btn-open-edicao-lote" role="menuitem"><span class="menu-item-icon">✎</span>Edição em lote</button>
         <button class="menu-item" id="btn-open-relatorios-menu" role="menuitem"><span class="menu-item-icon">📄</span>Relatórios</button>
@@ -1050,7 +1053,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div class="card">
       <h2>Sincronização por ano</h2>
-      <p class="text-small text-muted" style="margin-bottom:12px">Coleta todos os requerimentos do tipo escolhido, filtra por menção a Casa Civil, armazena no IndexedDB. Enriquecimento (histórico, situação, inteiro teor) só para os filtrados.</p>
+      <p class="text-small text-muted" style="margin-bottom:12px">Coleta todos os requerimentos do tipo escolhido, filtra por menção a Casa Civil, armazena na base do aplicativo. Enriquecimento (histórico, situação, inteiro teor) só para os filtrados.</p>
       <div class="form-row">
         <div><label>Casa</label><select id="sync-casa"><option value="ambas">Ambas (Câmara + Senado)</option><option value="camara">Câmara — RIC</option><option value="senado">Senado — RQS + REQ</option></select></div>
         <div><label>Ano</label><select id="sync-ano"></select></div>
@@ -1384,11 +1387,11 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
   </div>
 </div>
 
-<div class="modal-bg" id="modal-cloudsync">
+<div class="modal-bg" id="modal-conta">
   <div class="modal">
     <div class="modal-header">
       <h2>☁ Conta e dados na nuvem</h2>
-      <button class="modal-close" data-close-modal="modal-cloudsync">&times;</button>
+      <button class="modal-close" data-close-modal="modal-conta">&times;</button>
     </div>
     <div class="card">
       <div id="conta-estado-resumo" class="text-small" style="margin-bottom:12px"></div>
@@ -1455,7 +1458,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
       <h2>🤖 API Gemini (análise automática de PDFs)</h2>
       <p class="text-small text-muted" style="margin-bottom:12px">Configure sua chave da Google Gemini API para analisar automaticamente o inteiro teor dos requerimentos e pré-preencher os campos Objeto e Resumo. <a href="https://aistudio.google.com/apikey" target="_blank">Obter chave</a>.</p>
       <div class="form-row">
-        <div style="flex:2"><label>Chave da API</label><input type="password" id="cfg-gemini-key" placeholder="AIza..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-form-type="other" name="cfg-gemini-key-nofill"></div>
+        <div style="flex:2"><label>Chave da API</label><div style="display:flex;gap:6px"><input type="text" id="cfg-gemini-key" class="campo-mascarado" placeholder="AIza..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other" name="cfg-gemini-key-nofill"><button type="button" class="btn btn-sm" id="btn-ver-gemini-key" title="Mostrar ou ocultar a chave" aria-label="Mostrar ou ocultar a chave">👁</button></div></div>
         <div><label>Modelo</label><select id="cfg-gemini-model">
           <option value="gemini-2.5-flash">gemini-2.5-flash (rápido, recomendado)</option>
           <option value="gemini-2.5-pro">gemini-2.5-pro (mais preciso)</option>
@@ -1465,7 +1468,7 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
           <option value="gemini-1.5-flash">gemini-1.5-flash</option>
         </select></div>
       </div>
-      <p class="text-small text-muted">A chave é armazenada apenas no seu navegador (IndexedDB), nunca enviada a outros servidores além do próprio Google.</p>
+      <p class="text-small text-muted">A chave fica salva na sua conta e neste dispositivo, e é usada apenas nas chamadas ao próprio Google.</p>
     </div>
     <div class="card">
       <h2>Termos de busca (regex)</h2>
@@ -1492,10 +1495,10 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
     </div>
     <div class="card">
       <h2>Backup e dados</h2>
-      <p class="text-small text-muted" style="margin-bottom:12px">Dados ficam no navegador (IndexedDB). Faça backup periodicamente.</p>
+      <p class="text-small text-muted" style="margin-bottom:12px">Os dados ficam na base institucional na nuvem. O backup gera uma cópia local do que está neste dispositivo.</p>
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px">
         <input type="checkbox" id="cfg-backup-incluir-credenciais">
-        Incluir credenciais no backup (PAT do GitHub e chave Gemini)
+        Incluir credenciais no backup (chave Gemini)
       </label>
       <p class="text-small text-muted" style="margin:-4px 0 12px"><b>Por segurança</b>, o backup é exportado <b>sem</b> as credenciais por padrão. Marque a opção acima apenas se for guardar o arquivo em local seguro e não compartilhá-lo.</p>
       <div class="toolbar">
@@ -1720,7 +1723,7 @@ const LABEL_LEG = {
   pendente: "Não enriquecido"
 };
 
-// ===== IndexedDB =====
+// ===== Base local do aplicativo (espelho de leitura) =====
 const DB = (() => {
   let db = null;
   function open() {
@@ -1736,7 +1739,7 @@ const DB = (() => {
         if (!d.objectStoreNames.contains("marcacoes")) d.createObjectStore("marcacoes", { keyPath: "proposicaoId" });
         if (!d.objectStoreNames.contains("config")) d.createObjectStore("config", { keyPath: "key" });
         if (!d.objectStoreNames.contains("naomapeadas")) d.createObjectStore("naomapeadas", { keyPath: "situacao" });
-        // v4.7: store de tombstones (registros deletados) para CloudSync
+        // store de marcadores de exclusão (registros deletados)
         if (!d.objectStoreNames.contains("tombstones")) d.createObjectStore("tombstones", { keyPath: "id" });
       };
       req.onsuccess = () => { db = req.result; resolve(db); };
@@ -1750,7 +1753,7 @@ const DB = (() => {
     opts = opts || {};
     return new Promise((res, rej) => {
       const r = tx([store], "readwrite").objectStore(store).put(value);
-      r.onsuccess = () => { res(r.result); if (opts.sync !== false) CloudSync.notificarMudanca(); };
+      r.onsuccess = () => { res(r.result); };
       r.onerror = () => rej(r.error);
     });
   }
@@ -1759,7 +1762,7 @@ const DB = (() => {
     return new Promise((res, rej) => {
       const t = tx([store], "readwrite"); const s = t.objectStore(store);
       values.forEach(v => s.put(v));
-      t.oncomplete = () => { res(); if (opts.sync !== false) CloudSync.notificarMudanca(); };
+      t.oncomplete = () => { res(); };
       t.onerror = () => rej(t.error);
     });
   }
@@ -1767,7 +1770,7 @@ const DB = (() => {
     opts = opts || {};
     return new Promise((res, rej) => {
       const r = tx([store], "readwrite").objectStore(store).delete(key);
-      r.onsuccess = () => { res(); if (opts.sync !== false) CloudSync.notificarMudanca(); };
+      r.onsuccess = () => { res(); };
       r.onerror = () => rej(r.error);
     });
   }
@@ -1785,7 +1788,7 @@ async function setConfig(key, value, opts) { await DB.put("config", { key, value
 //
 // Papel nesta fase:
 //   - Fonte da verdade ONLINE: Supabase (PostgREST + RLS).
-//   - IndexedDB local vira ESPELHO de leitura: a cada login/atualização,
+//   - a base local vira ESPELHO de leitura: a cada login/atualização,
 //     puxamos proposicoes+marcacoes da nuvem, convertemos para o formato do
 //     app (camelCase) e regravamos o espelho com {sync:false}.
 //   - NÃO há escrita na nuvem nesta fase (writes + Realtime = fase seguinte).
@@ -2109,6 +2112,29 @@ const Nuvem = (() => {
     redefinirSenhaUsuario(id, senha) { return this._admin("redefinir_senha", { id, senha }); },
     mudarPapelUsuario(id, papel) { return this._admin("mudar_papel", { id, papel }); },
     excluirUsuario(id) { return this._admin("excluir", { id }); },
+    // Busca um PDF de inteiro teor PELO SERVIDOR (Edge Function 'baixar-pdf').
+    // Necessário porque camara.leg.br/senado.leg.br não enviam cabeçalhos CORS:
+    // o navegador bloqueia o fetch direto e ignora o atributo "download" em
+    // links de outro domínio. Devolve um Blob. Exige usuário autenticado.
+    async baixarPdf(url) {
+      const c = await client();
+      const { data, error } = await c.functions.invoke("baixar-pdf", { body: { url } });
+      if (error) {
+        let msg = error.message || "Falha ao baixar o PDF.";
+        try { const ctx = await error.context?.json?.(); if (ctx?.error) msg = ctx.error; } catch (e) {}
+        throw new Error(msg);
+      }
+      // A função responde como application/octet-stream, então o supabase-js
+      // devolve Blob. Se vier JSON, é mensagem de erro.
+      if (data instanceof Blob) {
+        if (/json/i.test(data.type || "")) {
+          try { const j = JSON.parse(await data.text()); if (j?.error) throw new Error(j.error); } catch (e) { if (e instanceof Error && e.message) throw e; }
+        }
+        return data;
+      }
+      if (data && data.error) throw new Error(data.error);
+      throw new Error("Resposta inesperada ao baixar o PDF.");
+    },
   };
 })();
 
@@ -2446,13 +2472,17 @@ async function fetchPdfComFallback(url, onProgress) {
         const r2 = await fetch(target);
         if (!r2.ok) throw new Error(`HTTP ${r2.status} via proxy`);
         return await r2.arrayBuffer();
-      } catch (e2) {
-        const err = new Error(`CORS: download bloqueado (${e2.message})`);
-        err.isCorsError = true;
-        throw err;
-      }
+      } catch (e2) { /* segue para a tentativa pelo servidor */ }
     }
-    const err = new Error(`CORS: download bloqueado — ${e1.message}`);
+    // Tentativa 3: pelo servidor (Edge Function), que não sofre restrição de CORS
+    if (Nuvem.autenticado()) {
+      try {
+        if (onProgress) onProgress("baixando PDF (pelo servidor)...");
+        const blob = await Nuvem.baixarPdf(url);
+        return await blob.arrayBuffer();
+      } catch (e3) { console.warn("baixarPdf (servidor):", e3); }
+    }
+    const err = new Error(`CORS: download bloqueado (${e1.message})`);
     err.isCorsError = true;
     throw err;
   }
@@ -4034,9 +4064,6 @@ async function excluirRic(id) {
   // Apaga
   if (m) await DB.delete("marcacoes", id);
   await DB.delete("proposicoes", id);
-  // v4.7: registra tombstones para não ressuscitar o item entre dispositivos (CloudSync)
-  if (m) await CloudSync.registrarTombstone("marc", id);
-  await CloudSync.registrarTombstone("prop", id);
 }
 
 async function reverterExclusao(snapId) {
@@ -4565,8 +4592,12 @@ async function abrirDetalhe(id) {
           status.innerHTML = `<span style="color:var(--warn)">⚠ Download automático bloqueado pelo servidor.</span>`;
           const dropZone = document.createElement("div");
           dropZone.style.cssText = "margin-top:10px;padding:16px;border:2px dashed var(--border-strong);border-radius:var(--radius-sm);text-align:center;cursor:pointer;background:var(--surface-2)";
-          dropZone.innerHTML = `<div class="text-small text-muted" style="margin-bottom:8px">Baixe o PDF pelo <a href="${escapeAttr(p.urlInteiroTeor)}" target="_blank" rel="noopener">link do inteiro teor</a> e arraste-o aqui ou clique para selecionar:</div><input type="file" id="gemini-pdf-input" accept="application/pdf" style="display:none"><label for="gemini-pdf-input" class="btn btn-sm" style="cursor:pointer">📂 Selecionar PDF</label>`;
+          dropZone.innerHTML = `<div class="text-small text-muted" style="margin-bottom:8px">Baixe o PDF e envie o arquivo aqui (arraste ou clique para selecionar). Também é possível abrir o <a href="${escapeAttr(p.urlInteiroTeor)}" target="_blank" rel="noopener">link do inteiro teor</a>.</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button type="button" class="btn btn-primary btn-sm" id="gemini-baixar-pdf">⬇ Baixar PDF</button><input type="file" id="gemini-pdf-input" accept="application/pdf" style="display:none"><label for="gemini-pdf-input" class="btn btn-sm" style="cursor:pointer">📂 Selecionar PDF</label></div><div id="gemini-baixar-msg" class="text-small" style="margin-top:8px"></div>`;
           status.appendChild(dropZone);
+          document.getElementById("gemini-baixar-pdf").addEventListener("click", async (ev) => {
+            ev.stopPropagation();
+            await baixarInteiroTeorParaDisco(p, document.getElementById("gemini-baixar-msg"));
+          });
           dropZone.addEventListener("dragover", ev => { ev.preventDefault(); dropZone.style.borderColor = "var(--accent)"; });
           dropZone.addEventListener("dragleave", () => { dropZone.style.borderColor = "var(--border-strong)"; });
           dropZone.addEventListener("drop", ev => { ev.preventDefault(); const f = ev.dataTransfer.files[0]; if (f) processarPdfFile(f, apiKey, model, status, dropZone); });
@@ -4593,6 +4624,49 @@ async function abrirDetalhe(id) {
     if (r.palavrasChave && camposAtivos.has("palavrasChave")) {
       const el = document.getElementById("m-palavraschave"); if (el) el.value = r.palavrasChave;
     }
+  }
+
+  // Baixa o inteiro teor direto para o disco (item pedido: sem abrir em outra aba).
+  // Cadeia: fetch direto -> proxy configurado -> servidor (Edge Function).
+  // O atributo "download" de um link não funciona em domínio diferente, por isso
+  // é preciso obter os bytes e gerar um arquivo local (Blob) para salvar.
+  async function baixarInteiroTeorParaDisco(p, msgEl) {
+    const url = p.urlInteiroTeor;
+    if (!url) { if (msgEl) msgEl.innerHTML = '<span style="color:var(--err)">Este requerimento não tem link de inteiro teor.</span>'; return; }
+    const nome = ((p.identificacao || "inteiro-teor").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, "-")) + ".pdf";
+    const btn = document.getElementById("gemini-baixar-pdf");
+    if (btn) btn.disabled = true;
+    if (msgEl) msgEl.innerHTML = '<span class="text-muted">Baixando…</span>';
+    try {
+      let blob = null;
+      try {
+        const r = await fetch(url);
+        if (r.ok) blob = await r.blob();
+      } catch (e) { /* CORS: segue */ }
+      if (!blob) {
+        const proxy = (await getConfig("proxy", "")) || "";
+        if (proxy) {
+          try {
+            const r2 = await fetch(proxy.replace("{url}", encodeURIComponent(url)));
+            if (r2.ok) blob = await r2.blob();
+          } catch (e) { /* segue */ }
+        }
+      }
+      if (!blob && Nuvem.autenticado()) {
+        if (msgEl) msgEl.innerHTML = '<span class="text-muted">Baixando pelo servidor…</span>';
+        blob = await Nuvem.baixarPdf(url);
+      }
+      if (!blob) throw new Error("não foi possível obter o arquivo (entre na conta para baixar pelo servidor)");
+      const href = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = href; a.download = nome;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 30000);
+      if (msgEl) msgEl.innerHTML = `<span style="color:var(--ok)">✓ Arquivo salvo como ${escapeHtml(nome)}. Agora selecione-o acima para analisar.</span>`;
+    } catch (e) {
+      console.error("baixarInteiroTeorParaDisco:", e);
+      if (msgEl) msgEl.innerHTML = `<span style="color:var(--err)">Falha ao baixar: ${escapeHtml(e?.message || String(e))}</span>`;
+    } finally { if (btn) btn.disabled = false; }
   }
 
   // Processa PDF carregado manualmente (fallback CORS)
@@ -5897,8 +5971,6 @@ document.getElementById("btn-manut-tudo").addEventListener("click", async () => 
     logEl.textContent = linhas.join("\n");
     await carregarLista();
     aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
-    // Dispara sync se configurado (as mudanças foram {sync:false}, então força um push)
-    if (CloudSync.estaConfigurado()) CloudSync.sincronizarAgora({ silencioso: true }).catch(() => {});
   } catch (e) {
     linhas.push(`\nERRO: ${e.message}`);
     logEl.textContent = linhas.join("\n");
@@ -5912,7 +5984,7 @@ document.getElementById("btn-export-backup").addEventListener("click", async () 
   let config = await DB.getAll("config");
   if (!incluirCred) {
     // v4.7.6: por segurança, remove credenciais sensíveis do backup por padrão
-    const SENSIVEIS = ["cloudPat", "geminiKey"];
+    const SENSIVEIS = ["geminiKey"];
     config = config.map(c => SENSIVEIS.includes(c.key) ? { ...c, value: "" } : c);
   }
   const data = {
@@ -5940,7 +6012,7 @@ document.getElementById("btn-import-backup").addEventListener("change", async e 
     if (data.marcacoes) await DB.bulkPut("marcacoes", data.marcacoes);
     if (data.config) {
       // v4.7.6: não sobrescreve credenciais locais com valores vazios vindos de um backup mascarado
-      const SENSIVEIS = ["cloudPat", "geminiKey"];
+      const SENSIVEIS = ["geminiKey"];
       for (const c of data.config) {
         if (SENSIVEIS.includes(c.key) && (!c.value || c.value === "")) continue;
         await DB.put("config", c);
@@ -6070,6 +6142,11 @@ document.getElementById("admin-lista-usuarios").addEventListener("click", async 
     alert("Falha: " + (e?.message || String(e)));
   }
 });
+
+document.getElementById("btn-ver-gemini-key").onclick = () => {
+  const el = document.getElementById("cfg-gemini-key");
+  el.classList.toggle("campo-mascarado");
+};
 
 document.getElementById("cfg-gemini-key").addEventListener("change", async e => {
   const v = e.target.value.trim();
@@ -6345,13 +6422,13 @@ function renderContaModalEstado() {
 }
 
 function abrirModalConta() {
-  abrirModal("modal-cloudsync");
+  abrirModal("modal-conta");
   renderContaModalEstado();
-  configToAcordeao("modal-cloudsync", { todosFechados: true });
+  configToAcordeao("modal-conta", { todosFechados: true });
   if (Nuvem.usuarioEhAdmin()) carregarListaUsuarios();
 }
 
-document.getElementById("btn-open-cloudsync").onclick = () => { fecharMenuAcoes(); abrirModalConta(); };
+document.getElementById("btn-open-conta").onclick = () => { fecharMenuAcoes(); abrirModalConta(); };
 document.getElementById("btn-open-sobre").onclick = () => { fecharMenuAcoes(); abrirModal("modal-sobre"); };
 
 // Clique no indicador: se logado, atualiza os dados; senão, abre o login.
@@ -8137,473 +8214,6 @@ async function reverterImportacao(snapId) {
   }
 }
 
-// ===== MÓDULO CLOUDSYNC (v4.7) — sincronização single-user via GitHub Gist privado =====
-// Reaproveita o desenho da v4.4, removendo coordenação multiusuário.
-// CRIPTO: AES-GCM 256, gzip antes de cifrar, chave derivada de PAT+GistID (PBKDF2-SHA256 100k).
-// CLOUD: wrappers GET/PATCH no Gist; status no header; offline-first; sync automático + manual.
-// MERGE: last-write-wins por timestamp; tombstone básico local para não ressuscitar deletados.
-
-class CloudHttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.name = "CloudHttpError";
-    this.status = status;
-  }
-}
-
-const CloudSync = (() => {
-  // ---- Estado interno ----
-  let _cfg = { pat: "", gistId: "" };         // credenciais
-  let _key = null;                            // CryptoKey derivada (cache em memória)
-  let _status = "local";                      // local|sincronizando|sincronizado|pendente|erro|offline
-  let _debounceTimer = null;
-  let _ultimoErro = "";
-  let _syncEmCurso = false;
-  const GIST_FILENAME = "monitor-ric-data.json.enc";
-  const ENVELOPE_V = 1;
-
-  // ---- Utilidades base64 / bytes ----
-  function bytesToB64(bytes) {
-    let bin = "";
-    const arr = new Uint8Array(bytes);
-    const chunk = 0x8000;
-    for (let i = 0; i < arr.length; i += chunk) {
-      bin += String.fromCharCode.apply(null, arr.subarray(i, i + chunk));
-    }
-    return btoa(bin);
-  }
-  function b64ToBytes(b64) {
-    const bin = atob(b64);
-    const arr = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    return arr;
-  }
-
-  // ---- gzip via CompressionStream (fallback: sem compressão) ----
-  async function gzip(str) {
-    const enc = new TextEncoder().encode(str);
-    if (typeof CompressionStream === "undefined") return { data: enc, compressed: false };
-    try {
-      const cs = new CompressionStream("gzip");
-      const writer = cs.writable.getWriter();
-      writer.write(enc); writer.close();
-      const ab = await new Response(cs.readable).arrayBuffer();
-      return { data: new Uint8Array(ab), compressed: true };
-    } catch (e) {
-      return { data: enc, compressed: false };
-    }
-  }
-  async function gunzip(bytes, compressed) {
-    if (!compressed) return new TextDecoder().decode(bytes);
-    const ds = new DecompressionStream("gzip");
-    const writer = ds.writable.getWriter();
-    writer.write(bytes); writer.close();
-    const ab = await new Response(ds.readable).arrayBuffer();
-    return new TextDecoder().decode(ab);
-  }
-
-  // ---- Derivação de chave: PBKDF2-SHA256(PAT+GistID), salt determinístico do GistID ----
-  async function saltDeterministico(gistId) {
-    const base = new TextEncoder().encode("monitor-ric-v1:" + gistId);
-    const hash = await crypto.subtle.digest("SHA-256", base);
-    return new Uint8Array(hash).slice(0, 16); // primeiros 16 bytes
-  }
-  async function derivarChave(pat, gistId) {
-    const material = await crypto.subtle.importKey(
-      "raw", new TextEncoder().encode(pat + ":" + gistId),
-      { name: "PBKDF2" }, false, ["deriveKey"]
-    );
-    const salt = await saltDeterministico(gistId);
-    return crypto.subtle.deriveKey(
-      { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-      material,
-      { name: "AES-GCM", length: 256 },
-      false, ["encrypt", "decrypt"]
-    );
-  }
-  async function garantirChave() {
-    if (_key) return _key;
-    if (!_cfg.pat || !_cfg.gistId) throw new Error("CloudSync não configurado.");
-    _key = await derivarChave(_cfg.pat, _cfg.gistId);
-    return _key;
-  }
-
-  // ---- Cifragem / decifragem (envelope) ----
-  async function cifrar(plaintext) {
-    const key = await garantirChave();
-    const { data, compressed } = await gzip(plaintext);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
-    return JSON.stringify({
-      v: ENVELOPE_V, alg: "AES-GCM-256", kdf: "PBKDF2-SHA256-100k",
-      compressed, iv: bytesToB64(iv), ciphertext: bytesToB64(ct)
-    });
-  }
-  async function decifrar(envelopeStr) {
-    const env = JSON.parse(envelopeStr);
-    const key = await garantirChave();
-    const iv = b64ToBytes(env.iv);
-    const ct = b64ToBytes(env.ciphertext);
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
-    return gunzip(new Uint8Array(plain), env.compressed);
-  }
-
-  // ---- Wrappers HTTP do GitHub Gist ----
-  async function gistGet(gistId, pat) {
-    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }
-    });
-    if (!resp.ok) throw await httpError(resp);
-    return resp.json();
-  }
-  async function gistPatch(gistId, pat, contentStr) {
-    const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-      method: "PATCH",
-      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
-      body: JSON.stringify({ files: { [GIST_FILENAME]: { content: contentStr } } })
-    });
-    if (!resp.ok) throw await httpError(resp);
-    return resp.json();
-  }
-  async function gistCreate(pat) {
-    const resp = await fetch(`https://api.github.com/gists`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" },
-      body: JSON.stringify({ description: "Monitor RIC — dados sincronizados (cifrados)", public: false, files: { [GIST_FILENAME]: { content: "{}" } } })
-    });
-    if (!resp.ok) throw await httpError(resp);
-    return resp.json();
-  }
-  async function httpError(resp) {
-    const status = resp.status;
-    // Tenta ler a mensagem do GitHub e os headers de rate limit
-    let ghMsg = "";
-    try { const body = await resp.json(); ghMsg = body && body.message ? body.message : ""; } catch (e) {}
-    const remaining = resp.headers.get("x-ratelimit-remaining");
-    const reset = resp.headers.get("x-ratelimit-reset");
-    const ehRateLimit = remaining === "0";
-    let msg;
-    if (status === 401) {
-      msg = "Token (PAT) inválido ou expirado. Gere um novo token e cole de novo.";
-    } else if (status === 403) {
-      if (ehRateLimit) {
-        let quando = "";
-        if (reset) { const dt = new Date(parseInt(reset, 10) * 1000); quando = ` Tente novamente após ${dt.toLocaleTimeString("pt-BR")}.`; }
-        msg = `Limite de requisições do GitHub atingido (rate limit).${quando}`;
-      } else {
-        // 403 sem rate limit = problema de permissão. Fine-grained PATs costumam falhar aqui.
-        msg = "Acesso negado (403). Tokens fine-grained às vezes não conseguem ler/escrever Gists mesmo com a permissão marcada. " +
-              "Recomendado: use um token CLÁSSICO (Classic token) com o escopo \"gist\" marcado — é o mais confiável para Gists.";
-      }
-    } else if (status === 404) {
-      msg = "Gist não encontrado (404). Confira o Gist ID, ou crie um novo Gist.";
-    } else {
-      msg = `Erro HTTP ${status} ao acessar o GitHub.`;
-    }
-    if (ghMsg) msg += ` (GitHub: ${ghMsg})`;
-    return new CloudHttpError(status, msg);
-  }
-
-  // ---- Diagnóstico: testa se o PAT consegue acessar a API de Gists ----
-  async function diagnosticar(pat) {
-    // 1. Testa autenticação básica
-    const respUser = await fetch("https://api.github.com/user", {
-      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json" }
-    });
-    if (respUser.status === 401) return { ok: false, etapa: "auth", msg: "PAT inválido ou expirado." };
-    if (!respUser.ok && respUser.status !== 403) return { ok: false, etapa: "auth", msg: `Falha ao autenticar (HTTP ${respUser.status}).` };
-    let login = "(desconhecido)";
-    try { const u = await respUser.json(); login = u.login || login; } catch (e) {}
-    // 2. Testa LISTAR gists (precisa de permissão de leitura de gist)
-    const respList = await fetch("https://api.github.com/gists?per_page=1", {
-      headers: { "Authorization": `Bearer ${pat}`, "Accept": "application/vnd.github+json" }
-    });
-    if (respList.status === 403) {
-      const rem = respList.headers.get("x-ratelimit-remaining");
-      if (rem === "0") return { ok: false, etapa: "ratelimit", msg: "Rate limit do GitHub atingido. Aguarde alguns minutos." };
-      return { ok: false, etapa: "permissao", login, msg: "O PAT autentica, mas NÃO tem permissão de Gists. Use um Classic token com escopo \"gist\", ou um fine-grained com \"Gists: Read and write\"." };
-    }
-    if (!respList.ok) return { ok: false, etapa: "gist", login, msg: `Falha ao listar Gists (HTTP ${respList.status}).` };
-    return { ok: true, login, msg: `PAT válido para o usuário ${login}, com acesso a Gists.` };
-  }
-
-  // ---- Serialização do snapshot local ----
-  async function montarSnapshotLocal() {
-    const [proposicoes, marcacoes, naomapeadas, tombstones, config] = await Promise.all([
-      DB.getAll("proposicoes"), DB.getAll("marcacoes"), DB.getAll("naomapeadas"),
-      DB.getAll("tombstones"), DB.getAll("config")
-    ]);
-    // Só NÃO sincroniza: credenciais do próprio CloudSync e a chave do Gemini (sensíveis e
-    // específicas do dispositivo) e o tema (preferência local por navegador). Todo o resto
-    // das configurações e dados é sincronizado.
-    const NAO_SINCRONIZAR = ["cloudPat", "cloudGistId", "geminiKey", "tema"];
-    const configFiltrada = config.filter(c => !NAO_SINCRONIZAR.includes(c.key));
-    // Inclui dados guardados em localStorage que fazem parte do estado do usuário:
-    // presets de relatório e snapshots de RICs excluídos (para recuperação em qualquer dispositivo).
-    let relatorioPresets = [], exclusaoSnapshots = [];
-    try { relatorioPresets = JSON.parse(localStorage.getItem("monitor-ric-relatorio-presets") || "[]"); } catch (e) {}
-    try { exclusaoSnapshots = JSON.parse(localStorage.getItem("monitor-ric-exclusao-snapshots") || "[]"); } catch (e) {}
-    return {
-      schema: "monitor-ric-cloud-v1",
-      exportadoEm: new Date().toISOString(),
-      proposicoes, marcacoes, naomapeadas, tombstones,
-      config: configFiltrada,
-      relatorioPresets,
-      exclusaoSnapshots,
-    };
-  }
-
-  // ---- Merge last-write-wins ----
-  function timestampDe(obj) {
-    // Para proposições: prefere dataEnriquecimento, depois coletadoEm
-    // Para marcações: atualizadoEm
-    return obj.dataEnriquecimento || obj.atualizadoEm || obj.coletadoEm || obj.exportadoEm || "";
-  }
-  function mergeListas(local, remoto, keyField) {
-    const map = new Map();
-    for (const item of local) map.set(item[keyField], item);
-    for (const item of remoto) {
-      const ex = map.get(item[keyField]);
-      if (!ex) { map.set(item[keyField], item); continue; }
-      // Last-write-wins por timestamp
-      const tEx = timestampDe(ex), tNew = timestampDe(item);
-      if (tNew > tEx) map.set(item[keyField], item);
-    }
-    return [...map.values()];
-  }
-
-  async function aplicarSnapshotRemoto(remoto) {
-    // Carrega locais
-    const [propLocal, marcLocal, naoLocal, tombLocal] = await Promise.all([
-      DB.getAll("proposicoes"), DB.getAll("marcacoes"), DB.getAll("naomapeadas"), DB.getAll("tombstones")
-    ]);
-    // Tombstones: união (não ressuscita deletados entre dispositivos do mesmo usuário)
-    const tombMap = new Map();
-    for (const t of [...tombLocal, ...(remoto.tombstones || [])]) {
-      const ex = tombMap.get(t.id);
-      if (!ex || (t.deletadoEm || "") > (ex.deletadoEm || "")) tombMap.set(t.id, t);
-    }
-    const tombstones = [...tombMap.values()];
-    const tombIds = new Set(tombstones.map(t => t.id));
-
-    // Merge das listas
-    let proposicoes = mergeListas(propLocal, remoto.proposicoes || [], "id");
-    let marcacoes = mergeListas(marcLocal, remoto.marcacoes || [], "proposicaoId");
-    let naomapeadas = mergeListas(naoLocal, remoto.naomapeadas || [], "situacao");
-
-    // Remove itens com tombstone (deletados)
-    proposicoes = proposicoes.filter(p => !tombIds.has("prop:" + p.id));
-    marcacoes = marcacoes.filter(m => !tombIds.has("marc:" + m.proposicaoId));
-
-    // Persiste tudo SEM disparar nova sync (sync: false)
-    await DB.bulkPut("tombstones", tombstones, { sync: false });
-    if (proposicoes.length) await DB.bulkPut("proposicoes", proposicoes, { sync: false });
-    if (marcacoes.length) await DB.bulkPut("marcacoes", marcacoes, { sync: false });
-    if (naomapeadas.length) await DB.bulkPut("naomapeadas", naomapeadas, { sync: false });
-    // Config compartilhada (last-write-wins simples) — exceto credenciais, Gemini e tema (local)
-    if (remoto.config) {
-      for (const c of remoto.config) {
-        if (["cloudPat", "cloudGistId", "geminiKey", "tema"].includes(c.key)) continue;
-        await DB.put("config", c, { sync: false });
-      }
-    }
-    // v4.7.4: restaura presets de relatório do usuário (localStorage)
-    if (Array.isArray(remoto.relatorioPresets)) {
-      try {
-        const locais = JSON.parse(localStorage.getItem("monitor-ric-relatorio-presets") || "[]");
-        // Merge por id, preferindo o mais recente (salvoEm)
-        const mapa = new Map();
-        for (const p of [...locais, ...remoto.relatorioPresets]) {
-          const ex = mapa.get(p.id);
-          if (!ex || (p.criadoEm || "") > (ex.criadoEm || "")) mapa.set(p.id, p);
-        }
-        localStorage.setItem("monitor-ric-relatorio-presets", JSON.stringify([...mapa.values()].slice(0, 30)));
-      } catch (e) { console.warn("Falha ao mesclar presets de relatório:", e); }
-    }
-    // v4.7.5: mescla snapshots de RICs excluídos (para recuperação em qualquer dispositivo)
-    if (Array.isArray(remoto.exclusaoSnapshots)) {
-      try {
-        const locais = JSON.parse(localStorage.getItem("monitor-ric-exclusao-snapshots") || "[]");
-        const mapa = new Map();
-        for (const s of [...locais, ...remoto.exclusaoSnapshots]) {
-          if (s && s.id) mapa.set(s.id, s);
-        }
-        // Ordena por data de exclusão desc e limita a 50
-        const merged = [...mapa.values()].sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || "")).slice(0, 50);
-        localStorage.setItem("monitor-ric-exclusao-snapshots", JSON.stringify(merged));
-      } catch (e) { console.warn("Falha ao mesclar snapshots de exclusão:", e); }
-    }
-  }
-
-  // ---- Status / indicador ----
-  function setStatus(s, erro) {
-    _status = s;
-    if (erro !== undefined) _ultimoErro = erro;
-    renderStatusIndicator();
-  }
-  function renderStatusIndicator() {
-    const el = document.getElementById("cloud-status-indicator");
-    if (!el) return;
-    const mapa = {
-      local:        { icon: "○", txt: "Local", cls: "cloud-local" },
-      sincronizando:{ icon: "↻", txt: "Sincronizando…", cls: "cloud-syncing" },
-      sincronizado: { icon: "✓", txt: "Sincronizado", cls: "cloud-ok" },
-      pendente:     { icon: "●", txt: "Pendente", cls: "cloud-pending" },
-      erro:         { icon: "⚠", txt: "Erro", cls: "cloud-error" },
-      offline:      { icon: "⊘", txt: "Offline", cls: "cloud-offline" },
-    };
-    const m = mapa[_status] || mapa.local;
-    el.className = "cloud-status " + m.cls;
-    el.innerHTML = `<span class="cloud-status-icon">${m.icon}</span><span class="cloud-status-txt">${m.txt}</span>`;
-    el.title = _ultimoErro && _status === "erro" ? _ultimoErro : `CloudSync: ${m.txt}`;
-  }
-
-  // ---- Carregamento da config ----
-  async function carregarConfig() {
-    _cfg.pat = await getConfig("cloudPat", "");
-    _cfg.gistId = await getConfig("cloudGistId", "");
-    _key = null; // invalida cache de chave
-    if (estaConfigurado()) setStatus("pendente"); else setStatus("local");
-  }
-  function estaConfigurado() { return !!(_cfg.pat && _cfg.gistId); }
-
-  async function salvarConfig(pat, gistId) {
-    _cfg.pat = pat.trim();
-    _cfg.gistId = gistId.trim();
-    _key = null;
-    await setConfig("cloudPat", _cfg.pat, { sync: false });
-    await setConfig("cloudGistId", _cfg.gistId, { sync: false });
-    if (estaConfigurado()) setStatus("pendente"); else setStatus("local");
-  }
-
-  async function desconectar() {
-    _cfg = { pat: "", gistId: "" };
-    _key = null;
-    await setConfig("cloudPat", "", { sync: false });
-    await setConfig("cloudGistId", "", { sync: false });
-    setStatus("local");
-  }
-
-  // ---- Sync principal ----
-  async function sincronizarAgora(opts) {
-    opts = opts || {};
-    if (!estaConfigurado()) { setStatus("local"); return { ok: false, motivo: "não configurado" }; }
-    if (!navigator.onLine) { setStatus("offline"); return { ok: false, motivo: "offline" }; }
-    if (_syncEmCurso) return { ok: false, motivo: "já em curso" };
-    _syncEmCurso = true;
-    setStatus("sincronizando");
-    try {
-      // 1. Baixa remoto
-      let remotoObj = null;
-      const gist = await comBackoff(() => gistGet(_cfg.gistId, _cfg.pat));
-      const file = gist.files && gist.files[GIST_FILENAME];
-      if (file && file.content && file.content.trim() && file.content.trim() !== "{}") {
-        try {
-          const plain = await decifrar(file.content);
-          remotoObj = JSON.parse(plain);
-        } catch (e) {
-          // Conteúdo ilegível (chave errada?) — não sobrescreve cegamente
-          throw new Error("Falha ao decifrar dados da nuvem. Verifique se o PAT e o Gist ID conferem com os que criaram o backup.");
-        }
-      }
-      // 2. Aplica remoto sobre local (merge)
-      if (remotoObj) await aplicarSnapshotRemoto(remotoObj);
-      // 3. Sobe estado mesclado
-      const snap = await montarSnapshotLocal();
-      const envelope = await cifrar(JSON.stringify(snap));
-      await comBackoff(() => gistPatch(_cfg.gistId, _cfg.pat, envelope));
-      await setConfig("cloudUltimaSync", new Date().toISOString(), { sync: false });
-      setStatus("sincronizado");
-      // Atualiza a UI da aplicação se merge trouxe mudanças
-      if (remotoObj && !opts.silencioso) {
-        if (typeof recarregarTudo === "function") await recarregarTudo();
-      }
-      return { ok: true };
-    } catch (e) {
-      const ehAuth = e instanceof CloudHttpError && (e.status === 401 || e.status === 403);
-      setStatus("erro", e.message);
-      console.error("CloudSync erro:", e);
-      return { ok: false, erro: e.message, auth: ehAuth };
-    } finally {
-      _syncEmCurso = false;
-    }
-  }
-
-  // ---- Backoff exponencial (sem retry em erro de auth) ----
-  async function comBackoff(fn, tentativas = 3) {
-    let ultimoErro;
-    for (let i = 0; i < tentativas; i++) {
-      try {
-        return await fn();
-      } catch (e) {
-        ultimoErro = e;
-        // Não faz retry em erro de autenticação
-        if (e instanceof CloudHttpError && (e.status === 401 || e.status === 403 || e.status === 404)) throw e;
-        // Backoff: 500ms, 1s, 2s...
-        if (i < tentativas - 1) await new Promise(r => setTimeout(r, 500 * Math.pow(2, i)));
-      }
-    }
-    throw ultimoErro;
-  }
-
-  // ---- Notificação de mudança (debounced) ----
-  function notificarMudanca() {
-    if (!estaConfigurado()) return;
-    setStatus("pendente");
-    if (_debounceTimer) clearTimeout(_debounceTimer);
-    _debounceTimer = setTimeout(() => { sincronizarAgora({ silencioso: true }); }, 2500);
-  }
-
-  // ---- Registro de tombstone ao deletar ----
-  async function registrarTombstone(tipo, idReal) {
-    const tid = tipo + ":" + idReal;
-    await DB.put("tombstones", { id: tid, tipo, refId: idReal, deletadoEm: new Date().toISOString() }, { sync: false });
-  }
-
-  // ---- Criar novo Gist ----
-  async function criarNovoGist() {
-    if (!_cfg.pat) throw new Error("Informe o PAT antes de criar o Gist.");
-    const gist = await gistCreate(_cfg.pat);
-    _cfg.gistId = gist.id;
-    await setConfig("cloudGistId", gist.id, { sync: false });
-    setStatus("pendente");
-    return gist.id;
-  }
-
-  // ---- Exportar / importar config ----
-  function exportarConfig() {
-    if (!estaConfigurado()) return "";
-    // Formato simples: base64 de JSON
-    return "MRIC1:" + btoa(JSON.stringify({ pat: _cfg.pat, gistId: _cfg.gistId }));
-  }
-  async function importarConfig(texto) {
-    const t = (texto || "").trim();
-    if (!t.startsWith("MRIC1:")) throw new Error("Texto de configuração inválido.");
-    const obj = JSON.parse(atob(t.slice(6)));
-    if (!obj.pat || !obj.gistId) throw new Error("Configuração incompleta.");
-    await salvarConfig(obj.pat, obj.gistId);
-    return true;
-  }
-
-  // ---- Listeners de rede ----
-  function initRede() {
-    window.addEventListener("online", () => {
-      if (estaConfigurado()) { setStatus("pendente"); sincronizarAgora({ silencioso: true }); }
-    });
-    window.addEventListener("offline", () => { if (estaConfigurado()) setStatus("offline"); });
-  }
-
-  return {
-    carregarConfig, salvarConfig, desconectar, estaConfigurado,
-    sincronizarAgora, notificarMudanca, registrarTombstone,
-    criarNovoGist, exportarConfig, importarConfig,
-    renderStatusIndicator, setStatus, initRede,
-    diagnosticar: (pat) => diagnosticar(pat),
-    get cfg() { return { ..._cfg }; },
-    get status() { return _status; },
-  };
-})();
-
 // ===== MÓDULO FERIADOS E DIAS ÚTEIS (v4.6) =====
 // Calcula feriados nacionais brasileiros (fixos + móveis) + permite adicionar customizados.
 // Persistência dos customizados em localStorage.
@@ -10385,7 +9995,7 @@ document.querySelectorAll("[data-rel-painel]").forEach(b => b.addEventListener("
 }));
 
 
-// v4.7: recarrega dados em memória e re-renderiza a UI (chamada após merge do CloudSync)
+// recarrega dados em memória e re-renderiza a UI (chamada após atualizar os dados da nuvem)
 async function recarregarTudo() {
   try {
     await carregarLista();
@@ -10414,9 +10024,7 @@ async function recarregarTudo() {
     // Detectar estado inconsistente de aplicação XLSX (rollback automático)
     await XLSX_MERGE.verificarEstadoInconsistente();
     // Fase F: Nuvem (Supabase) em modo espelho somente leitura.
-    // CloudSync (GitHub Gist) foi desativado: não carregamos suas credenciais,
-    // então estaConfigurado()=false e notificarMudanca() vira no-op (nenhuma
-    // escrita local dispara chamada externa). A base local serve como espelho.
+    // A base local serve como espelho de leitura da nuvem.
     (async () => {
       try {
         await Nuvem.iniciar(); // cria o client e restaura sessão persistida
