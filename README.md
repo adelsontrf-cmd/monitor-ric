@@ -1,160 +1,260 @@
-# Monitor RIC
+# Monitor RIC 2.0
 
-Aplicativo PWA (Progressive Web App) da SSGP/SE/Casa Civil para monitorar os **Requerimentos de Informação** (RIC, RQS, REQ) do Congresso Nacional que mencionam a Casa Civil, controlando sua tramitação interna, prazos e respostas. Consome as APIs públicas de Dados Abertos da Câmara dos Deputados e do Senado Federal. Funciona offline e é instalável como app.
+Acompanhamento de Requerimentos de Informação (RIC, RQS, REQ) do Congresso Nacional
+com relevância para a Casa Civil da Presidência da República.
 
-**Versão atual: 4.7.9**
+Aplicação web instalável (PWA) de uso interno da Subsecretaria de Governança Pública
+(SSGP), Secretaria Executiva da Casa Civil.
 
-## Arquivos do pacote
+---
 
-```
-monitor-ric-v4.7.9/
-├── index.html               ← o app (arquivo único)
-├── manifest.json            ← metadata PWA
-├── sw.js                    ← service worker
-├── icon-72.png              ← ícone 72x72
-├── icon-192.png             ← ícone 192x192
-├── icon-512.png             ← ícone 512x512
-└── icon-512-maskable.png    ← ícone maskable Android
-```
+## O que faz
 
-Os 7 arquivos precisam estar na mesma pasta e ser servidos via HTTPS.
+Coleta requerimentos nas APIs abertas da Câmara dos Deputados e do Senado Federal,
+filtra os que mencionam a Casa Civil, enriquece cada um com tramitação, autoria e
+situação legislativa, e permite que a equipe registre a análise interna: objeto,
+temática, unidades consultadas, etapas do fluxo, NUPs do SEI, prazos e resposta.
 
-## Funcionalidades
+Três telas: **Painel** (indicadores e gráficos), **Gerencial** (visões de
+acompanhamento) e **Requerimentos** (lista, filtros e edição). Gera relatórios e
+boletins em Word e PDF.
 
-### Sincronização com o Congresso
+Vários usuários trabalham sobre a mesma base, ao mesmo tempo, com atualização ao vivo.
 
-- Sincronização com as APIs da Câmara e do Senado, por ano completo ou incremental (até 180 dias).
-- Enriquecimento automático: ementa, autoria (com partido/UF), tramitação, situação legislativa, inteiro teor e prazo final CN extraído do histórico.
-- A sincronização incremental também reenriquece os RICs já existentes na base — inclusive os adicionados pela importação da planilha que não atendem ao filtro de menção à Casa Civil.
-- Inclusão manual de requerimentos por número/ano, com busca na API e preenchimento automático quando encontrado (ou criação em branco para completar à mão).
+---
 
-### Triagem e análise
-
-- Para cada RIC: objeto, resumo, temática, relevância, observações e unidades consultadas.
-- Mudança automática de status interno ao salvar: ao preencher o objeto, passa para "Em tramitação no Congresso Nacional"; ao registrar a data de recebimento, para "Em andamento na Casa Civil"; ao registrar a data da resposta, para "Respondido". O campo permanece editável (para casos de retirada).
-- Análise assistida por IA (Google Gemini) do inteiro teor, preenchendo objeto, resumo e palavras-chave.
-- Busca de RICs análogos por afinidade temática (TF-IDF, 100% no navegador).
-- Edição em lote: aplica etapa, prazo da etapa, temática, processo de recebimento, data e tipo de resposta a vários RICs de uma vez, com filtros de prazo de resposta e etapa atual no seletor.
-
-### Controle de prazos
-
-- Cálculo automático dos prazos das etapas internas conforme o art. 50, § 2º da Constituição Federal e a regra de contagem dos arts. 224 e 231 do CPC (30 dias, excluído o dia inicial, prorrogando o vencimento em dia não útil).
-- Prazo da etapa atual refletido em campo dedicado no modal de detalhe, que acompanha a etapa em curso.
-
-### Painéis e gráficos (aba Painel)
-
-- Cards de indicadores e gráficos: situação legislativa, etapas em andamento na Casa Civil, prazo final CN em andamento, casa parlamentar e evolução mensal.
-- Na situação legislativa, "Apresentados (últimos 7 dias)" é uma categoria própria, e RICs com data de resposta registrada são contabilizados como Respondidos (corrigindo registros defasados da API).
-- Os gráficos restritos a "em andamento na Casa Civil" ficam ocultos quando não há RICs nesse estado.
-- Gráficos clicáveis filtram a aba Requerimentos.
-
-### Relatórios
-
-- Geração em Word (.docx) e PDF, com seleção de campos, organização, presets nativos e presets de usuário.
-- Fonte sans-serif, orientação paisagem por padrão, links de inteiro teor e página oficial como URL ou botão clicável.
-
-### Importação e exportação
-
-- Importação da planilha `Controle_RICs.xlsx` (aba "Controle RI", 27 colunas) com merge inteligente: só marcações são atualizadas, nada é removido, e os campos sem correspondência na planilha (palavras-chave e RICs análogos) são preservados; duplicidades da base são mantidas.
-- Ao importar, é possível exportar um TXT com os RICs que estão na base mas não constam no XLSX, ou ocultá-los da base (sem apagar) com um clique.
-- A coluna "Etapa" da planilha é correlacionada com as etapas internas do app: Admissibilidade, Subsídios, Conformidade e Validação SSGP viram a etapa atual (com as anteriores marcadas como concluídas e o "Prazo da etapa" registrado); Respondido e Cancelado/Retirado fecham todo o fluxo; e "No Congresso"/"No Congresso - Novo", por serem anteriores ao recebimento na Casa Civil, não geram etapas internas.
-- Exportação para XLSX no mesmo formato do `Controle_RICs.xlsx`, com seleção de RICs.
-- Exportação CSV da aba Requerimentos.
-
-### Sincronização da base na nuvem (CloudSync)
-
-- Sincronização single-user via GitHub Gist privado, cifrada de ponta a ponta (AES-GCM 256, chave derivada por PBKDF2-SHA256 do PAT + Gist ID, com gzip antes de cifrar).
-- Indicador de estado no cabeçalho; sincronização automática em segundo plano e ao abrir; exportação/importação de configuração para ativar outros computadores com um único paste.
-- Sincroniza todos os dados (inclusive RICs ocultos e excluídos, para recuperação em qualquer dispositivo) e todas as configurações e presets de relatório, exceto as credenciais do próprio CloudSync, a chave do Gemini e o tema (local por navegador).
-- Requer que a rede permita acesso a `api.github.com`. Recomenda-se token clássico do GitHub com escopo `gist` (mais confiável que fine-grained para Gists).
-
-### PWA
-
-- Instalável como app (WebAPK no Android). Funciona offline via service worker (cache-first do shell, passthrough das APIs).
-- Tema claro/escuro, com preferência local por navegador (padrão claro).
-
-## Deploy no GitHub Pages
-
-### Pelo GitHub Desktop
-
-1. Abrir o GitHub Desktop e abrir o repositório `monitor-ric`.
-2. Copiar os 7 arquivos para a pasta local, substituindo as versões anteriores.
-3. **Summary** = "Atualização para v4.7.9", **Commit to main**, depois **Push origin**.
-4. Aguardar 1–2 minutos. A URL `https://SEU-USUARIO.github.io/monitor-ric/` estará atualizada.
-
-### Pela linha de comando
-
-```bash
-cd ~/seu-repo/monitor-ric
-# Copie os 7 arquivos para esta pasta
-git add index.html manifest.json sw.js icon-*.png
-git commit -m "v4.7.9"
-git push
-```
-
-### Cache do PWA
-
-A v4.7.9 usa o cache `monitor-ric-v4-7-9`. O service worker invalida o cache anterior automaticamente ao atualizar. Se necessário no Android: Configurações → Apps → Monitor RIC → Armazenamento → Limpar cache, e reabrir. Ou desinstalar e reinstalar pela URL.
-
-## Configuração inicial
-
-### Sincronização da base na nuvem (opcional)
-
-1. No GitHub: Settings → Developer settings → Personal access tokens → **Tokens (classic)** → Generate new token (classic), marcando apenas o escopo **gist**.
-2. No app: menu → **Sync base na nuvem** → cole o token → **Testar conexão** → **+ Criar novo Gist** → **Salvar configuração**.
-3. Em outros computadores, use **Exportar configuração** aqui e **Importar e ativar** lá.
-4. Em computador compartilhado, clique em **Desconectar** ao terminar.
-
-### Manutenção de dados
-
-Em **Configurações → Manutenção de dados**, o botão "Executar manutenção completa" roda rotinas idempotentes de correção: cria marcações para proposições que não tenham (invariante 1:1), normaliza as unidades consultadas para os valores canônicos (preservando e listando as que não tiverem correspondência) e recalcula a etapa a partir do fluxo. As mudanças sincronizam normalmente depois.
-
-### Backup seguro
-
-O backup é exportado **sem credenciais** por padrão (PAT do GitHub e chave Gemini ficam de fora), para poder ser compartilhado com segurança. Há uma opção para incluí-las quando o arquivo for guardado em local seguro.
-
-### Chave Gemini (opcional)
-
-1. Gere a chave em https://aistudio.google.com/apikey
-2. Menu → **Configurações → API Gemini**, cole a chave e escolha o modelo (recomendado `gemini-2.5-flash`).
-
-A chave fica apenas no navegador (IndexedDB) e não é sincronizada na nuvem.
-
-### Proxy CORS (opcional)
-
-Se a rede bloquear chamadas diretas às APIs do Congresso, em **Configurações → Proxy CORS**:
+## Arquitetura em uma página
 
 ```
-https://corsproxy.io/?url={url}
+  navegador                          nuvem                       fontes
+  ---------                          -----                       ------
+  index.html  ──── leitura/escrita ──▶  Supabase              Câmara (API v2)
+  (arquivo                              PostgreSQL 16   ◀───── Senado (dados abertos)
+   único)     ◀─── Realtime (WS) ─────  + RLS + Auth
+      │                                     ▲                  Google Gemini
+      │                                     │                  (análise de PDF)
+      ▼                              Edge Functions
+  IndexedDB                          admin-usuarios
+  (espelho de                        baixar-pdf
+   leitura)
 ```
 
-## Uso recomendado
+**Fonte da verdade é o Supabase.** O IndexedDB é espelho de leitura: reescrito a cada
+leitura da nuvem e a cada evento de Realtime. Serve para a tela não ficar vazia e para
+a consulta continuar funcionando quando a rede oscila. **Sem conexão, a edição é
+bloqueada**, com aviso: não existe fila de reenvio, e permitir digitar sem gravar seria
+perda silenciosa.
 
-1. **Sincronização inicial**: menu → Sync API Congresso → ano corrente → "Enriquecer".
-2. **Triagem**: aba Gerencial e aba Requerimentos com os filtros (incluindo Prazo final CN).
-3. **Análise**: no detalhe de um RIC, preencha objeto/resumo (ou use o Gemini) e salve.
-4. **Relatórios**: aba Requerimentos → filtre → gere o relatório em Word/PDF.
-5. **Backup/multi-dispositivo**: configure a Sync base na nuvem.
+### Camadas no `index.html`
 
-## APIs consumidas
+| Bloco | Papel |
+|---|---|
+| `DB` | IndexedDB (`monitor-ric`, versão 3, stores `proposicoes`, `marcacoes`, `config`, `naomapeadas`) |
+| `Nuvem` | Cliente Supabase: auth, leitura, gravação campo a campo, Realtime, Edge Functions |
+| Coleta | `sincronizar`, `sincronizarIncremental`, `reenriquecerExistentes`, `incluirRequerimentoManual` |
+| Relatórios | Presets, escopo, geração em Word (`docx`) e PDF (`window.print()` em iframe) |
+| XLSX | Importação e conciliação da planilha Controle RICs.xlsx |
 
-- Câmara: `dadosabertos.camara.leg.br/api/v2/proposicoes`
-- Senado: `legis.senado.leg.br/dadosabertos/materia/...`
-- GitHub Gist (CloudSync): `api.github.com/gists`
-- Gemini (opcional): `generativelanguage.googleapis.com/v1beta`
+---
 
-## Arquitetura
+## Restrições do projeto
 
-- HTML/CSS/JS puro, arquivo único (~478 KB).
-- IndexedDB: `monitor-ric` (schema/DB_VERSION 2, com store de tombstones para o CloudSync).
-- SheetJS (CDN) para XLSX; docx via biblioteca para relatórios Word.
-- Web Crypto API (AES-GCM, PBKDF2) para a criptografia do CloudSync.
-- Service Worker: cache-first do shell, passthrough das APIs externas.
-- Busca de análogos em TF-IDF, sem dependências externas.
+Não são preferências, são decisões firmes. Mudar qualquer uma delas é uma decisão de
+arquitetura, não um detalhe de implementação.
 
-## Limitações conhecidas
+1. **Arquivo único, sem toolchain de build.** Todo o app é `index.html`. Sem npm, sem
+   bundler, sem etapa de compilação. O que sobe para o servidor é o que se edita.
+2. **Nada de invenção.** Nome de coluna vem do schema real do banco. Nome de campo de
+   API vem de resposta real. Ambiguidade de regra de negócio é decidida por pessoa, não
+   pelo código.
+3. **`service_role` nunca aparece no app, em backup nem em conversa.** A chave pública
+   (`anon` / publishable) no `index.html` é pública por projeto: quem protege os dados é
+   o RLS. Operações que exigem privilégio ficam nas Edge Functions.
+4. **Migrações idempotentes.** Rodar duas vezes não pode causar dano.
+5. **Validar antes de entregar:** checagem de sintaxe JS e balanço de tags HTML em toda
+   alteração, com backup do arquivo anterior.
 
-- A detecção da situação legislativa por regras textuais pode não cobrir 100% dos casos; situações novas ficam registradas em Configurações → Situações não-mapeadas.
-- A busca por número/ano na inclusão manual é limitada no Senado; quando não há correspondência, o RIC é criado em branco para preenchimento manual.
-- O CloudSync depende de acesso a `api.github.com`; redes corporativas que bloqueiam esse domínio impedem a sincronização (o site `github.com` abrir não garante que a API esteja liberada).
-- A análise por Gemini tem limite de tamanho de PDF; RICs muito longos podem falhar.
+---
+
+## Modelo de dados
+
+Onze tabelas em `public`, todas com RLS ligado e política para o papel `authenticated`.
+
+| Tabela | Papel |
+|---|---|
+| `proposicoes` | O requerimento como vem da API. PK `id` (chave natural composta) |
+| `marcacoes` | A análise interna. Relação **1:1** com `proposicoes` |
+| `marcacao_unidades` | Junção: unidades consultadas por requerimento |
+| `unidades`, `tematicas`, `tipos_resposta` | Listas de referência |
+| `situacao_mapa` | De-para de situação bruta para categoria INFOCO |
+| `nao_mapeadas` | Situações vistas e ainda sem de-para |
+| `config_compartilhada` | Configurações por conta e da equipe |
+| `snapshots_import`, `auditoria_exclusoes` | Rastro de importação e de exclusão |
+
+### Chave natural das proposições
+
+```
+camara-{idApi}          senado-{codigoMateria}
+manual-{sigla}-{numero}-{ano}      (sufixo -b em duplicata)
+cn-RIC-{numero}-{ano}   cldf-RIC-{numero}-{ano}
+```
+
+### Gatilhos que o app depende (e não substitui)
+
+| Gatilho | Efeito |
+|---|---|
+| `trg_par_marcacao` | Cria a marcação 1:1 no INSERT de uma proposição. **O app nunca envia marcação na coleta** |
+| `trg_auditoria_exclusao` | Registra em `auditoria_exclusoes` antes do DELETE |
+| `trg_touch_*` | Mantém `atualizado_em` |
+
+### Realtime
+
+Publicação `supabase_realtime` cobre `proposicoes`, `marcacoes`, `marcacao_unidades` e
+`config_compartilhada`. O app assina as duas primeiras.
+
+---
+
+## Armadilhas conhecidas
+
+Cada item aqui custou tempo para ser descoberto. Ler antes de mexer.
+
+**`supabase-js` está fixado em `2.79.0`.** Versões posteriores têm uma regressão de ESM
+que quebra o import direto do CDN em ambiente sem bundler. Não atualizar sem testar no
+navegador.
+
+**"Aprovado" não é estado terminal.** Só `respondido` e `retirado` são. Um requerimento
+aprovado continua tramitando (vira aguardando resposta, depois respondido) e precisa ser
+sempre re-checado na API. Tratá-lo como final congela a situação.
+
+**Ids com "/" são legítimos.** 49 proposições (cn, cldf, senado) usam `id_original` no
+formato "numero/ano". Nenhuma validação nem constraint pode rejeitá-los. Cuidado para
+não confundir com a função `_idOriginalValido`, que rejeita "/" **de propósito e por
+outro motivo**: ali a pergunta é se aquele valor serve como identificador numérico da
+API, e "143/2025" não serve. Rejeitá-lo é o que faz o enriquecimento resolver o id real.
+
+**Espaço nas pontas é invisível e quebra tudo.** Já houve 783 registros com
+`"Aguardando Resposta "` que não casavam no de-para, e o defeito só apareceu com
+`repr()`. Hoje há duas defesas: `normalizarTextosProposicao()` na entrada e `CHECK` de
+`btrim` no banco em `situacao_legislativa`, `status_interno` e `etapa`. Um único valor
+com espaço faz o PostgREST recusar **o lote inteiro** do upsert.
+
+**PGRST102, "All object keys must match".** O upsert em lote do PostgREST exige que
+todos os registros do mesmo lote tenham exatamente o mesmo conjunto de chaves. Por isso
+`linhaDeProposicao()` e `linhaDeMarcacao()` sempre devolvem todas as chaves, com `null`
+onde não há valor. Nunca montar a linha só com os campos preenchidos.
+
+**Escrita é sempre campo a campo.** A edição envia apenas as colunas que mudaram, para
+que dois colegas editando campos diferentes do mesmo requerimento não se sobrescrevam.
+Campo ausente no registro enviado significa **não editado**, nunca **apagado**: é isso
+que protege colunas que a tela não exibe (`oficio`, `atribuicao`, os links). Todo
+`UPDATE` usa `.select()` e confere que voltou linha, porque negativa de RLS retorna
+sucesso com zero linhas e a perda seria silenciosa.
+
+**O botão "Atualizar banco na nuvem (upload)" sobrescreve.** Ele envia a base local
+inteira por cima da nuvem. É o caminho da carga da planilha Controle RICs.xlsx e por
+isso continua existindo, mas é **restrito ao administrador**: se um colega editar depois
+da sua última atualização de dados, o envio desfaz o trabalho dele sem erro. Atualizar
+antes de enviar.
+
+**As APIs mudam de estrutura sem aviso.** A do Senado já migrou de schema no meio do
+projeto e `/materia/movimentacoes` mudou de forma. Validar nome de campo contra resposta
+real antes de escrever código.
+
+**Rede institucional.** `api.github.com` tem histórico de indisponibilidade na rede da
+Casa Civil (foi o que aposentou o antigo CloudSync por Gist). `github.io` e
+`*.supabase.co` são alcançáveis. Se o WebSocket do Realtime for bloqueado, o app segue
+funcionando e só atualiza quando a página é recarregada, sem erro visível.
+
+---
+
+## Publicação
+
+Hospedado no GitHub Pages. Não há build: publicar é commitar o `index.html`.
+
+```
+index.html        o aplicativo inteiro
+manifest.json     PWA
+sw.js             service worker (cache offline)
+icon-72.png  icon-192.png  icon-512.png
+```
+
+Ao alterar o `index.html`, conferir se o `sw.js` precisa ter a lista de precache
+atualizada. Como não há toolchain, essa sincronia é manual.
+
+Depois de publicar, recarregar com Ctrl+Shift+R (ou fechar e reabrir o PWA) para o
+service worker pegar a versão nova.
+
+### Configuração no `index.html`
+
+```js
+const SUPABASE_URL      = "https://<projeto>.supabase.co";
+const SUPABASE_ANON     = "sb_publishable_...";   // pública por projeto, RLS protege
+const SUPABASE_JS_VERSAO = "2.79.0";              // fixada, ver Armadilhas
+```
+
+A chave do Google Gemini não fica no código: cada usuário grava a sua na própria conta,
+em `config_compartilhada`, com chave `geminiKey:<uid>`.
+
+### Edge Functions
+
+| Função | Por quê |
+|---|---|
+| `admin-usuarios` | Criar, listar, redefinir senha, mudar papel e excluir contas. Usa `service_role` **no servidor** e confere que quem chamou é admin |
+| `baixar-pdf` | Baixa o inteiro teor pelo servidor. Necessária porque `camara.leg.br` e `senado.leg.br` não enviam cabeçalhos CORS |
+
+---
+
+## Operação
+
+### Papéis
+
+Administrador (`app_metadata.role = "admin"`, definido só pela Edge Function) pode
+gerenciar contas e usar o envio em bloco. Os demais usuários leem e editam normalmente.
+
+### Rotina de coleta
+
+- **Sincronização rápida** (botão do cabeçalho): incremental dos últimos dias.
+  Descobre requerimentos novos e reverifica a tramitação dos já existentes.
+- **Coleta por ano**: varredura completa de um ano, por casa.
+- **Incluir requerimento**: traz um RIC específico por Casa, tipo, número e ano, quando
+  ele não é capturado pelos critérios de busca.
+
+Toda coleta grava no espelho local e envia ao banco em bloco no fim, o que tolera queda
+de rede no meio. O upsert é por chave primária: **recoletar atualiza e nunca duplica**.
+Se o envio falhar, rodar a coleta de novo é o remédio.
+
+### Conferência de integridade
+
+`conferencia-final.sql` (somente leitura) devolve, em uma consulta, as contagens, a
+distribuição por situação, os ids com "/", os campos com espaço nas pontas, a relação
+1:1 e os vínculos de unidade. O bloco `deve_ser_zero_ou_true` é onde olhar primeiro.
+
+Referência de sanidade: proposições e marcações em número igual, zero órfãs, zero
+espaços nas pontas, zero slugs fora do cadastro.
+
+---
+
+## Histórico da migração
+
+O app nasceu como PWA local com sincronização por GitHub Gist. A migração para Supabase
+foi feita em fases:
+
+| Fase | O que entregou |
+|---|---|
+| 0 a E | Inventário do schema a partir de backup real, DDLs idempotentes, seeds |
+| F | Carga inicial, leitura do Supabase, base local vira espelho, login |
+| G | Gravação campo a campo e colaboração ao vivo (Realtime) |
+| H | Coleta e relatórios contra o banco novo |
+| I | Remoção dos resíduos do sistema antigo e conferência final |
+
+O CloudSync por Gist e a criptografia associada foram removidos por completo.
+
+---
+
+## Licença e uso
+
+Ferramenta de uso interno da Casa Civil da Presidência da República. Não se destina a
+distribuição pública nem a uso fora do contexto institucional para o qual foi feita.
+
+Os dados legislativos vêm de APIs públicas da Câmara dos Deputados e do Senado Federal.
+A análise interna registrada no sistema é informação de trabalho da SSGP.
