@@ -147,6 +147,8 @@ html.dark .brand-logo { box-shadow: 0 0 20px rgba(93, 217, 210, 0.3); }
 .header-brand h1 .h1-titulo { display: inline-flex; align-items: baseline; gap: 6px; }
 .header-brand h1 small { display: block; font-size: 9.9px; font-weight: 400; color: var(--muted); margin-top: 2px; letter-spacing: 0; opacity: 0.7; }
 /* indicador de status da nuvem */
+/* Fase G: faixa de edição bloqueada (sem conexão com a nuvem) */
+#aviso-edicao-bloqueada { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #fef3c7; color: #92400e; border-bottom: 1px solid #fcd34d; font-size: 13px; font-weight: 600; }
 .cloud-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; transition: all 0.2s; }
 .cloud-status:hover { filter: brightness(0.97); }
 .cloud-status-icon { font-size: 12px; line-height: 1; }
@@ -759,6 +761,13 @@ html.dark .btn-gemini { background: linear-gradient(135deg, #818cf8, #a78bfa); c
 </style>
 </head>
 <body>
+<!-- Fase G, decisão 4: sem conexão com a nuvem a edição fica bloqueada.
+     Não existe fila de reenvio, então permitir digitar e não gravar seria
+     perda silenciosa. A faixa abaixo só aparece quando é o caso. -->
+<div id="aviso-edicao-bloqueada" role="status" style="display:none">
+  <span aria-hidden="true">⚠</span>
+  <span id="aviso-edicao-bloqueada-txt">Sem conexão com a nuvem. A edição está bloqueada; a consulta continua disponível pelo espelho local.</span>
+</div>
 <header class="app-header">
   <div class="header-top">
     <div class="header-brand">
@@ -1805,7 +1814,7 @@ const SUPABASE_CDN = `https://cdn.jsdelivr.net/npm/@supabase/supabase-js@${SUPAB
 const Nuvem = (() => {
   let _client = null;
   let _sessao = null;
-  const _estado = { online: false, sessao: null, ultimoErro: "", ultimaAtualizacao: null };
+  const _estado = { online: false, sessao: null, ultimoErro: "", ultimaAtualizacao: null, realtime: false };
   const _ouvintesAuth = [];
 
   async function client() {
@@ -1961,6 +1970,137 @@ const Nuvem = (() => {
     }
   }
 
+  // ============================================================
+  // FASE G, gravação campo a campo em `marcacoes`
+  //
+  // Regra central: só vai para o banco o que o usuário de fato mudou nesta
+  // edição. Assim, dois colegas editando campos diferentes do MESMO
+  // requerimento não se sobrescrevem (o UPDATE parcial do PostgREST só toca
+  // as colunas enviadas).
+  //
+  // Campo do app -> [coluna real de public.marcacoes, coerção de envio].
+  // Espelho exato de linhaDeMarcacao(); nenhum nome inventado, todos conferidos
+  // no schema-real-supabase.json (colunas 2 a 25 da tabela).
+  // Fora desta tabela, de propósito:
+  //   proposicao_id      -> chave, nunca é alterada;
+  //   atualizado_em_app  -> carimbo do app, enviado junto de qualquer mudança;
+  //   atualizado_em      -> auditoria do banco (trigger trg_touch_marcacoes);
+  //   atualizado_por     -> auditoria do banco, o app não escreve;
+  //   campos_extras      -> válvula de escape, não editável pela tela;
+  //   unidadesConsultadas-> não é coluna, vive na junção marcacao_unidades.
+  // ============================================================
+  const COLUNAS_MARCACAO = {
+    apelido:               ["apelido",                _t],
+    tematica:              ["tematica_slug",          v => _t(v) || null],
+    relevante:             ["relevante",              _bool],
+    palavrasChave:         ["palavras_chave",         _t],
+    resumo:                ["resumo",                 _t],
+    comentarios:           ["comentarios",            _t],
+    statusInterno:         ["status_interno",         _t],
+    etapa:                 ["etapa",                  _t],
+    etapasFluxo:           ["etapas_fluxo",           _j],
+    prazoEtapa:            ["prazo_etapa",            _data],
+    dataRecebimentoSEI:    ["data_recebimento_sei",   _data],
+    prazoFinalCN:          ["prazo_final_cn",         _data],
+    dataResposta:          ["data_resposta",          _data],
+    nupRecebimento:        ["nup_recebimento",        _t],
+    nupResposta:           ["nup_resposta",           _t],
+    tipoResposta:          ["tipo_resposta",          _t],
+    oficio:                ["oficio",                 _t],
+    atribuicao:            ["atribuicao",             _t],
+    linkCongresso:         ["link_congresso",         _t],
+    linkInteiroTeor:       ["link_inteiro_teor",      _t],
+    analogos:              ["analogos",               _j],
+    analogosCalculadoEm:   ["analogos_calculado_em",  _ts],
+    criadaAutomaticamente: ["criada_automaticamente", _bool],
+  };
+
+  // Compara a marcação de referência (como estava ao abrir a tela) com a nova.
+  // IMPORTANTE: campo ausente em `novo` não é "campo apagado", é campo NÃO
+  // EDITADO, e por isso nem entra no envio. É o que protege colunas que a tela
+  // de detalhe não exibe (oficio, atribuicao, links) do apagamento acidental.
+  function diffMarcacao(base, novo) {
+    base = base || {}; novo = novo || {};
+    const colunas = {};
+    for (const campo in COLUNAS_MARCACAO) {
+      if (!Object.prototype.hasOwnProperty.call(novo, campo)) continue;
+      const [coluna, coagir] = COLUNAS_MARCACAO[campo];
+      const antes  = coagir(base[campo] === undefined ? null : base[campo]);
+      const depois = coagir(novo[campo] === undefined ? null : novo[campo]);
+      if (JSON.stringify(antes) !== JSON.stringify(depois)) colunas[coluna] = depois;
+    }
+    let adicionar = [], remover = [];
+    if (Object.prototype.hasOwnProperty.call(novo, "unidadesConsultadas")) {
+      const uA = new Set(Array.isArray(base.unidadesConsultadas) ? base.unidadesConsultadas : []);
+      const uB = new Set(Array.isArray(novo.unidadesConsultadas) ? novo.unidadesConsultadas : []);
+      adicionar = [...uB].filter(n => !uA.has(n));
+      remover   = [...uA].filter(n => !uB.has(n));
+    }
+    const nomes = Object.keys(colunas);
+    return { colunas, adicionar, remover, mudou: nomes.length > 0 || adicionar.length > 0 || remover.length > 0 };
+  }
+
+  // Cadastro de unidades (slug <-> nome canônico), carregado uma vez por sessão.
+  let _mapaUnidades = null;
+  async function mapaUnidades(recarregar = false) {
+    if (_mapaUnidades && !recarregar) return _mapaUnidades;
+    const linhas = await lerTudo("unidades", "slug,nome");
+    _mapaUnidades = {
+      slugPorNome: new Map(linhas.map(u => [u.nome ?? u.slug, u.slug])),
+      nomePorSlug: new Map(linhas.map(u => [u.slug, u.nome ?? u.slug])),
+    };
+    return _mapaUnidades;
+  }
+
+  // UPDATE parcial com conferência de linha afetada. Sem o .select(), uma
+  // política RLS negando a escrita devolveria sucesso com zero linhas, e a
+  // perda seria silenciosa (exatamente o que a Fase G existe para evitar).
+  async function atualizarLinhaMarcacao(c, proposicaoId, colunas) {
+    const { data, error } = await c.from("marcacoes")
+      .update(colunas).eq("proposicao_id", proposicaoId).select("proposicao_id");
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error("Nenhuma linha gravada em marcacoes para " + proposicaoId + ". A proposição pode não existir na nuvem, ou a permissão foi negada.");
+    }
+  }
+
+  // Aplica só a diferença na junção marcacao_unidades (PK composta
+  // proposicao_id + unidade_slug). Nome sem slug no cadastro não é inventado:
+  // volta na lista de pendências para decisão manual.
+  async function aplicarUnidades(c, proposicaoId, adicionar, remover) {
+    const mp = await mapaUnidades();
+    const semSlug = [];
+    const paraSlug = nomes => nomes.map(n => {
+      const s = mp.slugPorNome.get(n);
+      if (!s) { semSlug.push(n); return null; }
+      return s;
+    }).filter(Boolean);
+    const del = paraSlug(remover);
+    const add = paraSlug(adicionar);
+    if (del.length) {
+      const { error } = await c.from("marcacao_unidades")
+        .delete().eq("proposicao_id", proposicaoId).in("unidade_slug", del);
+      if (error) throw error;
+    }
+    if (add.length) {
+      const { error } = await c.from("marcacao_unidades")
+        .upsert(add.map(s => ({ proposicao_id: proposicaoId, unidade_slug: s })),
+                { onConflict: "proposicao_id,unidade_slug", ignoreDuplicates: true });
+      if (error) throw error;
+    }
+    return semSlug;
+  }
+
+  // Unidades de UMA proposição, já convertidas para nome canônico.
+  // Usada pelo Realtime: o evento de `marcacoes` não traz a junção.
+  async function unidadesDaProposicao(c, proposicaoId) {
+    const { data, error } = await c.from("marcacao_unidades")
+      .select("unidade_slug").eq("proposicao_id", proposicaoId);
+    if (error) throw error;
+    const mp = await mapaUnidades();
+    return (data || []).map(r => mp.nomePorSlug.get(r.unidade_slug) ?? r.unidade_slug);
+  }
+
   // ---- Leitura paginada (evita truncamento silencioso do PostgREST, limite ~1000) ----
   async function lerTudo(tabela, colunas = "*") {
     const c = await client();
@@ -2069,6 +2209,127 @@ const Nuvem = (() => {
       _estado.ultimaAtualizacao = new Date().toISOString();
       return { proposicoes: props.length, marcacoes: marcs.length, unidades: juncao.length, unidadesSemSlug: semSlug };
     },
+
+    // ---- FASE G: escrita ----
+
+    // Pré-condição de qualquer gravação. Decisão 4: sem rede a edição é
+    // bloqueada, e não gravada "para depois" (não existe fila de reenvio).
+    pronto() { return !!(_sessao && _sessao.user) && navigator.onLine !== false; },
+
+    // Grava SOMENTE os campos alterados entre `base` (marcação como estava ao
+    // abrir a tela) e `novo` (marcação montada pelo formulário).
+    // Devolve { mudou, colunas, unidadesSemSlug }.
+    async salvarMarcacaoParcial(proposicaoId, base, novo) {
+      const c = await client();
+      const d = diffMarcacao(base, novo);
+      if (!d.mudou) return { mudou: false, colunas: [], unidadesSemSlug: [] };
+      const carimbo = _ts(novo && novo.atualizadoEm) || new Date().toISOString();
+      const nomes = Object.keys(d.colunas);
+      await atualizarLinhaMarcacao(c, proposicaoId, { ...d.colunas, atualizado_em_app: carimbo });
+      let semSlug = [];
+      if (d.adicionar.length || d.remover.length) {
+        semSlug = await aplicarUnidades(c, proposicaoId, d.adicionar, d.remover);
+      }
+      _estado.online = true;
+      return { mudou: true, colunas: nomes, unidadesSemSlug: semSlug };
+    },
+
+    // Edição em lote (decisão 3): grava direto no banco, um UPDATE por
+    // requerimento, enviando só as colunas marcadas no modal.
+    // `porId` é { [proposicaoId]: { base, novo } }, onde `base` é a marcação
+    // como está hoje e `novo` traz SÓ os campos marcados no modal. Comparar com
+    // a base é o que permite limpar um campo em lote (valor vira vazio) sem
+    // confundir "campo apagado" com "campo não editado".
+    // Devolve { gravadas, semMudanca, falhas: [{id, erro}], unidadesSemSlug }.
+    async salvarLoteMarcacoes(porId, aoProgredir) {
+      const c = await client();
+      const ids = Object.keys(porId);
+      const falhas = []; let gravadas = 0, semMudanca = 0; const semSlug = new Set();
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        try {
+          const d = diffMarcacao(porId[id].base, porId[id].novo);
+          if (!d.mudou) { semMudanca++; continue; }
+          await atualizarLinhaMarcacao(c, id, { ...d.colunas, atualizado_em_app: new Date().toISOString() });
+          if (d.adicionar.length || d.remover.length) {
+            (await aplicarUnidades(c, id, d.adicionar, d.remover)).forEach(n => semSlug.add(n));
+          }
+          gravadas++;
+        } catch (e) {
+          falhas.push({ id, erro: e && e.message ? e.message : String(e) });
+        }
+        if (typeof aoProgredir === "function") { try { aoProgredir(i + 1, ids.length); } catch (e) {} }
+      }
+      return { gravadas, semMudanca, falhas, unidadesSemSlug: [...semSlug] };
+    },
+
+    // Exclusão na nuvem. O trigger trg_auditoria_exclusao registra em
+    // auditoria_exclusoes antes do DELETE, e a FK com ON DELETE CASCADE
+    // remove a marcação e os vínculos de unidade. Nada disso é feito aqui.
+    async excluirProposicao(id) {
+      const c = await client();
+      const { error } = await c.from("proposicoes").delete().eq("id", id);
+      if (error) throw error;
+    },
+
+    // Reversão de exclusão. O INSERT dispara trg_par_marcacao, que recria a
+    // marcação 1:1; em seguida os campos dela são regravados a partir do snapshot.
+    async restaurarProposicao(prop, marc) {
+      const c = await client();
+      const { error } = await c.from("proposicoes").upsert([linhaDeProposicao(prop)], { onConflict: "id" });
+      if (error) throw error;
+      if (marc) {
+        const linha = linhaDeMarcacao(marc);
+        delete linha.proposicao_id;
+        await atualizarLinhaMarcacao(c, prop.id, linha);
+        const nomes = Array.isArray(marc.unidadesConsultadas) ? marc.unidadesConsultadas : [];
+        if (nomes.length) return await aplicarUnidades(c, prop.id, nomes, []);
+      }
+      return [];
+    },
+
+    // Grava o campo `oculto` de uma proposição (Ocultar / Reexibir).
+    async definirOculto(id, oculto) {
+      const c = await client();
+      const { data, error } = await c.from("proposicoes")
+        .update({ oculto: oculto === true }).eq("id", id).select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Nenhuma linha gravada em proposicoes para " + id + ".");
+    },
+
+    // ---- FASE G: Realtime ----
+    // Assina proposicoes e marcacoes (ambas confirmadas na publicação
+    // supabase_realtime). Se a rede bloquear o WebSocket, o canal não sobe,
+    // o estado fica realtime=false e o app segue normal: as mudanças dos
+    // colegas aparecem ao atualizar os dados ou ao recarregar a página.
+    assinarMudancas(aoMudar) {
+      let canal = null;
+      (async () => {
+        try {
+          const c = await client();
+          canal = c.channel("monitor-ric-2")
+            .on("postgres_changes", { event: "*", schema: "public", table: "proposicoes" },
+                p => { try { aoMudar("proposicoes", p); } catch (e) { console.warn("Realtime proposicoes:", e); } })
+            .on("postgres_changes", { event: "*", schema: "public", table: "marcacoes" },
+                p => { try { aoMudar("marcacoes", p); } catch (e) { console.warn("Realtime marcacoes:", e); } })
+            .subscribe(status => {
+              _estado.realtime = (status === "SUBSCRIBED");
+              if (status !== "SUBSCRIBED") {
+                console.info("Realtime indisponível (" + status + "). O app continua funcionando; as mudanças aparecem ao atualizar os dados.");
+              }
+            });
+        } catch (e) {
+          _estado.realtime = false;
+          console.info("Realtime não iniciado (não bloqueia o uso):", (e && e.message) || e);
+        }
+      })();
+      return () => { try { if (canal) client().then(c => c.removeChannel(canal)).catch(() => {}); } catch (e) {} };
+    },
+
+    // Conversores expostos para o tratador de Realtime (payload.new vem em snake_case).
+    converterProposicao(linha) { return linhaParaProposicao(linha); },
+    converterMarcacao(linha) { return linhaParaMarcacao(linha, null); },
+    async unidadesDe(proposicaoId) { return unidadesDaProposicao(await client(), proposicaoId); },
 
     // Config compartilhada (config_compartilhada: chave text PK, valor jsonb).
     async obterConfigCompartilhada(chave) {
@@ -4041,27 +4302,43 @@ function lerSnapshotsExclusao() {
   catch (e) { return []; }
 }
 
+// FASE G: toda alteração de base passa pela nuvem ANTES do espelho local.
+// Se a nuvem recusar, nada é gravado localmente e o espelho não diverge.
+function exigirNuvem(acao) {
+  if (!Nuvem.pronto()) {
+    throw new Error("Sem conexão com a nuvem. " + acao + " não foi feita. Confira a rede e entre na conta.");
+  }
+}
+
 async function ocultarRic(id) {
   const p = await DB.get("proposicoes", id);
   if (!p) throw new Error("Proposição não encontrada.");
+  exigirNuvem("A ocultação");
+  await Nuvem.definirOculto(id, true);
   p.oculto = true;
-  await DB.put("proposicoes", p);
+  await DB.put("proposicoes", p, { sync: false });
 }
 
 async function reexibirRic(id) {
   const p = await DB.get("proposicoes", id);
   if (!p) throw new Error("Proposição não encontrada.");
+  exigirNuvem("A reexibição");
+  await Nuvem.definirOculto(id, false);
   p.oculto = false;
-  await DB.put("proposicoes", p);
+  await DB.put("proposicoes", p, { sync: false });
 }
 
 async function excluirRic(id) {
   const p = await DB.get("proposicoes", id);
   if (!p) throw new Error("Proposição não encontrada.");
   const m = await DB.get("marcacoes", id);
-  // Snapshot pré-exclusão
+  exigirNuvem("A exclusão");
+  // Snapshot pré-exclusão (local, permite reverter)
   await _salvarSnapshotExclusao(p, m);
-  // Apaga
+  // Apaga na nuvem. O trigger trg_auditoria_exclusao registra em
+  // auditoria_exclusoes e a FK em cascata remove marcação e unidades.
+  await Nuvem.excluirProposicao(id);
+  // Só então o espelho local
   if (m) await DB.delete("marcacoes", id);
   await DB.delete("proposicoes", id);
 }
@@ -4070,8 +4347,13 @@ async function reverterExclusao(snapId) {
   const arr = lerSnapshotsExclusao();
   const snap = arr.find(s => s.id === snapId);
   if (!snap) throw new Error("Snapshot não encontrado.");
-  await DB.put("proposicoes", snap.proposicao);
-  if (snap.marcacao) await DB.put("marcacoes", snap.marcacao);
+  exigirNuvem("A reversão da exclusão");
+  const semSlug = await Nuvem.restaurarProposicao(snap.proposicao, snap.marcacao);
+  if (semSlug && semSlug.length) {
+    alert("Requerimento restaurado. Estas unidades não existem no cadastro da nuvem e não foram revinculadas:\n\n" + semSlug.join(", "));
+  }
+  await DB.put("proposicoes", snap.proposicao, { sync: false });
+  if (snap.marcacao) await DB.put("marcacoes", snap.marcacao, { sync: false });
   // v4.7: remove tombstones para o item poder voltar a sincronizar normalmente
   try {
     await DB.delete("tombstones", "prop:" + snap.proposicao.id, { sync: false });
@@ -4210,7 +4492,13 @@ async function abrirDetalhe(id) {
   await carregarLista();
   const p = listaEstado.itens.find(x => x.id === id);
   if (!p) return;
+  ricDetalheAberto = id; // Fase G: protege a edição em curso das mudanças vindas por Realtime
   const m = getMarcacao(id);
+  // FASE G: fotografia da marcação COMO ESTAVA ao abrir a tela. É contra ela
+  // que o Salvar calcula o que mudou, para enviar só isso. Precisa ser tirada
+  // antes de qualquer ajuste automático (prazo sugerido, análogos, etapas),
+  // senão essas mudanças ficariam de fora do envio.
+  let marcBase = JSON.parse(JSON.stringify(m));
   // Preenche prazoFinalCN com sugestão do histórico se ainda vazio
   m.prazoFinalCN = calcPrazoFinalCN(m, p);
 
@@ -4775,8 +5063,40 @@ async function abrirDetalhe(id) {
         if (elSt) elSt.value = st;
       }
     }
-    await DB.put("marcacoes", novoM);
+    // ---- FASE G: grava na NUVEM primeiro, campo a campo ----
+    // Só sobem as colunas que mudaram em relação a marcBase. Se um colega
+    // estiver editando outro campo do mesmo requerimento, o trabalho dele fica
+    // intacto, porque o UPDATE nem toca naquela coluna.
+    // Decisão 4: sem rede a edição é bloqueada. O espelho local só é regravado
+    // depois do sucesso na nuvem, para não divergir do banco.
+    if (!Nuvem.pronto()) {
+      alert("Sem conexão com a nuvem.\n\nA alteração NÃO foi gravada. Confira a rede, entre na conta e tente de novo.");
+      atualizarIndicadorNuvem(Nuvem.autenticado() ? "offline" : "entrar");
+      return;
+    }
+    const btnSalvarG = document.getElementById("btn-salvar-marcacao-header");
+    if (btnSalvarG) btnSalvarG.disabled = true;
+    let resultadoG;
+    try {
+      resultadoG = await Nuvem.salvarMarcacaoParcial(id, marcBase, novoM);
+    } catch (e) {
+      console.error("salvarMarcacaoParcial:", e);
+      alert("Falha ao gravar na nuvem. NADA foi salvo.\n\n" + ((e && e.message) || String(e)));
+      atualizarIndicadorNuvem("erro");
+      return;
+    } finally {
+      if (btnSalvarG) btnSalvarG.disabled = false;
+    }
+    await DB.put("marcacoes", novoM, { sync: false });
     listaEstado.marcacoes.set(id, novoM);
+    // A partir daqui, o estado gravado passa a ser a nova referência.
+    marcBase = JSON.parse(JSON.stringify(novoM));
+    atualizarIndicadorNuvem("ok");
+    if (resultadoG.unidadesSemSlug && resultadoG.unidadesSemSlug.length) {
+      alert("Estas unidades não existem no cadastro da nuvem e NÃO foram gravadas:\n\n" +
+            resultadoG.unidadesSemSlug.join(", ") +
+            "\n\nO restante da alteração foi gravado. Cadastre a unidade ou avise o administrador.");
+    }
     // Feedback (no header)
     const fbHdr = document.getElementById("save-feedback-header");
     if (fbHdr) {
@@ -4855,20 +5175,31 @@ async function abrirDetalhe(id) {
     };
     // Handler Limpar análise (lixeira discreta, requer confirmação)
     document.getElementById("btn-limpar-marcacao").onclick = async () => {
-      if (!confirm("Apagar todos os dados internos (objeto, temática, análise, tramitação, NUPs, unidades, etc.) deste requerimento?\n\nO requerimento em si NÃO será apagado, apenas a análise interna.")) return;
-      const novoM = {
-        proposicaoId: id, statusInterno: "novo", apelido: "", relevante: false,
-        tematica: "", palavrasChave: "", unidadesConsultadas: [],
-        resumo: "", comentarios: "", etapa: "", prazoEtapa: "",
-        etapasFluxo: {}, // v4.6: limpa lista de etapas
-        nupRecebimento: "", nupResposta: "", dataRecebimentoSEI: "",
-        prazoFinalCN: "", dataResposta: "", tipoResposta: "",
-        atualizadoEm: new Date().toISOString()
-      };
-      await DB.put("marcacoes", novoM);
-      listaEstado.marcacoes.set(id, novoM);
-      dispararFecharModal("modal-detalhe");
-      renderTabela(); renderHeaderStats(); renderPainel();
+      if (!confirm("Limpar na TELA todos os dados internos (objeto, temática, análise, tramitação, NUPs, unidades, etc.) deste requerimento?\n\nNada é gravado agora: a limpeza só vai para o banco quando você clicar em Salvar. Se fechar sem salvar, nada muda.")) return;
+      // FASE G: a limpeza deixou de gravar sozinha. Ela zera o formulário e
+      // segue o mesmo caminho de qualquer outra edição, o botão Salvar, que
+      // envia campo a campo. Isso evita que uma limpeza acidental apague o
+      // trabalho de um colega sem chance de desistir.
+      const porV = (elId, v) => { const el = document.getElementById(elId); if (el) el.value = v; };
+      porV("m-apelido", ""); porV("m-tematica", ""); porV("m-palavraschave", "");
+      porV("m-resumo", ""); porV("m-comentarios", ""); porV("m-status-interno", "novo");
+      porV("m-data-recebimento-sei", ""); porV("m-prazo-final-cn", ""); porV("m-data-resposta", "");
+      porV("m-nup-receb", ""); porV("m-nup-resp", ""); porV("m-tipo-resposta", "");
+      const elRelevante = document.getElementById("m-relevante");
+      if (elRelevante) elRelevante.checked = false;
+      document.querySelectorAll("#m-unidades-checkboxes .unid-cb").forEach(cb => { cb.checked = false; });
+      const contUnid = document.getElementById("unidades-contador");
+      if (contUnid) contUnid.textContent = "0";
+      // Etapas do fluxo: zera no estado em memória e repinta o bloco.
+      const marcLimpa = listaEstado.marcacoes.get(id) || {};
+      marcLimpa.etapasFluxo = {};
+      listaEstado.marcacoes.set(id, marcLimpa);
+      const blocoEtapas = document.getElementById("m-etapas-fluxo");
+      if (blocoEtapas) {
+        blocoEtapas.innerHTML = renderEtapasFluxoHtml(marcLimpa);
+        bindEtapasFluxoHandlers(id);
+      }
+      alert("Análise limpa na tela.\n\nClique em Salvar para gravar a limpeza no banco, ou feche o requerimento para desistir.");
     };
     // Handler Relatório deste RIC (abre o modal de relatório com escopo fixo no RIC corrente)
     const btnRel = document.getElementById("btn-relatorio-ric");
@@ -4878,6 +5209,9 @@ async function abrirDetalhe(id) {
       }
     };
   }
+  // Fase G: os botões do rodapé acabaram de ser criados; aplica o bloqueio
+  // de edição caso não haja conexão com a nuvem.
+  atualizarBloqueioEdicao();
 
   // Toggle das seções colapsáveis
   // v4.7.1: acordeão EXCLUSIVO — só um aberto por vez; ao abrir um, fecha os outros.
@@ -6380,6 +6714,7 @@ async function atualizarDadosDaNuvem() {
     await sincronizarConfigConta();
     await recarregarTudo();
     atualizarIndicadorNuvem("ok");
+    garantirRealtime();
     renderContaModalEstado();
     return { ok: true, ...r };
   } catch (e) {
@@ -6388,6 +6723,102 @@ async function atualizarDadosDaNuvem() {
     renderContaModalEstado();
     return { ok: false, erro: e?.message || String(e) };
   }
+}
+
+// ============================================================
+// FASE G, colaboração ao vivo (Realtime)
+//
+// Assina proposicoes e marcacoes. Quando um colega grava, o espelho local e a
+// tela se atualizam sozinhos, sem recarregar a página.
+//
+// Se a rede da Casa Civil bloquear o WebSocket, o canal simplesmente não sobe:
+// nada é exibido ao usuário, e as mudanças passam a aparecer quando ele clicar
+// em atualizar os dados ou recarregar a página. Nenhum caminho de uso depende
+// do Realtime estar no ar.
+// ============================================================
+let ricDetalheAberto = null;
+let _realtimeCancelar = null;
+let _realtimeTimer = null;
+
+function repintarPorRealtime() {
+  clearTimeout(_realtimeTimer);
+  _realtimeTimer = setTimeout(() => {
+    try {
+      aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
+    } catch (e) { console.warn("Repintura após Realtime:", e); }
+  }, 400);
+}
+
+async function aplicarMudancaRealtime(tabela, payload) {
+  const tipo = payload && payload.eventType;
+  const linha = (tipo === "DELETE") ? (payload.old || {}) : (payload.new || {});
+  const id = (tabela === "proposicoes") ? linha.id : linha.proposicao_id;
+  if (!id) return;
+  const elDet = document.getElementById("modal-detalhe");
+  const editandoEste = !!(elDet && elDet.classList.contains("open") && ricDetalheAberto === id);
+
+  if (tabela === "proposicoes") {
+    if (tipo === "DELETE") {
+      try { await DB.delete("proposicoes", id); } catch (e) {}
+      try { await DB.delete("marcacoes", id); } catch (e) {}
+      listaEstado.itens = listaEstado.itens.filter(x => x.id !== id);
+      listaEstado.marcacoes.delete(id);
+    } else {
+      const p = Nuvem.converterProposicao(linha);
+      await DB.put("proposicoes", p, { sync: false });
+      const i = listaEstado.itens.findIndex(x => x.id === id);
+      if (i >= 0) listaEstado.itens[i] = p; else listaEstado.itens.push(p);
+    }
+  } else {
+    if (tipo === "DELETE") {
+      try { await DB.delete("marcacoes", id); } catch (e) {}
+      listaEstado.marcacoes.delete(id);
+    } else {
+      const m = Nuvem.converterMarcacao(linha);
+      // O evento de `marcacoes` não carrega a junção marcacao_unidades:
+      // as unidades consultadas são lidas à parte, só para esta proposição.
+      try { m.unidadesConsultadas = await Nuvem.unidadesDe(id); }
+      catch (e) { m.unidadesConsultadas = []; }
+      await DB.put("marcacoes", m, { sync: false });
+      // Se o usuário está com ESTE requerimento aberto e com alterações ainda
+      // não salvas, o registro em memória não é trocado, para não apagar o que
+      // ele digitou. O espelho no banco local já ficou atualizado acima.
+      if (!editandoEste) listaEstado.marcacoes.set(id, m);
+    }
+  }
+  repintarPorRealtime();
+}
+
+// FASE G, decisão 4: sem nuvem, a edição fica bloqueada e avisada.
+// A leitura continua funcionando normalmente pelo espelho local.
+function atualizarBloqueioEdicao() {
+  const podeEditar = Nuvem.pronto();
+  const faixa = document.getElementById("aviso-edicao-bloqueada");
+  const txt = document.getElementById("aviso-edicao-bloqueada-txt");
+  if (faixa) faixa.style.display = podeEditar ? "none" : "";
+  if (txt && !podeEditar) {
+    txt.textContent = Nuvem.autenticado()
+      ? "Sem conexão com a nuvem. A edição está bloqueada; a consulta continua disponível pelo espelho local."
+      : "Você não está conectado à nuvem. Entre na conta para editar; a consulta continua disponível pelo espelho local.";
+  }
+  ["btn-salvar-marcacao-header", "btn-limpar-marcacao", "btn-excluir-ric",
+   "btn-ocultar-ric", "btn-lote-aplicar", "btn-incluir-manual"].forEach(elId => {
+    const el = document.getElementById(elId);
+    if (el) {
+      el.disabled = !podeEditar;
+      if (el.dataset.tituloOriginal === undefined) el.dataset.tituloOriginal = el.title || "";
+      el.title = podeEditar ? el.dataset.tituloOriginal : "Indisponível sem conexão com a nuvem.";
+    }
+  });
+}
+window.addEventListener("online", atualizarBloqueioEdicao);
+window.addEventListener("offline", atualizarBloqueioEdicao);
+
+// Assina uma única vez por sessão. Idempotente: pode ser chamada de novo.
+function garantirRealtime() {
+  if (_realtimeCancelar || !Nuvem.autenticado()) return;
+  try { _realtimeCancelar = Nuvem.assinarMudancas(aplicarMudancaRealtime); }
+  catch (e) { console.info("Realtime não iniciado (não bloqueia o uso):", (e && e.message) || e); }
 }
 
 function renderContaModalEstado() {
@@ -6406,7 +6837,11 @@ function renderContaModalEstado() {
     if (cardSenha) cardSenha.style.display = "";
     if (cardAdmin) cardAdmin.style.display = Nuvem.usuarioEhAdmin() ? "" : "none";
     if (btnAtualizar) btnAtualizar.style.display = "";
-    if (btnEnviar) btnEnviar.style.display = "";
+    // FASE G, decisão 2: o envio em bloco continua existindo (é o caminho da
+    // carga da planilha Controle RICs.xlsx), mas fica restrito ao
+    // administrador, porque ele sobrescreve linha inteira e pode desfazer o
+    // trabalho de um colega feito depois da última atualização deste espelho.
+    if (btnEnviar) btnEnviar.style.display = Nuvem.usuarioEhAdmin() ? "" : "none";
     if (btnSair) btnSair.style.display = "";
   } else {
     if (resumo) resumo.innerHTML = Nuvem.estado.ultimoErro
@@ -6438,7 +6873,7 @@ document.getElementById("cloud-status-indicator").onclick = async () => {
 };
 
 // Mantém indicador e modal coerentes com o estado de auth.
-Nuvem.onMudancaAuth(() => { renderContaModalEstado(); atualizarIndicadorNuvem(Nuvem.autenticado() ? "ok" : "entrar"); });
+Nuvem.onMudancaAuth(() => { renderContaModalEstado(); atualizarIndicadorNuvem(Nuvem.autenticado() ? "ok" : "entrar"); atualizarBloqueioEdicao(); });
 
 // ===== Inclusão manual de requerimento (v4.7) =====
 document.getElementById("btn-incluir-manual").onclick = () => {
@@ -6796,6 +7231,7 @@ document.getElementById("btn-open-relatorios-menu").onclick = () => {
 
 document.getElementById("btn-open-edicao-lote").onclick = () => {
   fecharMenuAcoes();
+  atualizarBloqueioEdicao(); // Fase G: sem nuvem, o "Aplicar" fica desabilitado
   loteSelecionados = new Set();
   document.getElementById("lote-busca").value = "";
   document.getElementById("lote-casa").value = "";
@@ -6841,15 +7277,22 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
   if (document.getElementById("lote-ck-dataresp").checked) campos.dataResposta = document.getElementById("lote-dataresp").value;
   if (document.getElementById("lote-ck-tiporesp").checked) campos.tipoResposta = document.getElementById("lote-tiporesp").value;
   if (Object.keys(campos).length === 0) { fb.innerHTML = '<span style="color:#b91c1c">Marque ao menos um campo para alterar.</span>'; return; }
-  if (!confirm(`Aplicar ${Object.keys(campos).length} campo(s) a ${loteSelecionados.size} RIC(s)?`)) return;
+  if (!Nuvem.pronto()) {
+    fb.innerHTML = '<span style="color:#b91c1c">Sem conexão com a nuvem. A edição em lote não foi aplicada.</span>';
+    return;
+  }
+  if (!confirm(`Aplicar ${Object.keys(campos).length} campo(s) a ${loteSelecionados.size} RIC(s)?\n\nA gravação vai direto para o banco, campo a campo. Os demais campos de cada requerimento não são tocados.`)) return;
 
   const atualizadas = [];
+  const baseLote = {};
   for (const id of loteSelecionados) {
     // v4.8: lê a marcação ATUAL do banco (fonte da verdade) para não perder campos não editados.
     // Se não existir, cria uma marcação vazia íntegra (mesmo modelo do app).
     let mDb = await DB.get("marcacoes", id);
+    baseLote[id] = mDb ? JSON.parse(JSON.stringify(mDb)) : {};
     const m = mDb ? { ...mDb } : marcacaoVaziaPara(id);
     m.proposicaoId = id;
+    m.etapasFluxo = JSON.parse(JSON.stringify(m.etapasFluxo || {}));
     if (!m.etapasFluxo || typeof m.etapasFluxo !== "object") m.etapasFluxo = {};
     if ("statusInterno" in campos) m.statusInterno = campos.statusInterno;
     if ("tematica" in campos) m.tematica = campos.tematica;
@@ -6878,11 +7321,52 @@ document.getElementById("btn-lote-aplicar").onclick = async () => {
     m.atualizadoEm = new Date().toISOString();
     atualizadas.push(m);
   }
-  await DB.bulkPut("marcacoes", atualizadas);
+  // FASE G: monta, para cada requerimento, SÓ os campos marcados no modal.
+  // etapasFluxo entra apenas quando "Etapa" ou "Prazo da etapa" foi marcado,
+  // porque é neles que esses dois campos gravam.
+  const SIMPLES_LOTE = ["statusInterno", "tematica", "nupRecebimento", "dataResposta", "tipoResposta"];
+  const mexeuEtapas = ("etapa" in campos && !!campos.etapa) || ("prazoEtapa" in campos);
+  const porIdLote = {};
+  for (const m of atualizadas) {
+    const mud = {};
+    for (const k of SIMPLES_LOTE) if (k in campos) mud[k] = m[k];
+    if ("etapa" in campos && campos.etapa) mud.etapa = m.etapa;
+    if (mexeuEtapas) mud.etapasFluxo = m.etapasFluxo;
+    porIdLote[m.proposicaoId] = { base: baseLote[m.proposicaoId] || {}, novo: mud };
+  }
+  const btnLote = document.getElementById("btn-lote-aplicar");
+  btnLote.disabled = true;
+  fb.innerHTML = `Gravando no banco… 0 de ${atualizadas.length}`;
+  let rLote;
+  try {
+    rLote = await Nuvem.salvarLoteMarcacoes(porIdLote, (feitos, total) => {
+      fb.innerHTML = `Gravando no banco… ${feitos} de ${total}`;
+    });
+  } catch (e) {
+    console.error("salvarLoteMarcacoes:", e);
+    fb.innerHTML = `<span style="color:#b91c1c">Falha ao gravar no banco. Nada foi alterado no espelho local: ${escapeHtml((e && e.message) || String(e))}</span>`;
+    atualizarIndicadorNuvem("erro");
+    btnLote.disabled = false;
+    return;
+  }
+  btnLote.disabled = false;
+  // Espelho local só depois da nuvem, e só para os que de fato gravaram.
+  const idsFalhos = new Set(rLote.falhas.map(f => f.id));
+  const gravadasLocal = atualizadas.filter(m => !idsFalhos.has(m.proposicaoId));
+  if (gravadasLocal.length) await DB.bulkPut("marcacoes", gravadasLocal, { sync: false });
   // Recarrega o estado em memória DO BANCO para refletir com fidelidade
   await carregarLista();
   aplicarFiltros(); ordenar(); renderTabela(); renderHeaderStats(); renderPainel();
-  fb.innerHTML = `<span style="color:#047857">✓ ${atualizadas.length} RIC(s) atualizado(s).</span>`;
+  atualizarIndicadorNuvem("ok");
+  let msgLote = `<span style="color:#047857">✓ ${rLote.gravadas} RIC(s) gravado(s) no banco.</span>`;
+  if (rLote.semMudanca) msgLote += `<br><span class="text-muted">${rLote.semMudanca} já estava(m) com esses valores.</span>`;
+  if (rLote.unidadesSemSlug.length) msgLote += `<br><span style="color:#b45309">Unidades sem cadastro na nuvem, não gravadas: ${escapeHtml(rLote.unidadesSemSlug.join(", "))}</span>`;
+  if (rLote.falhas.length) {
+    msgLote += `<br><span style="color:#b91c1c">${rLote.falhas.length} falha(s): ` +
+      escapeHtml(rLote.falhas.slice(0, 5).map(f => f.id + " (" + f.erro + ")").join("; ")) +
+      (rLote.falhas.length > 5 ? " e outras" : "") + `</span>`;
+  }
+  fb.innerHTML = msgLote;
   // Atualiza a própria lista do modal (mantém aberto para conferência)
   renderLoteLista();
 };
@@ -6930,7 +7414,8 @@ document.getElementById("btn-conta-sair").onclick = async () => {
 document.getElementById("btn-conta-enviar").onclick = async () => {
   const fb = document.getElementById("conta-upload-feedback");
   if (!Nuvem.autenticado()) { fb.innerHTML = '<span style="color:#b91c1c">Entre na conta antes de enviar.</span>'; return; }
-  if (!confirm("Atualizar o banco na nuvem com a base local (proposições e marcações)? Isto grava no Supabase as alterações deste dispositivo, inclusive as vindas da planilha Controle RICs.xlsx.")) return;
+  if (!Nuvem.usuarioEhAdmin()) { fb.innerHTML = '<span style="color:#b91c1c">Ação restrita a administradores.</span>'; return; }
+  if (!confirm("ATENÇÃO: este envio grava a base LOCAL INTEIRA por cima da nuvem.\n\nÉ o caminho da carga da planilha Controle RICs.xlsx, mas, se um colega tiver editado algo depois da sua última atualização de dados, a edição dele será desfeita sem aviso.\n\nRecomendado: clicar antes em \"Atualizar dados\" e só então enviar.\n\nContinuar mesmo assim?")) return;
   const btn = document.getElementById("btn-conta-enviar");
   btn.disabled = true;
   fb.innerHTML = "Enviando para a nuvem…";
@@ -10036,6 +10521,7 @@ async function recarregarTudo() {
             await sincronizarConfigConta();   // chave Gemini da conta, se houver
             await recarregarTudo();           // repinta com os dados frescos
             atualizarIndicadorNuvem("ok");
+            garantirRealtime();               // Fase G: colaboração ao vivo
           } catch (e) {
             console.error("Espelho inicial:", e);
             atualizarIndicadorNuvem(navigator.onLine ? "erro" : "offline");
@@ -10050,6 +10536,9 @@ async function recarregarTudo() {
         console.error("Nuvem.iniciar:", e);
         atualizarIndicadorNuvem("offline");
       }
+      // Fase G: qualquer que tenha sido o desfecho acima, a tela precisa
+      // refletir se a edição está liberada ou bloqueada.
+      atualizarBloqueioEdicao();
     })();
   } catch (e) {
     alert("Falha ao inicializar: " + e.message);
